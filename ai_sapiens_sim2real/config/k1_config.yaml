@@ -52,6 +52,13 @@ teleop_input:
   vel_command_timeout: 0.2
   timeout: 0.2
 
+group:
+  enabled: true
+  plugin: ai_sapiens_sim2real/RadiomasterPocketTeleopInputPlugin
+  config: teleop/radiomaster_group.yaml
+  timeout: 0.2
+  vel_command_timeout: 0.2
+
 teleop_conditions:
   DampingRequested:
     input_code: 1

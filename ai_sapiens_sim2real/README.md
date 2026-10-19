@@ -11,6 +11,18 @@ a realtime-oriented loop, and publishes joint position/gain commands.
 > operator can select the configured Damping state. Use
 > `command_publisher_enabled:=false` for a non-actuating startup check.
 
+## Any2Track adapters
+
+The runtime supports `opentrack_anyadapter` (IMU and joint feedback) and
+`any2track_gt_xy_adapter` (also requires pelvis odometry). Both load the exported
+ONNX policy, matching `sim2real.yaml`, and a motion CSV.
+
+The checked-in `k1_config.yaml` does not register an Any2Track behavior or selector.
+To use an adapter, supply its assets and add a mimic behavior, state, and selector
+to your root configuration, then use `ai_sapiens_sim2real.launch.py`.
+See [Any2Track deployment](docs/any2track.md) for the configuration contract and
+the available offline reference check.
+
 ## Runtime at a glance
 
 The package deliberately separates mode selection from policy execution:
@@ -191,9 +203,51 @@ assets/k1/locomotion/velocity/walk_default/params/sim2real.yaml
 Use `policy_path` and `sim2real_yaml_path` together when the standard asset
 layout is not suitable.
 
+For controller MoE exports (`dance_motion_reference_v2` and `dance_motion_reference_v3`), deployment uses
+`exported/policy.onnx`, `params/sim2real.yaml` and the configured motion CSV.
+Without an exported `training_reference_file`, reference data is derived from the CSV. The runtime derives foot poses
+and sole clearance from the CSV and the installed K1 model, estimates contact
+with a smooth 8–25 mm clearance transition, and extracts dance gestures in memory.
+Live velocity commands drive the foot planner, leg IK and root shift each tick.
+The planner reads the same `MotionReference` already loaded for Mimic playback.
+Its joint targets go through the existing motion observation functions and joint
+mapping; ONNX inference, action processing and command publishing remain shared
+with the other Mimic policies. Seeking a new frame clears the previous targets.
+
+V3 derives movement intent from the request after deadband and before velocity
+smoothing. Releasing all movement axes prevents new supplemental placements
+immediately, while an active gesture finishes at its latched endpoint. Planning
+no longer shortens newly starting natural swings based on residual filtered speed
+after release. Root steering, release rebasing, crouch and velocity observations
+still use the filtered velocity. V2 retains its previous settling behavior.
+The v3 YAML must declare `finish_active_gesture_no_new_steps` and
+`deadbanded_request_before_smoothing`; renaming the version alone is insufficient.
+
+The exported `phase_labels` and `phase_labels_sha256` describe the training input;
+they are not deployment file requirements. CSV-derived contact differs from the
+training labels, so this mode does not guarantee identical policy observations.
+Copy the matching ONNX, deployment YAML, and motion CSV from the intended
+training run into the asset layout above. Startup validates the ONNX joint and
+observation metadata when present; localized Mimic requires both metadata fields.
+Startup logs also include the ONNX `Training run` metadata when available.
+
+Dedicated MoE import, smoke-test, and parity-probe tools are not included in this
+checkout. The package tests described below do not establish training parity or
+physical balance for a deployed model.
+
+`dance_motion_reference_v4` additionally requires the exported training reference
+file and its SHA256, plus the matching monotonic IK settings in `sim2real.yaml`.
+
+A global-position policy also requires fresh `/state_estimator/odom` messages
+with `odom` as the world frame and `pelvis` as the base frame. The existing
+`run_k1_tmux.sh --sim --dualsense` command starts simulation, policy and teleop;
+start the localization stack separately. Mimic entry is rejected while this
+feedback is unavailable.
+
 ## Build
 
-ROS 2 Jazzy, the workspace package dependencies, and
+ROS 2 Jazzy, the workspace package dependencies (including `mujoco_vendor` and
+OpenSSL Crypto), and
 [ONNX Runtime](https://github.com/microsoft/onnxruntime/releases) are
 required. Install ONNX Runtime under `/usr/local`, or pass
 `--cmake-args -DONNXRUNTIME_ROOT=<extracted directory>` to `colcon build`.
@@ -229,6 +283,11 @@ Useful launch arguments include:
 | `robot` | `k1` | Selects `config/<robot>_config.yaml`. |
 | `imu_topic` | `/imu_sensor_broadcaster/imu` | Required IMU input. |
 | `joint_states_topic` | `/joint_states` | Required joint feedback. |
+| `localization_topic` | `/state_estimator/odom` | Pelvis odometry for policies requiring global XY. |
+| `localization_world_frame` | `odom` | Expected odometry world frame. |
+| `localization_base_frame` | `pelvis` | Expected odometry child frame. |
+| `localization_timeout` | `0.5` | Maximum source and reception age in seconds. |
+| `localization_align_on_entry` | `true` | Align localization coordinates on policy entry. |
 | `control_rate` | `1000.0` | Command loop rate in Hz. |
 | `wait_for_ready_timeout` | `30.0` | Input startup timeout; `0` disables it. |
 | `joint_command_topic` | `/joint_group_impedance_controller/commands` | Command output. |
@@ -258,6 +317,7 @@ Default runtime interfaces are:
 | --- | --- | --- |
 | Input | `/imu_sensor_broadcaster/imu` | `sensor_msgs/msg/Imu` |
 | Input | `/joint_states` | `sensor_msgs/msg/JointState` |
+| Input | `/state_estimator/odom` | `nav_msgs/msg/Odometry` (required by global-XY policies) |
 | Input | `/ai_sapiens_rc/status` | `ai_sapiens_interfaces/msg/RcStatus` |
 | Input | `/ai_sapiens/api_heartbeat` | `ai_sapiens_interfaces/msg/ApiHeartbeat` |
 | Input | `/cmd_vel` | `geometry_msgs/msg/Twist` |

@@ -27,6 +27,9 @@
 
 #include "ai_sapiens_sim2real/axis_range.hpp"
 #include "ai_sapiens_sim2real/config/config_utils.hpp"
+#include "ai_sapiens_sim2real/config/dance_reference_config.hpp"
+#include "ai_sapiens_sim2real/config/motion_observation_origin.hpp"
+#include "ai_sapiens_sim2real/config/planar_steering_config.hpp"
 
 namespace ai_sapiens_sim2real
 {
@@ -46,6 +49,7 @@ struct ActionProperties
   std::vector<float> scale;
   std::vector<float> offset;
   std::vector<PositionLimit> clip;
+  std::vector<PositionLimit> raw_clip;
 };
 
 // Maps a target joint order onto positions in a source order. Used to scatter a
@@ -97,10 +101,30 @@ public:
     return velocity_command_ranges_;
   }
 
+  const std::optional<PlanarSteeringConfig> & steering() const
+  {
+    return steering_;
+  }
+
   const YAML::Node & observations() const
   {
     return observations_;
   }
+
+  const std::optional<DanceReferenceConfig> & dance_reference() const
+  {
+    return dance_reference_;
+  }
+
+  MotionObservationOrigin observation_origin() const
+  {
+    return observation_origin_;
+  }
+
+  bool any2track() const {return any2track_;}
+  bool any2track_path_tracking() const {return any2track_path_tracking_;}
+
+  bool use_imu_orientation() const {return use_imu_orientation_;}
 
 private:
   std::filesystem::path path_;
@@ -110,6 +134,12 @@ private:
   ActionProperties action_properties_;
   std::optional<AxisRanges> velocity_command_ranges_;
   YAML::Node observations_;
+  std::optional<PlanarSteeringConfig> steering_;
+  std::optional<DanceReferenceConfig> dance_reference_;
+  MotionObservationOrigin observation_origin_{MotionObservationOrigin::Episode};
+  bool use_imu_orientation_{false};
+  bool any2track_{false};
+  bool any2track_path_tracking_{false};
 };
 
 }  // namespace ai_sapiens_sim2real

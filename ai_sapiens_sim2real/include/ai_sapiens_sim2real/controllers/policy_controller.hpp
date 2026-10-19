@@ -77,6 +77,8 @@ private:
   // no path to the mode block, which arrives per tick as a const argument.
   const TeleopInput * teleop_;
   PolicyState * policy_;
+  ModeRequests * requests_;
+  std::string localization_loss_state_;
   BehaviorOutput * output_;
   const ActionTransitionConfig transition_config_;
   CommandTransition command_transition_;

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "ai_sapiens_sim2real/config/config_utils.hpp"
+#include "ai_sapiens_sim2real/config/any2track_config.hpp"
 
 namespace ai_sapiens_sim2real
 {
@@ -117,13 +118,14 @@ PositionLimit read_position_limit_pair(
 
 std::vector<PositionLimit> read_action_clip(
   const YAML::Node & action_node,
-  const std::vector<std::string> & policy_joints)
+  const std::vector<std::string> & policy_joints,
+  const std::string & key = "clip")
 {
-  const std::string clip_path = "actions.joint_pos.clip";
+  const std::string clip_path = "actions.joint_pos." + key;
   const size_t action_size = policy_joints.size();
 
   std::vector<PositionLimit> clip(action_size, std::nullopt);
-  const auto clip_node = action_node["clip"];
+  const auto clip_node = action_node[key];
   if (yaml_node_is_missing(clip_node)) {
     return clip;
   }
@@ -224,6 +226,7 @@ ActionProperties read_action_properties(
     std::vector<float>(policy_joints.size(), 1.0f));
   properties.offset = read_action_vector(action_node, "offset", policy_joints, default_position);
   properties.clip = read_action_clip(action_node, policy_joints);
+  properties.raw_clip = read_action_clip(action_node, policy_joints, "raw_clip");
   return properties;
 }
 
@@ -263,6 +266,9 @@ std::optional<AxisRanges> read_velocity_command_ranges(
   const YAML::Node & sim2real_config)
 {
   const auto commands = sim2real_config["commands"];
+  if (yaml_node_is_missing(commands)) {
+    return std::nullopt;
+  }
   const auto base_velocity = commands["base_velocity"];
   const bool has_velocity_ranges = base_velocity && base_velocity["ranges"];
   if (!has_velocity_ranges) {
@@ -273,6 +279,50 @@ std::optional<AxisRanges> read_velocity_command_ranges(
     read_velocity_command_range(sim2real_config_path, sim2real_config, "lin_vel_x"),
     read_velocity_command_range(sim2real_config_path, sim2real_config, "lin_vel_y"),
     read_velocity_command_range(sim2real_config_path, sim2real_config, "ang_vel_z")};
+}
+
+std::optional<PlanarSteeringConfig> read_planar_steering(const YAML::Node & config)
+{
+  const auto commands = config["commands"];
+  if (!commands || !commands["reference_trajectory"]) {
+    return std::nullopt;
+  }
+  const auto steering = commands["reference_trajectory"]["steering"];
+  if (yaml_node_is_missing(steering)) {
+    return std::nullopt;
+  }
+  const std::string path = "commands.reference_trajectory.steering";
+  require_yaml_map(steering, path);
+  const auto read_range = [&](const char * key) {
+      const auto values = steering[key];
+      require_yaml_sequence(values, path + "." + key);
+      if (values.size() != 2U) {
+        throw std::runtime_error(path + "." + key + " requires [min, max]");
+      }
+      return AxisRange{values[0].as<double>(), values[1].as<double>()};
+    };
+  PlanarSteeringConfig result;
+  result.ranges = {read_range("lin_vel_x"), read_range("lin_vel_y"), read_range("yaw_rate")};
+  require_yaml_node(steering["smoothing_time_constant"], path + ".smoothing_time_constant");
+  result.smoothing_time_constant = steering["smoothing_time_constant"].as<float>();
+  if (steering["command_deadband"]) {
+    result.command_deadband = steering["command_deadband"].as<float>();
+  }
+  if (steering["release_on_zero"]) {
+    result.release_on_zero = steering["release_on_zero"].as<bool>();
+  }
+  if (steering["release_velocity_threshold"]) {
+    result.release_velocity_threshold = steering["release_velocity_threshold"].as<float>();
+  }
+  if (steering["tracking_mode"] && steering["tracking_mode"].as<std::string>() != "trajectory") {
+    throw std::runtime_error(path + " requires trajectory steering for global-position Mimic");
+  }
+  if (steering["velocity_estimator_time_constant"]) {
+    throw std::runtime_error(path +
+          ".velocity_estimator_time_constant belongs to the obsolete velocity schema");
+  }
+  result.validate();
+  return result;
 }
 
 }  // namespace
@@ -316,11 +366,71 @@ Sim2RealConfig::Sim2RealConfig(const std::filesystem::path & path)
 
       step_dt_ = step_dt_node.as<double>();
       joint_properties_ = read_joint_properties(node, policy_joints_);
-      action_properties_ = read_action_properties(
-        node,
-        policy_joints_,
-        joint_properties_.default_position);
+      const auto runtime = node["runtime_type"];
+      any2track_path_tracking_ = runtime && runtime.as<std::string>() == "any2track_gt_xy_adapter";
+      any2track_ = any2track_path_tracking_ ||
+        (runtime && runtime.as<std::string>() == "opentrack_anyadapter");
+      if (any2track_) {
+        validate_any2track_config(node);
+        action_properties_.scale = node["actions"]["reference_residual"]["scale"].as<std::vector<float>>();
+        action_properties_.offset.assign(policy_joints_.size(), 0.0f);
+        action_properties_.clip.resize(policy_joints_.size());
+        action_properties_.raw_clip.resize(policy_joints_.size());
+      } else {
+        action_properties_ = read_action_properties(
+          node, policy_joints_, joint_properties_.default_position);
+      }
       observations_ = node["observations"];
+      steering_ = read_planar_steering(node);
+      const auto commands = node["commands"];
+      const auto reference = commands ? commands["reference_trajectory"] : YAML::Node{};
+      if (reference && reference["orientation_source"]) {
+        const auto source = reference["orientation_source"].as<std::string>();
+        if (source != "imu" && source != "localization") {
+          throw std::runtime_error(
+                  "reference_trajectory.orientation_source must be 'imu' or 'localization'");
+        }
+        use_imu_orientation_ = source == "imu";
+      }
+      if (reference && reference["observation_origin"]) {
+        const auto origin = reference["observation_origin"].as<std::string>();
+        if (origin == "motion") {
+          observation_origin_ = MotionObservationOrigin::Motion;
+        } else if (origin != "episode") {
+          throw std::runtime_error(
+                  "reference_trajectory.observation_origin must be 'episode' or 'motion'");
+        }
+      }
+      const auto features = reference ? reference["required_runtime_features"] : YAML::Node{};
+      if (features && !features.IsNull() && !features.IsSequence()) {
+        throw std::runtime_error("required_runtime_features must be a sequence");
+      }
+      if (features && features.size() != 0) {
+        if (features.size() != 1 ||
+        (features[0].as<std::string>() != "dance_motion_reference_v2" &&
+        features[0].as<std::string>() != "dance_motion_reference_v3" &&
+        features[0].as<std::string>() != "dance_motion_reference_v4"))
+        {
+          throw std::runtime_error("Unsupported required_runtime_features for Mimic");
+        }
+        if (!steering_) {
+          throw std::runtime_error("Dance reference requires steering");
+        }
+        for (const auto * key : {"command_deadband", "release_on_zero",
+          "release_velocity_threshold"})
+        {
+          require_yaml_node(reference["steering"][key],
+            std::string("reference_trajectory.steering.") + key);
+        }
+        dance_reference_ = DanceReferenceConfig::read(reference, step_dt_);
+        if (!dance_reference_->training_reference_file.empty()) {
+          const std::filesystem::path data(dance_reference_->training_reference_file);
+          dance_reference_->training_reference_file =
+          (data.is_absolute() ? data : path_.parent_path() / data).lexically_normal().string();
+        }
+      } else if (reference && (reference["dance_steps"] || reference["motion_command_source"])) {
+        throw std::runtime_error("Dance reference settings require a supported runtime feature");
+      }
     });
   velocity_command_ranges_ = read_velocity_command_ranges(path_, node);
 }

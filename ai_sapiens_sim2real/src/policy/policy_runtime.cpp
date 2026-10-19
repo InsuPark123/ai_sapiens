@@ -50,7 +50,8 @@ PolicyRuntime::PolicyRuntime(
   const Sim2RealConfig & sim2real_config,
   const std::vector<std::string> & controller_joint_names,
   SharedControlData * shared_data,
-  const MotionReference * reference_motion)
+  const MotionReference * reference_motion,
+  const MimicBehavior * any2track_mimic)
 : sensors_(&shared_data->sensors)
   , policy_(&shared_data->policy)
   , requests_(&shared_data->requests)
@@ -63,13 +64,47 @@ PolicyRuntime::PolicyRuntime(
   , model_path_(std::move(model_path))
   , sim2real_config_path_(sim2real_config.path())
 {
+  const auto observations = sim2real_config.observations();
+  const bool has_robot_xy = static_cast<bool>(observations["robot_root_position_xy_w"]);
+  const bool has_reference_xy = static_cast<bool>(observations["reference_root_position_xy_w"]);
+  const bool has_robot_velocity = static_cast<bool>(observations["robot_root_velocity_xy_h"]);
+  const bool has_reference_velocity =
+    static_cast<bool>(observations["reference_root_velocity_xy_h"]);
+  if (has_robot_velocity || has_reference_velocity) {
+    throw std::runtime_error(
+        "Global-position Mimic requires robot/reference_root_position_xy_w; "
+        "root velocity observations belong to an incompatible training schema");
+  }
+  requires_localization_ = has_robot_xy || sim2real_config.any2track_path_tracking();
+  requires_imu_orientation_ = sim2real_config.any2track() || sim2real_config.use_imu_orientation();
+  if (requires_imu_orientation_ && !requires_localization_ && !sim2real_config.any2track()) {
+    throw std::runtime_error("reference_trajectory.orientation_source=imu requires global-position Mimic");
+  }
+  if (has_robot_xy != has_reference_xy ||
+    (requires_localization_ && !sim2real_config.any2track() && reference_motion == nullptr))
+  {
+    throw std::runtime_error(
+        "Global-position Mimic requires both robot/reference_root_position_xy_w and a motion reference");
+  }
   load_sim2real_config(sim2real_config, controller_joint_names);
   log_joint_coverage(controller_joint_names);
   log_loading();
+  if (sim2real_config.any2track()) {
+    if (!any2track_mimic) {throw std::runtime_error("Any2Track requires a mimic behavior");}
+    any2track_ = std::make_unique<Any2TrackPolicy>(sim2real_config, *any2track_mimic);
+    RCLCPP_INFO(node_->get_logger(),
+      "[Any2Track] IMU attitude/gyro; XY input=%s; "
+      "20-frame velocity history and 79-frame adapter history",
+      requires_localization_ ? "pelvis odometry" : "none (orientation-only model)");
+  }
   load_onnx_model();
-  const size_t observation_size =
+  const size_t observation_size = any2track_ ? any2track_->observation().size() :
     create_observation_manager(sim2real_config, shared_data, reference_motion);
-  gait_clock_ = make_gait_clock(sim2real_config.observations(), step_dt_);
+  if (!any2track_) {
+    inference_->validate_policy_metadata(
+      joint_context_.policy_joint_names, obs_manager_->get_term_names(), requires_localization_);
+    gait_clock_ = make_gait_clock(sim2real_config.observations(), step_dt_);
+  }
   validate_observation_size(observation_size);
   obs_buffer_[onnx_input_name_].resize(observation_size);
   target_command_.resize(joint_context_.policy_joint_names.size());
@@ -79,6 +114,12 @@ PolicyRuntime::PolicyRuntime(
 }
 
 PolicyRuntime::~PolicyRuntime() = default;
+
+bool PolicyRuntime::check_inputs()
+{
+  return (!requires_localization_ || shared_data_->localization.valid) &&
+         (!requires_imu_orientation_ || sensors_->orientation_valid);
+}
 
 void PolicyRuntime::reset()
 {
@@ -90,11 +131,31 @@ void PolicyRuntime::reset()
 
 void PolicyRuntime::enter()
 {
+  policy_->uses_global_position = requires_localization_;
+  policy_->motion_frame.reset();
+  policy_->uses_motion_steering = false;
+  policy_->motion_steering.reset();
   install_joint_properties();
   install_velocity_command_ranges();
   reset_episode_state();
   on_enter();
-  obs_manager_->reset();  // after on_enter(): seeds history from the state it sets
+  if (obs_manager_) {obs_manager_->reset();}  // seed after on_enter()
+  if (requires_localization_) {
+    RCLCPP_INFO(node_->get_logger(),
+      "[PolicyEntry] %s: reset time/action/steering/frame; orientation_source=%s",
+      state_name_.c_str(), requires_imu_orientation_ ? "imu" : "localization");
+    if (sensors_->orientation_valid) {
+      // Gravity in the body frame compares tilt without confusing independent
+      // IMU/odom world yaw origins. This is a diagnostic, not a pose correction.
+      const auto imu_up = sensors_->orientation.normalized().conjugate() * Eigen::Vector3f::UnitZ();
+      const auto odom_up = shared_data_->localization.orientation.normalized().conjugate() *
+        Eigen::Vector3f::UnitZ();
+      const float tilt_degrees = std::acos(std::clamp(imu_up.dot(odom_up), -1.0f, 1.0f)) *
+        180.0f / 3.14159265359f;
+      RCLCPP_INFO(node_->get_logger(), "[PolicyEntry] %s: IMU/odom tilt difference %.2f deg",
+        state_name_.c_str(), tilt_degrees);
+    }
+  }
 }
 
 void PolicyRuntime::install_joint_properties() const
@@ -144,6 +205,10 @@ void PolicyRuntime::reset_episode_state()
 
 void PolicyRuntime::on_enter()
 {
+  if (any2track_) {
+    any2track_->reset(any2track_sample(),
+      !requires_localization_ || shared_data_->localization.align_on_entry);
+  }
   if (gait_clock_) {
     gait_clock_->reset(policy_->gait_phase);
   }
@@ -151,6 +216,13 @@ void PolicyRuntime::on_enter()
 
 bool PolicyRuntime::prepare_observation()
 {
+  if (any2track_) {
+    if (!any2track_->observe(any2track_sample())) {
+      requests_->state_name = any2track_->completion_state();
+      return false;
+    }
+    return true;
+  }
   if (gait_clock_) {
     gait_clock_->advance(policy_->gait_phase, *shared_data_);
   }
@@ -160,7 +232,8 @@ bool PolicyRuntime::prepare_observation()
 
 void PolicyRuntime::advance_clocks()
 {
-  policy_->episode_time += static_cast<float>(step_dt_);
+  policy_->episode_time += step_dt_;
+  if (any2track_) {any2track_->advance();}
 }
 
 PolicyUpdateResult PolicyRuntime::update(const rclcpp::Duration & period)
@@ -173,10 +246,12 @@ PolicyUpdateResult PolicyRuntime::update(const rclcpp::Duration & period)
   }
 
   resolve_active_velocity_command();
+  prepare_command_observation();
   compute_observation();
   PolicyUpdateResult result = PolicyUpdateResult::TargetUnavailable;
   if (const auto raw_action = run_policy_inference()) {
-    result = accept_action(*raw_action, action_pipeline_.process(*raw_action));
+    result = accept_action(*raw_action, any2track_ ? any2track_->target(*raw_action) :
+      action_pipeline_.process(*raw_action));
   }
   advance_clocks();
   return result;
@@ -221,6 +296,10 @@ void PolicyRuntime::resolve_active_velocity_command()
 
 void PolicyRuntime::compute_observation()
 {
+  if (any2track_) {
+    policy_->input = any2track_->observation();
+    return;
+  }
   // ObservationManager returns the full scaled/clipped/history observation.
   obs_buffer_[onnx_input_name_] = obs_manager_->compute();
   policy_->input = obs_buffer_[onnx_input_name_];
@@ -231,7 +310,11 @@ void PolicyRuntime::compute_observation()
 std::optional<std::vector<float>> PolicyRuntime::run_policy_inference()
 {
   try {
-    auto raw_action = inference_->run(obs_buffer_);
+    auto raw_action = inference_->run(any2track_ ? any2track_->inputs() : obs_buffer_);
+    if (any2track_) {
+      // Validate the residual inside the inference failure boundary as well.
+      any2track_->target(raw_action);
+    }
     consecutive_inference_failures_ = 0;
     return raw_action;
   } catch (const std::exception & e) {
@@ -298,7 +381,9 @@ PolicyUpdateResult PolicyRuntime::accept_action(
   std::copy(processed_action.begin(), processed_action.end(), target_command_.position.begin());
 
   // The buffer is controller-sized; this policy uses the first joint_names.size() slots.
-  std::copy(raw_action.begin(), raw_action.end(), policy_->last_action.begin());
+  if (any2track_) {any2track_->accept(processed_action);}
+  const auto & applied_raw = any2track_ ? raw_action : action_pipeline_.applied_raw_action();
+  std::copy(applied_raw.begin(), applied_raw.end(), policy_->last_action.begin());
   return PolicyUpdateResult::TargetReady;
 }
 
@@ -416,9 +501,9 @@ void PolicyRuntime::log_loading() const
 
 void PolicyRuntime::load_onnx_model()
 {
-  inference_ = std::make_unique<OnnxInference>(model_path_);
+  inference_ = std::make_unique<OnnxInference>(model_path_, static_cast<bool>(any2track_));
   const auto & input_names = inference_->get_input_names();
-  if (input_names.size() != 1) {
+  if (!any2track_ && input_names.size() != 1) {
     throw std::runtime_error(
       "Policy state '" + state_name_ + "' must have exactly one ONNX input");
   }
@@ -460,6 +545,21 @@ void PolicyRuntime::validate_observation_size(size_t observation_size) const
       std::to_string(expected_size) +
       " values, but sim2real observations produce " + std::to_string(observation_size));
   }
+}
+
+Any2TrackSample PolicyRuntime::any2track_sample() const
+{
+  Any2TrackSample sample;
+  if (requires_localization_) {sample.xy = shared_data_->localization.position;}
+  // Only XY comes from the estimator; attitude and gyro come from the robot IMU.
+  sample.orientation = sensors_->orientation;
+  sample.gyro = sensors_->angular_velocity;
+  for (size_t j = 0; j < joint_context_.policy_to_controller.size(); ++j) {
+    const size_t robot = joint_context_.policy_to_controller[j];
+    sample.position[j] = sensors_->joint_pos[robot];
+    sample.velocity[j] = sensors_->joint_vel[robot];
+  }
+  return sample;
 }
 
 void PolicyRuntime::log_ready(size_t observation_size) const

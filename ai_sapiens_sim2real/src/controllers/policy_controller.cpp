@@ -30,6 +30,8 @@ PolicyController::PolicyController(
 : node_(node),
   teleop_(&shared_data->teleop),
   policy_(&shared_data->policy),
+  requests_(&shared_data->requests),
+  localization_loss_state_(root_config.authority_config().default_velocity_state),
   output_(&shared_data->output),
   transition_config_(root_config.policy_action_transition()),
   command_transition_(shared_data->joint_map.controller_joint_names.size())
@@ -76,6 +78,15 @@ void PolicyController::update(
       "[PolicyController] active state '%s' requested policy '%s' but no runtime exists",
       decision.active_state_name.c_str(),
       decision.active_policy_name.c_str());
+    return;
+  }
+
+  if (!runtime->check_inputs()) {
+    requests_->state_name = localization_loss_state_;
+    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 1000,
+      "Policy '%s' requires valid localization and configured attitude input; "
+      "stopping mimic and requesting %s",
+      decision.active_state_name.c_str(), localization_loss_state_.c_str());
     return;
   }
 
@@ -148,10 +159,15 @@ void PolicyController::load_policies(
   for (std::size_t i = 0; i < behaviors.size(); ++i) {
     const auto & behavior = behaviors[i];
     const auto & sim2real_config = sim2real_configs[i];
-    // A mimic behavior drives a MimicPolicyRuntime; otherwise a plain policy.
-    // Both drive the act stage through the same PolicyRuntime interface.
+    // Any2Track composes its own multi-input ABI; ordinary mimic uses the
+    // reference-observation hooks. Both share PolicyRuntime target validation.
     std::unique_ptr<PolicyRuntime> runtime;
-    if (behavior.mimic) {
+    if (sim2real_config.any2track()) {
+      if (!behavior.mimic) {throw std::runtime_error("Any2Track must use kind: mimic");}
+      runtime = std::make_unique<PolicyRuntime>(
+        node_, behavior.name, behavior.policy_path.string(), sim2real_config,
+        controller_joints, shared_data, nullptr, &*behavior.mimic);
+    } else if (behavior.mimic) {
       runtime = MimicPolicyRuntime::create(
         node_,
         behavior.name,

@@ -15,6 +15,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(realtime_tools REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
@@ -22,6 +23,8 @@ find_package(ai_sapiens_interfaces REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(mujoco_vendor REQUIRED)
+find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 find_package(pluginlib REQUIRED)
 
 # ONNX Runtime (https://github.com/microsoft/onnxruntime/releases).
@@ -46,6 +49,7 @@ include_directories(include)
 # Executable
 # ============================================================================
 add_executable(ai_sapiens_sim2real_node
+  src/policy/any2track_policy.cpp
   src/policy/action_pipeline.cpp
   src/command_publishers/joint_command_publisher.cpp
   src/config/config_utils.cpp
@@ -66,6 +70,7 @@ add_executable(ai_sapiens_sim2real_node
   src/mode_runtime/startup_gate.cpp
   src/policy/gait_clock.cpp
   src/policy/motion_reference.cpp
+  src/policy/dance_motion_reference.cpp
   src/policy/mimic_policy_runtime.cpp
   src/observation/observation_manager.cpp
   src/observation/observations.cpp
@@ -75,6 +80,7 @@ add_executable(ai_sapiens_sim2real_node
   src/sensor_handles/api_heartbeat_handle.cpp
   src/sensor_handles/imu_sensor_handle.cpp
   src/sensor_handles/joint_states_sensor_handle.cpp
+  src/sensor_handles/localization_sensor_handle.cpp
   src/sensor_handles/teleop_input_handle.cpp
   src/sensor_handles/twist_command_handle.cpp
   src/config/sim2real_config.cpp
@@ -84,10 +90,12 @@ ament_target_dependencies(ai_sapiens_sim2real_node
   rclcpp
   realtime_tools
   sensor_msgs
+  nav_msgs
   geometry_msgs
   std_msgs
   control_msgs
   ai_sapiens_interfaces
+  ament_index_cpp
   pluginlib
 )
 
@@ -95,7 +103,22 @@ target_link_libraries(ai_sapiens_sim2real_node
   yaml-cpp
   Eigen3::Eigen
   ${ONNXRUNTIME_LIBRARY}
+  mujoco::mujoco
+  OpenSSL::Crypto
 )
+
+# Offline reference check only; deployed sim2sim uses ROS pelvis odometry.
+add_executable(any2track_reference_check
+  src/any2track_reference_check.cpp
+  src/policy/motion_reference.cpp
+  src/policy/any2track_policy.cpp
+  src/policy/onnx_inference.cpp
+  src/config/config_utils.cpp
+  src/config/sim2real_config.cpp)
+ament_target_dependencies(any2track_reference_check ament_index_cpp)
+target_link_libraries(any2track_reference_check
+  yaml-cpp Eigen3::Eigen ${ONNXRUNTIME_LIBRARY} mujoco::mujoco)
+install(TARGETS any2track_reference_check DESTINATION lib/${PROJECT_NAME})
 
 # ============================================================================
 # teleop input plugins

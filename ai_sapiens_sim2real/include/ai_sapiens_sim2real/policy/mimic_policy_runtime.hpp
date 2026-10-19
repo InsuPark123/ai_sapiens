@@ -26,8 +26,10 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "ai_sapiens_sim2real/config/mimic_behavior.hpp"
+#include "ai_sapiens_sim2real/policy/dance_motion_reference.hpp"
 #include "ai_sapiens_sim2real/policy/motion_playback.hpp"
 #include "ai_sapiens_sim2real/policy/motion_reference.hpp"
+#include "ai_sapiens_sim2real/policy/motion_steering_release.hpp"
 #include "ai_sapiens_sim2real/policy/policy_runtime.hpp"
 #include "ai_sapiens_sim2real/shared_control_data.hpp"
 
@@ -68,19 +70,31 @@ public:
 protected:
   void on_enter() override;
   bool prepare_observation() override;
+  void prepare_command_observation() override;
 
 private:
   // Loads the reference motion and clamps the playback window to its duration.
   static MotionPlayback load_playback(
     const MimicBehavior & mimic,
+    const Sim2RealConfig & sim2real_config,
     const std::vector<std::string> & controller_joint_names);
   static Eigen::Quaternionf yaw_quaternion(const Eigen::Quaternionf & q);
+  void update_motion_targets();
 
   // Outlives the runtime, so the reference-motion pointer the base handed to
   // its observation manager stays valid for the runtime's lifetime.
   MotionPlayback playback_;
   // Which state to hand off to once the playback window ends ("stay" = none).
   std::string completion_state_;
+  MotionObservationOrigin observation_origin_;
+  bool use_imu_orientation_;
+  std::optional<PlanarSteeringConfig> steering_;
+  float steering_dt_;
+  MotionSteeringRelease steering_release_;
+  Eigen::Vector2f previous_root_{Eigen::Vector2f::Zero()};
+  std::unique_ptr<DanceMotionReference> dance_reference_;
+  std::vector<Eigen::Index> policy_to_motion_;
+  Eigen::VectorXf motion_joint_pos_, motion_joint_vel_;
 };
 
 }  // namespace ai_sapiens_sim2real

@@ -1,0 +1,372 @@
+policy_joints:
+- left_hip_pitch_joint
+- left_hip_roll_joint
+- left_hip_yaw_joint
+- left_knee_joint
+- left_ankle_pitch_joint
+- left_ankle_roll_joint
+- right_hip_pitch_joint
+- right_hip_roll_joint
+- right_hip_yaw_joint
+- right_knee_joint
+- right_ankle_pitch_joint
+- right_ankle_roll_joint
+- waist_yaw_joint
+- left_shoulder_pitch_joint
+- left_shoulder_roll_joint
+- left_shoulder_yaw_joint
+- left_elbow_joint
+- left_wrist_roll_joint
+- right_shoulder_pitch_joint
+- right_shoulder_roll_joint
+- right_shoulder_yaw_joint
+- right_elbow_joint
+- right_wrist_roll_joint
+step_dt: 0.02
+joint_properties:
+  left_hip_pitch_joint:
+    default_position: -0.312
+    stiffness: 76.45161378437756
+    damping: 4.867060896454468
+    position_limit:
+    - -2.4435
+    - 2.4435
+  left_hip_roll_joint:
+    default_position: 0.0
+    stiffness: 76.45161378437756
+    damping: 4.867060896454468
+    position_limit:
+    - -0.6109
+    - 2.5307
+  left_hip_yaw_joint:
+    default_position: 0.0
+    stiffness: 76.45161378437756
+    damping: 4.867060896454468
+    position_limit:
+    - -3.1416
+    - 3.1416
+  left_knee_joint:
+    default_position: 0.669
+    stiffness: 76.45161378437756
+    damping: 4.867060896454468
+    position_limit:
+    - 0.0
+    - 2.3562
+  left_ankle_pitch_joint:
+    default_position: -0.363
+    stiffness: 44.60208455472136
+    damping: 2.8394568916346326
+    position_limit:
+    - -0.7854
+    - 0.7854
+  left_ankle_roll_joint:
+    default_position: 0.0
+    stiffness: 44.60208455472136
+    damping: 2.8394568916346326
+    position_limit:
+    - -0.5236
+    - 0.5236
+  right_hip_pitch_joint:
+    default_position: -0.312
+    stiffness: 76.45161378437756
+    damping: 4.867060896454468
+    position_limit:
+    - -2.4435
+    - 2.4435
+  right_hip_roll_joint:
+    default_position: 0.0
+    stiffness: 76.45161378437756
+    damping: 4.867060896454468
+    position_limit:
+    - -2.5307
+    - 0.6109
+  right_hip_yaw_joint:
+    default_position: 0.0
+    stiffness: 76.45161378437756
+    damping: 4.867060896454468
+    position_limit:
+    - -3.1416
+    - 3.1416
+  right_knee_joint:
+    default_position: 0.669
+    stiffness: 76.45161378437756
+    damping: 4.867060896454468
+    position_limit:
+    - 0.0
+    - 2.3562
+  right_ankle_pitch_joint:
+    default_position: -0.363
+    stiffness: 44.60208455472136
+    damping: 2.8394568916346326
+    position_limit:
+    - -0.7854
+    - 0.7854
+  right_ankle_roll_joint:
+    default_position: 0.0
+    stiffness: 44.60208455472136
+    damping: 2.8394568916346326
+    position_limit:
+    - -0.5236
+    - 0.5236
+  waist_yaw_joint:
+    default_position: 0.0
+    stiffness: 76.45161378437756
+    damping: 4.867060896454468
+    position_limit:
+    - -6.2832
+    - 6.2832
+  left_shoulder_pitch_joint:
+    default_position: 0.2
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - -3.1416
+    - 3.1416
+  left_shoulder_roll_joint:
+    default_position: 0.2
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - 0.0
+    - 3.1416
+  left_shoulder_yaw_joint:
+    default_position: 0.0
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - -3.1416
+    - 3.1416
+  left_elbow_joint:
+    default_position: 0.6
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - -0.7854
+    - 2.1817
+  left_wrist_roll_joint:
+    default_position: 0.0
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - -3.1416
+    - 3.1416
+  right_shoulder_pitch_joint:
+    default_position: 0.2
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - -3.1416
+    - 3.1416
+  right_shoulder_roll_joint:
+    default_position: -0.2
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - -3.1416
+    - 0.0
+  right_shoulder_yaw_joint:
+    default_position: 0.0
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - -3.1416
+    - 3.1416
+  right_elbow_joint:
+    default_position: 0.6
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - -0.7854
+    - 2.1817
+  right_wrist_roll_joint:
+    default_position: 0.0
+    stiffness: 22.30104227736068
+    damping: 1.4197284458173163
+    position_limit:
+    - -3.1416
+    - 3.1416
+commands:
+  base_velocity:
+    ranges:
+      lin_vel_x:
+      - -1.5
+      - 1.5 # 3.0
+      lin_vel_y:
+      - -1.0
+      - 1.0
+      ang_vel_z:
+      - -1.57
+      - 1.57
+      heading:
+      - -1.5707963267948966
+      - 1.5707963267948966
+actions:
+  joint_pos:
+    scale:
+    - 0.31674936343787685
+    - 0.31674936343787685
+    - 0.31674936343787685
+    - 0.31674936343787685
+    - 0.26499321989085983
+    - 0.26499321989085983
+    - 0.31674936343787685
+    - 0.31674936343787685
+    - 0.31674936343787685
+    - 0.31674936343787685
+    - 0.26499321989085983
+    - 0.26499321989085983
+    - 0.31674936343787685
+    - 0.5299864397817197
+    - 0.5299864397817197
+    - 0.5299864397817197
+    - 0.5299864397817197
+    - 0.5299864397817197
+    - 0.5299864397817197
+    - 0.5299864397817197
+    - 0.5299864397817197
+    - 0.5299864397817197
+    - 0.5299864397817197
+    offset:
+    - -0.312
+    - 0.0
+    - 0.0
+    - 0.669
+    - -0.363
+    - 0.0
+    - -0.312
+    - 0.0
+    - 0.0
+    - 0.669
+    - -0.363
+    - 0.0
+    - 0.0
+    - 0.2
+    - 0.2
+    - 0.0
+    - 0.6
+    - 0.0
+    - 0.2
+    - -0.2
+    - 0.0
+    - 0.6
+    - 0.0
+    clip: null
+observations:
+  base_ang_vel:
+    params: {}
+    clip: null
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 4
+  projected_gravity:
+    params: {}
+    clip: null
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 4
+  velocity_commands:
+    params:
+      command_name: base_velocity
+    clip: null
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 4
+  joint_pos_rel:
+    params: {}
+    clip: null
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 4
+  joint_vel_rel:
+    params: {}
+    clip: null
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 4
+  last_action:
+    params: {}
+    clip: null
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 4
+deployment_metadata:
+  source: AMP_mjlab model_16000.pt
+  input_layout: term-major history; policy internally permutes to MJLab time-major
+  history_length: 4
+  single_frame_dim: 78
+  observation_dim: 312
+  action_dim: 23
+  normalization: embedded in policy.onnx and policy.pt
+  raw_action_limit: 10.0

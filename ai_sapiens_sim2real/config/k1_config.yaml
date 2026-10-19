@@ -65,16 +65,29 @@ teleop_conditions:
 selectors:
   mimic_selector:
     table:
-      200: MimicSquat
-      201: MimicDance1
-      202: MimicDance2
-      # 203:
-      # 204:
-      # 205:
-      # 206:
-      # 207:
-      # 208:
-      # 209:
+      200: MimicWaveOneHand
+      201: MimicWaveRightHandOnly
+      202: MimicWaveTwoHand
+      203: MimicWaveOneHandWaistYaw
+      204: MimicWaveRightHandOnlyWaistYaw
+      205: MimicWaveTwoHandWaistYaw
+      206: MimicWaveOneHandWaistYawLarge
+      207: MimicWaveRightHandOnlyWaistYawLarge
+      208: MimicWaveTwoHandWaistYawLarge
+      209: MimicMotifectTauntMockBow
+      210: MimicSquat
+      211: MimicBowNavel
+      212: MimicCoinPickNewton
+      213: MimicBoxingNewton
+      214: MimicRedredNewton
+      # 215: MimicLemonade
+      216: MimicJumpNewton
+      217: MimicDance1
+      218: MimicDance2
+      219: MimicTurn
+      220: MimicFlower3
+      221: SubVelocityTerrain
+
 
 state_machine:
   initial: Damping
@@ -105,7 +118,10 @@ state_machine:
         - when: MimicRequested
           select: mimic_selector
     Velocity:
-      run: velocity_policy
+      # run: velocity_policy_amp_hangang
+      run: velocity_policy_amp_hangang_limited
+      # run: velocity_policy_woojin_amp_mjlab_k1_head_safe_50000
+      # run: velocity_policy_walk_terrain
       transitions:
         - when: DampingRequested
           to: Damping
@@ -114,6 +130,17 @@ state_machine:
         - when: MimicRequested
           trigger: edge
           select: mimic_selector
+
+    SubVelocityTerrain:
+      run: velocity_policy_walk_terrain
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: VelocityRequested
+          to: Velocity
+
     Mimic:
       abstract: true
       transitions:
@@ -123,15 +150,70 @@ state_machine:
           to: ReadyPose
         - when: VelocityRequested
           to: Velocity
-    MimicSquat:
-      parent: Mimic
-      run: mimic_squat
     MimicDance1:
       parent: Mimic
       run: mimic_dance1
     MimicDance2:
       parent: Mimic
       run: mimic_dance2
+    MimicJumpNewton:
+      parent: Mimic
+      run: mimic_jump_newton
+    MimicRedredNewton:
+      parent: Mimic
+      run: mimic_redred_newton
+    MimicSquat:
+      parent: Mimic
+      run: mimic_squat
+    MimicCoinPickNewton:
+      parent: Mimic
+      run: mimic_coin_pick_newton
+    MimicBoxingNewton:
+      parent: Mimic
+      run: mimic_boxing_newton
+    MimicBowNavel:
+      parent: Mimic
+      run: mimic_bow_navel
+    MimicLemonade:
+      parent: Mimic
+      run: mimic_lemonade
+    MimicTurn:
+      parent: Mimic
+      run: mimic_turn
+    MimicFlower3:
+      parent: Mimic
+      run: flower3
+    MimicWaveOneHand:
+      parent: Mimic
+      run: mimic_wave_one_hand
+    MimicWaveTwoHand:
+      parent: Mimic
+      run: mimic_wave_two_hand
+    MimicWaveRightHandOnly:
+      parent: Mimic
+      run: mimic_wave_right_hand_only
+    MimicWaveOneHandWaistYaw:
+      parent: Mimic
+      run: mimic_wave_one_hand_waist_yaw
+    MimicWaveRightHandOnlyWaistYaw:
+      parent: Mimic
+      run: mimic_wave_right_hand_only_waist_yaw
+    MimicWaveTwoHandWaistYaw:
+      parent: Mimic
+      run: mimic_wave_two_hand_waist_yaw
+    MimicWaveOneHandWaistYawLarge:
+      parent: Mimic
+      run: mimic_wave_one_hand_waist_yaw_large
+    MimicWaveRightHandOnlyWaistYawLarge:
+      parent: Mimic
+      run: mimic_wave_right_hand_only_waist_yaw_large
+    MimicWaveTwoHandWaistYawLarge:
+      parent: Mimic
+      run: mimic_wave_two_hand_waist_yaw_large
+    MimicMotifectTauntMockBow:
+      parent: Mimic
+      run: mimic_motifect_taunt_mock_bow
+
 
 state_behaviors:
   damping:
@@ -194,11 +276,31 @@ state_behaviors:
   velocity_policy:
     kind: policy
     asset: locomotion/velocity/walk_default
+  velocity_policy_woojin_pure_k1:
+    kind: policy
+    asset: locomotion/velocity/walk_woojin_pure_k1
 
-  mimic_squat:
-    kind: mimic
-    asset: mimic/squat
-    motion: squat.csv
+  velocity_policy_amp_hangang:  # (== velocity_policy_jhl_0715_v1)
+    kind: policy
+    asset: locomotion/velocity/walk_amp_hangang
+  velocity_policy_amp_hangang_limited:
+    kind: policy
+    asset: locomotion/velocity/walk_amp_hangang_limited
+
+  velocity_policy_woojin_amp_mjlab_k1_head_safe_50000:
+    kind: policy
+    asset: locomotion/velocity/woojin_amp_mjlab_k1_head_safe_50000
+
+  velocity_policy_walk_terrain:
+    kind: policy
+    asset: locomotion/velocity/walk_terrain_new
+  
+  velocity_policy_woojin_dreamwaq_amp_phase_free:
+    kind: policy
+    asset: locomotion/velocity/woojin_dreamwaq_amp_phase_free
+
+  
+
   mimic_dance1:
     kind: mimic
     asset: mimic/dance1
@@ -207,11 +309,88 @@ state_behaviors:
     kind: mimic
     asset: mimic/dance2
     motion: dance2.csv
+  mimic_jump_newton:
+    kind: mimic
+    asset: mimic/jump_newton
+    motion: jump.csv
+  mimic_redred_newton:
+    kind: mimic
+    asset: mimic/redred_newton
+    motion: redred.csv
+  mimic_squat:
+    kind: mimic
+    asset: mimic/squat
+    motion: squat.csv
+  mimic_coin_pick:
+    kind: mimic
+    asset: mimic/coin_pick
+    motion: coin_pick.csv
+  mimic_coin_pick_newton:
+    kind: mimic
+    asset: mimic/coin_pick_newton
+    motion: coin_pick.csv
+  mimic_boxing_newton:
+    kind: mimic
+    asset: mimic/boxing_newton
+    motion: boxing.csv
+  mimic_mjlab_redred:
+    kind: mimic
+    asset: mimic/redred_mjlab
+    motion: redred_k1.csv
+  mimic_bow_navel:
+    kind: mimic
+    asset: mimic/bow_navel
+    motion: bow_navel_p3_04.csv
+  mimic_lemonade:
+    kind: mimic
+    asset: mimic/lemonade
+    motion: lemonade_with_ready_transition_kimodo.csv
+  mimic_turn:
+    kind: mimic
+    asset: mimic/turn
+    motion: dance_basic_turn_v1_360_r_loop_fast_003_a325.csv
+  flower3:
+    kind: mimic
+    asset: mimic/flower3
+    motion: flower3.csv
+  mimic_wave_one_hand:
+    kind: mimic
+    asset: mimic/wave_one_hand
+    motion: wave_single_hand_deploy_no_transition_lpf6hz_edge_safe.csv
+  mimic_wave_two_hand:
+    kind: mimic
+    asset: mimic/wave_two_hand
+    motion: wave_both_hands_deploy_no_transition_lpf6hz_edge_safe.csv
+  mimic_wave_right_hand_only:
+    kind: mimic
+    asset: mimic/wave_right_hand_only
+    motion: wave_right_hand_only.csv
+  mimic_wave_one_hand_waist_yaw:
+    kind: mimic
+    asset: mimic/wave_one_hand_waist_yaw
+    motion: wave_single_hand_waist_yaw.csv
+  mimic_wave_right_hand_only_waist_yaw:
+    kind: mimic
+    asset: mimic/wave_right_hand_only_waist_yaw
+    motion: wave_right_hand_only_waist_yaw.csv
+  mimic_wave_two_hand_waist_yaw:
+    kind: mimic
+    asset: mimic/wave_two_hand_waist_yaw
+    motion: wave_both_hands_waist_yaw.csv
+  mimic_wave_one_hand_waist_yaw_large:
+    kind: mimic
+    asset: mimic/wave_one_hand_waist_yaw_large
+    motion: wave_single_hand_waist_yaw_large.csv
+  mimic_wave_right_hand_only_waist_yaw_large:
+    kind: mimic
+    asset: mimic/wave_right_hand_only_waist_yaw_large
+    motion: wave_right_hand_only_waist_yaw_large.csv
+  mimic_wave_two_hand_waist_yaw_large:
+    kind: mimic
+    asset: mimic/wave_two_hand_waist_yaw_large
+    motion: wave_both_hands_waist_yaw_large.csv
+  mimic_motifect_taunt_mock_bow:
+    kind: mimic
+    asset: mimic/motifect_taunt_mock_bow
+    motion: motifect_taunt_mock_bow.csv
 
-# Set false for the legacy single-controller path (including CH8/API).
-group:
-  enabled: true
-  plugin: ai_sapiens_sim2real/RadiomasterPocketTeleopInputPlugin
-  config: teleop/radiomaster_group.yaml
-  timeout: 0.2
-  vel_command_timeout: 0.2

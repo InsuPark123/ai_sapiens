@@ -299,7 +299,18 @@ state_behaviors:
     kind: policy
     asset: locomotion/velocity/woojin_dreamwaq_amp_phase_free
 
-  
+  velocity_motifect_stable_torso_no_phase_lpf6_88700:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_stable_torso_no_phase_lpf6_88700
+
+  velocity_motifect_stable_torso_no_phase_lpf6_88700_limited:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_stable_torso_no_phase_lpf6_88700_limited
+
+  velocity_motifect_stable_torso_no_phase_lpf6_93400:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_stable_torso_no_phase_lpf6_93400
+
 
   mimic_dance1:
     kind: mimic

@@ -8,6 +8,11 @@ velocity_command:
     linear_y: {channel: CH4, invert: true}
     angular_z: {channel: CH1, invert: true}
 
+# Used only when group.enabled is true.
+group_mode:
+  when:
+    CH5: 2000
+
 api_mode:
   when:
     CH8: 2000

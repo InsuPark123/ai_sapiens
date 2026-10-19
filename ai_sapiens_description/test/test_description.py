@@ -12,6 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Author: Kiwoong Park
 
 """Validate the installed K1 robot-description assets."""
 
@@ -234,6 +236,8 @@ def test_xacro_expands_with_mujoco_and_radiomaster_usb():
     assert controls[0].find("./sensor[@name='hat']") is None
     assert controls[1].find("./sensor[@name='hat']") is not None
     assert controls[1].find(".//param[@name='device']").text == '/dev/input/js7'
+    assert controls[1].find(".//param[@name='group_device']") is None
+    assert len(controls[1].findall('sensor/state_interface')) == 23
 
 
 def test_xacro_ignores_radiomaster_usb_without_mujoco():
@@ -368,3 +372,38 @@ def test_mujoco_files_load():
         dof_id = model.jnt_dofadr[joint_id]
         expected_armature = ARMATURE_BY_CLASS[_armature_class(joint.attrib['name'])]
         assert math.isclose(model.dof_armature[dof_id], expected_armature)
+
+
+def test_xacro_exposes_both_usb_receivers_through_one_hat():
+    """Both broadcasters use the same channel and status interfaces as the real HAT."""
+    document = xacro.process_file(
+        str(XACRO_PATH),
+        mappings={
+            'sim_mujoco': 'true',
+            'mujoco_viewer': 'false',
+            'radiomaster_usb': 'true',
+            'radiomaster_usb_device': '/dev/input/js0',
+            'group_usb': 'true',
+            'group_usb_device': '/dev/input/js1',
+        },
+    )
+    root = ET.fromstring(document.toxml())
+    controls = {item.attrib['name']: item for item in root.findall('ros2_control')}
+    assert set(controls) == {'k1_mujoco', 'k1_radiomaster_usb'}
+    usb = controls['k1_radiomaster_usb']
+    assert usb.find("hardware/param[@name='device']").text == '/dev/input/js0'
+    assert usb.find("hardware/param[@name='group_device']").text == '/dev/input/js1'
+    assert len(usb.findall('sensor')) == 1
+    sensor = usb.find('sensor')
+    assert sensor.attrib['name'] == 'hat'
+    interfaces = [item.attrib['name'] for item in sensor.findall('state_interface')]
+    assert len(interfaces) == len(set(interfaces)) == 39
+    assert {f'RC Channel {i}' for i in range(1, 17)} <= set(interfaces)
+    assert {f'Remote 2 CH{i}' for i in range(1, 17)} <= set(interfaces)
+
+    real = ET.fromstring(xacro.process_file(str(XACRO_PATH)).toxml())
+    real_interfaces = {
+        item.attrib['name']
+        for item in real.findall("ros2_control[@name='k1_hat']/sensor/state_interface")
+    }
+    assert set(interfaces) <= real_interfaces

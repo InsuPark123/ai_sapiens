@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Author: Kiwoong Park
 
 #include "radiomaster_usb_hardware_interface/radiomaster_usb_hardware_interface.hpp"
 
@@ -30,7 +32,6 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <utility>
 
 #include "pluginlib/class_list_macros.hpp"
 
@@ -44,11 +45,8 @@ constexpr const char * kDefaultRcChannels =
 constexpr double kEdgeTxHidCenter = 1024.0;
 constexpr double kJoydevCorrectionShift = 16384.0;
 
-std::unordered_map<int, std::vector<js_corr>> & original_joydev_corrections()
-{
-  static std::unordered_map<int, std::vector<js_corr>> corrections;
-  return corrections;
-}
+constexpr const char * kIndividualChannelPrefix = "RC Channel ";
+constexpr const char * kGroupChannelPrefix = "Remote 2 CH";
 
 std::string get_parameter(
   const std::unordered_map<std::string, std::string> & parameters,
@@ -168,11 +166,12 @@ hardware_interface::CallbackReturn RadiomasterUsbHardwareInterface::on_init(
   sensor_name_ = info_.sensors.front().name;
 
   const auto & parameters = info_.hardware_parameters;
-  device_ = get_parameter(parameters, "device", "/dev/input/js0");
+  const auto device = get_parameter(parameters, "device", "/dev/input/js0");
   reverse_axes_ = parse_bool(get_parameter(parameters, "reverse_axes", "false"));
 
+  double reconnect_interval_ms = 0.0;
   try {
-    reconnect_interval_ms_ = std::stod(
+    reconnect_interval_ms = std::stod(
       get_parameter(parameters, "reconnect_interval_ms", "1000.0"));
     channel_defaults_ = parse_channel_defaults(
       get_parameter(parameters, "rc_channel_defaults", kDefaultRcChannels));
@@ -182,34 +181,50 @@ hardware_interface::CallbackReturn RadiomasterUsbHardwareInterface::on_init(
   }
 
   if (
-    device_.empty() || !std::isfinite(reconnect_interval_ms_) ||
-    reconnect_interval_ms_ <= 0.0)
+    device.empty() || !std::isfinite(reconnect_interval_ms) ||
+    reconnect_interval_ms <= 0.0)
   {
     RCLCPP_ERROR(
       get_logger(), "device must be non-empty and reconnect_interval_ms must be positive");
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  axes_.fill(0.0);
-  axes_initialized_.fill(false);
+  const auto group_device = get_parameter(parameters, "group_device", "");
+  if (!validate_channel_interfaces(kIndividualChannelPrefix) ||
+    (!group_device.empty() && !validate_channel_interfaces(kGroupChannelPrefix)))
+  {
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  individual_receiver_ = std::make_unique<Receiver>(device, reconnect_interval_ms, get_logger());
+  if (!group_device.empty()) {
+    group_receiver_ = std::make_unique<Receiver>(group_device, reconnect_interval_ms, get_logger());
+  }
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-RadiomasterUsbHardwareInterface::~RadiomasterUsbHardwareInterface()
+bool RadiomasterUsbHardwareInterface::validate_channel_interfaces(const std::string & prefix) const
 {
-  close_device(false);
+  const auto & interfaces = info_.sensors.front().state_interfaces;
+  for (std::size_t channel = 1; channel <= kRcChannelCount; ++channel) {
+    const auto name = prefix + std::to_string(channel);
+    if (std::none_of(interfaces.begin(), interfaces.end(), [&name](const auto & interface) {
+        return interface.name == name;
+      }))
+    {
+      RCLCPP_ERROR(get_logger(), "Missing RadioMaster channel interface: %s", name.c_str());
+      return false;
+    }
+  }
+  return true;
 }
 
 hardware_interface::CallbackReturn RadiomasterUsbHardwareInterface::on_configure(
   const rclcpp_lifecycle::State &)
 {
   publish_safe_states();
-  next_reconnect_ns_ = 0;
-  try_open_device(steady_now_ns());
-  RCLCPP_INFO(
-    get_logger(),
-    "Configured RadioMaster USB hardware: sensor=%s device=%s",
-    sensor_name_.c_str(), device_.c_str());
+  individual_receiver_->configure();
+  if (group_receiver_) {group_receiver_->configure();}
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -217,16 +232,16 @@ hardware_interface::CallbackReturn RadiomasterUsbHardwareInterface::on_activate(
   const rclcpp_lifecycle::State &)
 {
   publish_safe_states();
-  if (joystick_fd_ < 0) {
-    try_open_device(steady_now_ns());
-  }
+  individual_receiver_->activate();
+  if (group_receiver_) {group_receiver_->activate();}
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::CallbackReturn RadiomasterUsbHardwareInterface::on_deactivate(
   const rclcpp_lifecycle::State &)
 {
-  close_device(false);
+  individual_receiver_->deactivate();
+  if (group_receiver_) {group_receiver_->deactivate();}
   publish_safe_states();
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -234,35 +249,72 @@ hardware_interface::CallbackReturn RadiomasterUsbHardwareInterface::on_deactivat
 hardware_interface::CallbackReturn RadiomasterUsbHardwareInterface::on_cleanup(
   const rclcpp_lifecycle::State &)
 {
-  close_device(false);
-  axes_.fill(0.0);
-  axes_initialized_.fill(false);
-  realtime_tick_ = 0;
-  next_reconnect_ns_ = 0;
-  open_failure_reported_ = false;
+  individual_receiver_->reset();
+  if (group_receiver_) {group_receiver_->reset();}
+  publish_safe_states();
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::return_type RadiomasterUsbHardwareInterface::read(
   const rclcpp::Time &, const rclcpp::Duration &)
 {
-  const std::int64_t now_ns = steady_now_ns();
-  if (joystick_fd_ < 0 && !try_open_device(now_ns)) {
-    publish_safe_states();
-    return hardware_interface::return_type::OK;
-  }
-
-  if (!read_device_events() || !all_required_axes_initialized()) {
-    publish_safe_states();
-    return hardware_interface::return_type::OK;
-  }
-
-  realtime_tick_ = (realtime_tick_ + 1U) % 32768U;
-  publish_rc_states(joy_axes_to_rc_channels(axes_, channel_defaults_, reverse_axes_));
+  const auto now_ns = steady_now_ns();
+  const auto individual = individual_receiver_->read(now_ns);
+  const auto group = group_receiver_ ? group_receiver_->read(now_ns) : ReceiverSample{};
+  publish_inputs(individual, group);
   return hardware_interface::return_type::OK;
 }
 
-bool RadiomasterUsbHardwareInterface::try_open_device(std::int64_t now_ns)
+RadiomasterUsbHardwareInterface::Receiver::Receiver(
+  const std::string & device, double reconnect_interval_ms, const rclcpp::Logger & logger)
+: device_(device),
+  reconnect_interval_ns_(static_cast<std::int64_t>(reconnect_interval_ms * 1.0e6)),
+  logger_(logger)
+{
+}
+
+RadiomasterUsbHardwareInterface::Receiver::~Receiver()
+{
+  close_device(false);
+}
+
+void RadiomasterUsbHardwareInterface::Receiver::configure()
+{
+  next_reconnect_ns_ = 0;
+  try_open_device(steady_now_ns());
+  RCLCPP_INFO(logger_, "Configured RadioMaster USB receiver: device=%s", device_.c_str());
+}
+
+void RadiomasterUsbHardwareInterface::Receiver::activate()
+{
+  try_open_device(steady_now_ns());
+}
+
+void RadiomasterUsbHardwareInterface::Receiver::deactivate()
+{
+  close_device(false);
+}
+
+void RadiomasterUsbHardwareInterface::Receiver::reset()
+{
+  close_device(false);
+  axes_.fill(0.0);
+  axes_initialized_.fill(false);
+  next_reconnect_ns_ = 0;
+  open_failure_reported_ = false;
+}
+
+RadiomasterUsbHardwareInterface::ReceiverSample
+RadiomasterUsbHardwareInterface::Receiver::read(std::int64_t now_ns)
+{
+  if (!try_open_device(now_ns) || !read_device_events() || !all_required_axes_initialized()) {
+    return {};
+  }
+  realtime_tick_ = (realtime_tick_ + 1U) % 32768U;
+  return {axes_, realtime_tick_, true};
+}
+
+bool RadiomasterUsbHardwareInterface::Receiver::try_open_device(std::int64_t now_ns)
 {
   if (joystick_fd_ >= 0) {
     return true;
@@ -270,13 +322,13 @@ bool RadiomasterUsbHardwareInterface::try_open_device(std::int64_t now_ns)
   if (now_ns < next_reconnect_ns_) {
     return false;
   }
-  next_reconnect_ns_ = now_ns + static_cast<std::int64_t>(reconnect_interval_ms_ * 1.0e6);
+  next_reconnect_ns_ = now_ns + reconnect_interval_ns_;
 
   joystick_fd_ = open(device_.c_str(), O_RDWR | O_NONBLOCK | O_CLOEXEC);
   if (joystick_fd_ < 0) {
     if (!open_failure_reported_) {
       RCLCPP_WARN(
-        get_logger(), "Cannot open RadioMaster joystick %s: %s",
+        logger_, "Cannot open RadioMaster joystick %s: %s",
         device_.c_str(), std::strerror(errno));
       open_failure_reported_ = true;
     }
@@ -284,9 +336,12 @@ bool RadiomasterUsbHardwareInterface::try_open_device(std::int64_t now_ns)
   }
 
   std::uint8_t axis_count = 0;
-  if (ioctl(joystick_fd_, JSIOCGAXES, &axis_count) < 0 || axis_count < kRequiredJoyAxisCount) {
+  if (
+    ioctl(joystick_fd_, JSIOCGAXES, &axis_count) < 0 ||
+    axis_count < kRequiredJoyAxisCount)
+  {
     RCLCPP_ERROR(
-      get_logger(), "Joystick %s exposes %u axes; at least %zu are required",
+      logger_, "Joystick %s exposes %u axes; at least %zu are required",
       device_.c_str(), static_cast<unsigned int>(axis_count), kRequiredJoyAxisCount);
     close_device(false);
     return false;
@@ -304,20 +359,19 @@ bool RadiomasterUsbHardwareInterface::try_open_device(std::int64_t now_ns)
 
   axes_.fill(0.0);
   axes_initialized_.fill(false);
-  realtime_tick_ = 0;
   open_failure_reported_ = false;
   RCLCPP_INFO(
-    get_logger(), "Opened RadioMaster joystick %s (%s, %u axes)",
+    logger_, "Opened RadioMaster joystick %s (%s, %u axes)",
     device_.c_str(), device_name.data(), static_cast<unsigned int>(axis_count));
   return true;
 }
 
-bool RadiomasterUsbHardwareInterface::read_joydev_correction(std::uint8_t axis_count)
+bool RadiomasterUsbHardwareInterface::Receiver::read_joydev_correction(std::uint8_t axis_count)
 {
   std::vector<js_corr> original(axis_count);
   if (ioctl(joystick_fd_, JSIOCGCORR, original.data()) < 0) {
     RCLCPP_ERROR(
-      get_logger(), "Cannot read joystick correction for %s: %s",
+      logger_, "Cannot read joystick correction for %s: %s",
       device_.c_str(), std::strerror(errno));
     return false;
   }
@@ -327,13 +381,12 @@ bool RadiomasterUsbHardwareInterface::read_joydev_correction(std::uint8_t axis_c
     correction.type = JS_CORR_NONE;
   }
 
-  auto & original_corrections = original_joydev_corrections();
-  original_corrections.insert_or_assign(joystick_fd_, std::move(original));
+  original_joydev_correction_ = original;
   if (ioctl(joystick_fd_, JSIOCSCORR, joydev_correction_.data()) < 0) {
     RCLCPP_ERROR(
-      get_logger(), "Cannot disable joystick correction for %s: %s",
+      logger_, "Cannot disable joystick correction for %s: %s",
       device_.c_str(), std::strerror(errno));
-    original_corrections.erase(joystick_fd_);
+    original_joydev_correction_.clear();
     joydev_correction_.clear();
     return false;
   }
@@ -341,7 +394,7 @@ bool RadiomasterUsbHardwareInterface::read_joydev_correction(std::uint8_t axis_c
   return true;
 }
 
-bool RadiomasterUsbHardwareInterface::read_device_events()
+bool RadiomasterUsbHardwareInterface::Receiver::read_device_events()
 {
   pollfd descriptor{};
   descriptor.fd = joystick_fd_;
@@ -383,7 +436,7 @@ bool RadiomasterUsbHardwareInterface::read_device_events()
   }
 }
 
-void RadiomasterUsbHardwareInterface::process_axis_event(
+void RadiomasterUsbHardwareInterface::Receiver::process_axis_event(
   std::uint8_t axis, std::int16_t value)
 {
   if (axis >= axes_.size()) {
@@ -393,35 +446,32 @@ void RadiomasterUsbHardwareInterface::process_axis_event(
   axes_initialized_[axis] = true;
 }
 
-void RadiomasterUsbHardwareInterface::close_device(bool report_disconnect)
+void RadiomasterUsbHardwareInterface::Receiver::close_device(bool report_disconnect)
 {
   if (joystick_fd_ < 0) {
     return;
   }
 
-  auto & original_corrections = original_joydev_corrections();
-  const auto original = original_corrections.find(joystick_fd_);
-  if (original != original_corrections.end()) {
-    if (ioctl(joystick_fd_, JSIOCSCORR, original->second.data()) < 0) {
+  if (!original_joydev_correction_.empty()) {
+    if (ioctl(joystick_fd_, JSIOCSCORR, original_joydev_correction_.data()) < 0) {
       RCLCPP_WARN(
-        get_logger(), "Cannot restore joystick correction for %s: %s",
+        logger_, "Cannot restore joystick correction for %s: %s",
         device_.c_str(), std::strerror(errno));
     }
-    original_corrections.erase(original);
+    original_joydev_correction_.clear();
   }
 
   ::close(joystick_fd_);
   joystick_fd_ = -1;
   joydev_correction_.clear();
   axes_initialized_.fill(false);
-  next_reconnect_ns_ = steady_now_ns() +
-    static_cast<std::int64_t>(reconnect_interval_ms_ * 1.0e6);
+  next_reconnect_ns_ = steady_now_ns() + reconnect_interval_ns_;
   if (report_disconnect) {
-    RCLCPP_ERROR(get_logger(), "RadioMaster joystick disconnected: %s", device_.c_str());
+    RCLCPP_ERROR(logger_, "RadioMaster joystick disconnected: %s", device_.c_str());
   }
 }
 
-bool RadiomasterUsbHardwareInterface::all_required_axes_initialized() const
+bool RadiomasterUsbHardwareInterface::Receiver::all_required_axes_initialized() const
 {
   return std::all_of(
     axes_initialized_.begin(), axes_initialized_.end(), [](bool initialized) {
@@ -431,32 +481,47 @@ bool RadiomasterUsbHardwareInterface::all_required_axes_initialized() const
 
 void RadiomasterUsbHardwareInterface::publish_safe_states()
 {
-  for (std::size_t index = 0; index < channel_defaults_.size(); ++index) {
-    set_state(
-      sensor_name_ + "/RC Channel " + std::to_string(index + 1), channel_defaults_[index]);
-  }
-  set_state(sensor_name_ + "/Hardware Error Status", 1.0);
-  set_state(sensor_name_ + "/Realtime Tick", 0.0);
-  set_state(sensor_name_ + "/E-stop Active", 1.0);
-  set_state(sensor_name_ + "/CRSF Failsafe", 1.0);
-  set_state(sensor_name_ + "/CRSF Link Quality", 0.0);
-  set_state(sensor_name_ + "/CRSF RSSI 1", 0.0);
-  set_state(sensor_name_ + "/CRSF Last Frame Age", 65535.0);
+  publish_inputs({}, {});
 }
 
-void RadiomasterUsbHardwareInterface::publish_rc_states(
-  const std::array<double, kRcChannelCount> & channels)
+void RadiomasterUsbHardwareInterface::publish_inputs(
+  const ReceiverSample & individual, const ReceiverSample & group)
+{
+  publish_channels(
+    kIndividualChannelPrefix, individual.ready ?
+    joy_axes_to_rc_channels(individual.axes, channel_defaults_, reverse_axes_) : channel_defaults_);
+
+  if (group_receiver_) {
+    // Invalid group channels block only the group input; individual status stays independent.
+    std::array<double, kRcChannelCount> channels{};
+    channels.fill(std::numeric_limits<double>::quiet_NaN());
+    if (group.ready) {
+      channels = joy_axes_to_rc_channels(group.axes, channel_defaults_, reverse_axes_);
+    }
+    publish_channels(kGroupChannelPrefix, channels);
+  }
+  publish_individual_status(individual);
+}
+
+void RadiomasterUsbHardwareInterface::publish_channels(
+  const std::string & prefix, const std::array<double, kRcChannelCount> & channels)
 {
   for (std::size_t index = 0; index < channels.size(); ++index) {
-    set_state(sensor_name_ + "/RC Channel " + std::to_string(index + 1), channels[index]);
+    set_state(sensor_name_ + "/" + prefix + std::to_string(index + 1), channels[index]);
   }
-  set_state(sensor_name_ + "/Hardware Error Status", 0.0);
-  set_state(sensor_name_ + "/Realtime Tick", static_cast<double>(realtime_tick_));
-  set_state(sensor_name_ + "/E-stop Active", 0.0);
-  set_state(sensor_name_ + "/CRSF Failsafe", 0.0);
-  set_state(sensor_name_ + "/CRSF Link Quality", 100.0);
-  set_state(sensor_name_ + "/CRSF RSSI 1", 100.0);
-  set_state(sensor_name_ + "/CRSF Last Frame Age", 0.0);
+}
+
+void RadiomasterUsbHardwareInterface::publish_individual_status(const ReceiverSample & individual)
+{
+  // The current HAT interface has one status set, driven by the individual receiver.
+  const bool ready = individual.ready;
+  set_state(sensor_name_ + "/Hardware Error Status", ready ? 0.0 : 1.0);
+  set_state(sensor_name_ + "/Realtime Tick", ready ? individual.realtime_tick : 0.0);
+  set_state(sensor_name_ + "/E-stop Active", ready ? 0.0 : 1.0);
+  set_state(sensor_name_ + "/CRSF Failsafe", ready ? 0.0 : 1.0);
+  set_state(sensor_name_ + "/CRSF Link Quality", ready ? 100.0 : 0.0);
+  set_state(sensor_name_ + "/CRSF RSSI 1", ready ? 100.0 : 0.0);
+  set_state(sensor_name_ + "/CRSF Last Frame Age", ready ? 0.0 : 65535.0);
 }
 
 std::int64_t RadiomasterUsbHardwareInterface::steady_now_ns()

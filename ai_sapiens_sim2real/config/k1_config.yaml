@@ -29,6 +29,8 @@ policy_action_transition:
 
 policy_asset_roots:
   - ../assets/k1
+  - ../assets/k1_kpop
+  - ../assets/k1_taekwondo
 
 mimic_defaults:
   fps: 50
@@ -72,33 +74,490 @@ teleop_conditions:
 selectors:
   mimic_selector:
     table:
-      200: MimicWaveOneHand
-      201: MimicWaveRightHandOnly
-      202: MimicWaveTwoHand
-      203: MimicWaveOneHandWaistYaw
-      204: MimicWaveRightHandOnlyWaistYaw
-      205: MimicWaveTwoHandWaistYaw
-      206: MimicWaveOneHandWaistYawLarge
-      207: MimicWaveRightHandOnlyWaistYawLarge
-      208: MimicWaveTwoHandWaistYawLarge
-      209: MimicMotifectTauntMockBow
-      210: MimicSquat
-      211: MimicBowNavel
-      212: MimicCoinPickNewton
-      213: MimicBoxingNewton
-      214: MimicRedredNewton
-      # 215: MimicLemonade
-      216: MimicJumpNewton
-      217: MimicDance1
-      218: MimicDance2
-      219: MimicTurn
-      220: MimicFlower3
-      221: SubVelocityTerrain
+      200: MimicStandup
+      201: MimicLiedown
+      202: SubVelocityHangang
+      203: SubVelocityTerrain
 
+      204: MimicSquat
+      205: MimicDance1
+      206: MimicDance2
+      207: MimicBoxingNewton
+
+      208: MimicWaveOneHandWaistYaw
+      209: MimicWaveRightHandOnlyWaistYaw
+      210: MimicWaveTwoHandWaistYaw
+
+      211: MimicWaveOneHandWaistYawLarge
+      212: MimicWaveRightHandOnlyWaistYawLarge
+      213: MimicWaveTwoHandWaistYawLarge
+
+      214: MimicBowBig
+      215: MimicBowNavel
+
+      216: MimicRedredNewton
+      217: MimicTurn
+
+      # 220: MimicTaeguek_1
+      # 221: MimicTaeguek_2
+      # 222: MimicTaeguek_3
+      # 223: MimicTaeguek_4
+      # 224: MimicTaeguek_5
+      # 225: MimicTaeguek_6
+      # 236: MimicTaeguek_7
+      # 237: MimicTaeguek_8
+
+
+      240: MimicLikeJennieK1_107999_f55628f7
+      241: MimicTask2PinkvenomXY_8880e167
+      242: MimicAttention
+      243: MimicTask2SavageXY_ae9342d2
+      244: MimicTask2UnforgivenXY_bbfba803
+      245: MimicTeddyBear
+      246: MimicOnXYK1_107000_72da9c90
+      247: MimicEasyXYCK1_109999_a667fbf5
+      248: MimicTask2PermissiontodanceXY_1a8656a4
+      249: MimicTask2BlackmambaXY_40d1eed8
+      250: MimicTask2XoxoXY_d3816fbd
+      251: MimicHammerTransitionXY5k
+      252: MimicTask2NeonXY_c6a28b07
+      253: MimicSuperShy
+      254: MimicLXYK1_112999_5fb4d087
+      255: MimicSmartFlowK1_107999_fb601c79
+      256: MimicPowerK1_25000_389ffe11
+      257: MimicJiyu404XYK1_110000_d66ac6ba
+      258: MimicTask2QueencardXY_89defef9
+      259: MimicCheerleading
+      260: MimicHypeboy
+      261: MimicDitto
+
+
+selectors:
+  mimic_selector_all_dance:
+    table:
+      200: MimicStandup
+      201: MimicLiedown
+      202: SubVelocityHangang
+      203: SubVelocityTerrain
+
+      204: MimicSquat
+      205: MimicDance1
+      206: MimicDance2
+      207: MimicBoxingNewton
+
+      208: MimicWaveOneHandWaistYaw
+      209: MimicWaveRightHandOnlyWaistYaw
+      210: MimicWaveTwoHandWaistYaw
+
+      211: MimicWaveOneHandWaistYawLarge
+      212: MimicWaveRightHandOnlyWaistYawLarge
+      213: MimicWaveTwoHandWaistYawLarge
+
+      214: MimicBowBig
+      215: MimicBowNavel
+
+      216: MimicRedredNewton
+      217: MimicTurn
+
+      220: MimicTaeguek_1
+      221: MimicTaeguek_2
+      222: MimicTaeguek_3
+      223: MimicTaeguek_4
+      224: MimicTaeguek_5
+      225: MimicTaeguek_6
+      236: MimicTaeguek_7
+      237: MimicTaeguek_8
+
+      240: MimicCrayonBar3
+      # 241: MimicSupernaturalLongYawStanceSupportFT8k
+      242: MimicPeaches
+      243: MimicHammerTransitionXY5k
+
+      300: MimicKillXYK1_112999_07eb337a
+      301: MimicAnpanmanXYK1_112999_92bdb876
+      302: MimicButterXYK1_112999_0bcc9a83
+      303: MimicLXYK1_112999_5fb4d087
+      304: MimicPopXYK1_112999_c47d9042
+      305: MimicRudeXYK1_112999_84d931a4
+      306: MimicIcyXYK1_112999_11eaa701
+      307: MimicDallaXYK1_112999_96212e46
+      308: MimicLovesickXYK1_112999_28e737d0
+      309: MimicYesOrYesXYK1_112999_423a5938
+      310: MimicDynamiteXYK1_112999_9ec28a87
+      311: MimicBoyWithLuvXYK1_112999_5b225a9a
+      312: MimicSmartFlowK1_107999_fb601c79
+      313: MimicThatThatXYK1_112999_c646419b
+      314: MimicDTNAXYK1_109000_a364220b
+      315: MimicOnXYK1_107000_72da9c90
+      316: MimicPowerK1_25000_389ffe11
+      317: MimicLikeJennieK1_107999_f55628f7
+      318: MimicJiyu404XYK1_110000_d66ac6ba
+      319: MimicEasyXYCK1_109999_a667fbf5
+      320: MimicHypeBoyFlowK1_107999_592cd45c
+      321: MimicBouncyFlowK1_107999_c9fe2ee4
+      322: MimicDramaFlowK1_107999_485ffdfe
+      323: MimicOmgFlowK1_107999_32329a5a
+      324: MimicPerfectNightFlowK1_107999_b7cd53a4
+      325: MimicSlayFlowK1_107999_f3050621
+      326: MimicUntouchableFlowK1_107999_1b7b7656
+      327: MimicTask2PermissiontodanceXY_1a8656a4
+      328: MimicTask2HowyoulikethatXY_55a2e178
+      329: MimicTask2NeonXY_c6a28b07
+      330: MimicFeelSpecial
+      331: MimicTask2ThefeelsXY_f3572b0c
+      332: MimicTask2FancyXY_d42b5a98
+      333: MimicTask2IcantstopmeXY_f297435a
+      334: MimicTask2PinkvenomXY_8880e167
+      335: MimicTask2SomidumbdumbXY_11480532
+      336: MimicTask2StrategyXY_ed3d61a7
+      337: MimicTask2SupernovaXY_2f114f3d
+      338: MimicTask2MoneyXY_5e65fd61
+      339: MimicTask2GnarlyXY_2ffdf957
+      340: MimicTask2InthemorningXY_34ba869a
+      341: MimicTask2LocoXY_6c79376d
+      342: MimicTask2SuperladyXY_dc8c04d8
+      343: MimicTask2CherishmyloveXY_752b705c
+      344: MimicTask2TomboyXY_93c2f221
+      345: MimicTask2DripXY_4bbd0ecc
+      346: MimicTask2SpicyXY_033a9df5
+      347: MimicTask2SavageXY_ae9342d2
+      348: MimicTask2NextlevelXY_fca2ac6a
+      349: MimicTask2QueencardXY_89defef9
+      350: MimicTask2KitschXY_934d15b3
+      351: MimicTask2LovemelikethisXY_b6b7d2bc
+      352: MimicTask2UnforgivenXY_bbfba803
+      353: MimicTask23dXY_0b06ed69
+      354: MimicTask2PsychoXY_6d1b868b
+      355: MimicTask2BlackmambaXY_40d1eed8
+      356: MimicTask2BabymonsterbillionaireXY_a148d4ec
+      357: MimicTask2JisooearthquakeXY_3ae001f4
+      358: MimicTask2CheshireXY_19cbfb1a
+      359: MimicTask2XoxoXY_d3816fbd
+      360: MimicTask2ArmageddonXY_21defea2
+      361: MimicTask2HotXY_07f3f85d
+      362: MimicTask2SheeshXY_161e1d78
+      363: MimicTask2WhatisloveXY_7869efa4
+      364: MimicTask2SoloXY_ce211219
+      365: MimicTask2BadboyXY_b579b208
+      366: MimicTask2KnockknockXY_3247f2af
+      367: MimicTask2CheerupXY_27a45815
+      368: MimicTask2HeartshakerXY_7167b197
+      369: MimicTask2LikeoohahhXY_b80074cc
+      370: MimicTask2LikeyXY_92bde402
+      371: MimicTask2SignalXY_8b264d22
+      372: MimicTask2TtXY_8f3449b7
+      # 373: MimicSupernaturalShort235Interim105k
+
+      374: MimicSeventeen
+      375: MimicZico
+      376: MimicCheerleading
+
+      377: MimicHypeboy
+      378: MimicOMG
+      379: MimicSuperShy
+      380: MimicAttention
+      381: MimicDitto
+      382: MimicETA
+      383: MimicHowSweet
+      384: MimicLoveDive
+      385: MimicIAm
+      386: MimicTalkThatTalk
+      387: MimicTeddyBear
+      388: MimicStereotype
+      389: MimicItzySneakers
+      390: MimicWannabe
+      391: MimicNotshy
+      392: MimicDundundance
+      393: MimicAntifragile
+      394: MimicGravity
 
 state_machine:
   initial: Damping
   states:
+    MimicHypeboy:
+      parent: Mimic
+      run: mimic_kes_hype_boy
+    MimicOMG:
+      parent: Mimic
+      run: mimic_kes_omg
+    MimicSuperShy:
+      parent: Mimic
+      run: mimic_kes_super_shy
+    MimicAttention:
+      parent: Mimic
+      run: mimic_kes_attention
+    MimicDitto:
+      parent: Mimic
+      run: mimic_kes_ditto
+    MimicETA:
+      parent: Mimic
+      run: mimic_kes_eta
+    MimicHowSweet:
+      parent: Mimic
+      run: mimic_kes_how_sweet
+    MimicLoveDive:
+      parent: Mimic
+      run: mimic_kes_love_dive
+    MimicIAm:
+      parent: Mimic
+      run: mimic_kes_i_am
+    MimicTalkThatTalk:
+      parent: Mimic
+      run: mimic_kes_talk_that_talk
+    MimicTeddyBear:
+      parent: Mimic
+      run: mimic_kes_teddy_bear
+    MimicStereotype:
+      parent: Mimic
+      run: mimic_kes_stereotype
+    MimicItzySneakers:
+      parent: Mimic
+      run: mimic_kes_sneakers
+    MimicWannabe:
+      parent: Mimic
+      run: mimic_kes_wannabe
+    MimicNotshy:
+      parent: Mimic
+      run: mimic_kes_not_shy
+    MimicDundundance:
+      parent: Mimic
+      run: mimic_kes_dun_dun_dance
+    MimicAntifragile:
+      parent: Mimic
+      run: mimic_kes_antifragile
+    MimicGravity:
+      parent: Mimic
+      run: mimic_gravity
+    MimicKillXYK1_112999_07eb337a:
+      parent: Mimic
+      run: mimic_kill_xy_112999_07eb337a
+    MimicAnpanmanXYK1_112999_92bdb876:
+      parent: Mimic
+      run: mimic_anpanman_xy_112999_92bdb876
+    MimicButterXYK1_112999_0bcc9a83:
+      parent: Mimic
+      run: mimic_butter_xy_112999_0bcc9a83
+    MimicLXYK1_112999_5fb4d087:
+      parent: Mimic
+      run: mimic_l_xy_112999_5fb4d087
+    MimicPopXYK1_112999_c47d9042:
+      parent: Mimic
+      run: mimic_eval27_mimicpopxyk1_112999_c47d9042
+    MimicRudeXYK1_112999_84d931a4:
+      parent: Mimic
+      run: mimic_rude_xy_112999_84d931a4
+    MimicIcyXYK1_112999_11eaa701:
+      parent: Mimic
+      run: mimic_eval27_mimicicyxyk1_112999_11eaa701
+    MimicDallaXYK1_112999_96212e46:
+      parent: Mimic
+      run: mimic_eval27_mimicdallaxyk1_112999_96212e46
+    MimicLovesickXYK1_112999_28e737d0:
+      parent: Mimic
+      run: mimic_eval27_mimiclovesickxyk1_112999_28e737d0
+    MimicYesOrYesXYK1_112999_423a5938:
+      parent: Mimic
+      run: mimic_eval27_mimicyesoryesxyk1_112999_423a5938
+    MimicDynamiteXYK1_112999_9ec28a87:
+      parent: Mimic
+      run: mimic_eval27_mimicdynamitexyk1_112999_9ec28a87
+    MimicBoyWithLuvXYK1_112999_5b225a9a:
+      parent: Mimic
+      run: mimic_eval27_mimicboywithluvxyk1_112999_5b225a9a
+    MimicSmartFlowK1_107999_fb601c79:
+      parent: Mimic
+      run: mimic_eval27_mimicsmartflowk1_107999_fb601c79
+    MimicThatThatXYK1_112999_c646419b:
+      parent: Mimic
+      run: mimic_eval27_mimicthatthatxyk1_112999_c646419b
+    MimicDTNAXYK1_109000_a364220b:
+      parent: Mimic
+      run: mimic_eval27_mimicdtnaxyk1_109000_a364220b
+    MimicOnXYK1_107000_72da9c90:
+      parent: Mimic
+      run: mimic_eval27_mimiconxyk1_107000_72da9c90
+    MimicPowerK1_25000_389ffe11:
+      parent: Mimic
+      run: mimic_eval27_mimicpowerk1_25000_389ffe11
+    MimicLikeJennieK1_107999_f55628f7:
+      parent: Mimic
+      run: mimic_eval27_mimiclikejenniek1_107999_f55628f7
+    MimicJiyu404XYK1_110000_d66ac6ba:
+      parent: Mimic
+      run: mimic_eval27_mimicjiyu404xyk1_110000_d66ac6ba
+    MimicEasyXYCK1_109999_a667fbf5:
+      parent: Mimic
+      run: mimic_easy_xy_c_109999_a667fbf5
+    MimicHypeBoyFlowK1_107999_592cd45c:
+      parent: Mimic
+      run: mimic_eval27_mimichypeboyflowk1_107999_592cd45c
+    MimicBouncyFlowK1_107999_c9fe2ee4:
+      parent: Mimic
+      run: mimic_eval27_mimicbouncyflowk1_107999_c9fe2ee4
+    MimicDramaFlowK1_107999_485ffdfe:
+      parent: Mimic
+      run: mimic_eval27_mimicdramaflowk1_107999_485ffdfe
+    MimicOmgFlowK1_107999_32329a5a:
+      parent: Mimic
+      run: mimic_eval27_mimicomgflowk1_107999_32329a5a
+    MimicPerfectNightFlowK1_107999_b7cd53a4:
+      parent: Mimic
+      run: mimic_eval27_mimicperfectnightflowk1_107999_b7cd53a4
+    MimicSlayFlowK1_107999_f3050621:
+      parent: Mimic
+      run: mimic_eval27_mimicslayflowk1_107999_f3050621
+    MimicUntouchableFlowK1_107999_1b7b7656:
+      parent: Mimic
+      run: mimic_eval27_mimicuntouchableflowk1_107999_1b7b7656
+    MimicTask2PermissiontodanceXY_1a8656a4:
+      parent: Mimic
+      run: mimic_task2_permissiontodance_1a8656a42939
+    MimicTask2HowyoulikethatXY_55a2e178:
+      parent: Mimic
+      run: mimic_task2_howyoulikethat_55a2e178dd34
+    MimicTask2NeonXY_c6a28b07:
+      parent: Mimic
+      run: mimic_task2_neon_c6a28b07339d
+    MimicFeelSpecial:
+      parent: Mimic
+      run: mimic_feel_special
+    MimicTask2ThefeelsXY_f3572b0c:
+      parent: Mimic
+      run: mimic_task2_thefeels_f3572b0c6430
+    MimicTask2FancyXY_d42b5a98:
+      parent: Mimic
+      run: mimic_task2_fancy_d42b5a98d82c
+    MimicTask2IcantstopmeXY_f297435a:
+      parent: Mimic
+      run: mimic_task2_icantstopme_f297435a7271
+    MimicTask2PinkvenomXY_8880e167:
+      parent: Mimic
+      run: mimic_task2_pinkvenom_8880e167d346
+    MimicTask2SomidumbdumbXY_11480532:
+      parent: Mimic
+      run: mimic_task2_somidumbdumb_114805320ec8
+    MimicTask2StrategyXY_ed3d61a7:
+      parent: Mimic
+      run: mimic_task2_strategy_ed3d61a77431
+    MimicTask2SupernovaXY_2f114f3d:
+      parent: Mimic
+      run: mimic_task2_supernova_2f114f3d15e9
+    MimicTask2MoneyXY_5e65fd61:
+      parent: Mimic
+      run: mimic_task2_money_5e65fd611bb4
+    MimicTask2GnarlyXY_2ffdf957:
+      parent: Mimic
+      run: mimic_task2_gnarly_2ffdf957f29d
+    MimicTask2InthemorningXY_34ba869a:
+      parent: Mimic
+      run: mimic_task2_inthemorning_34ba869a09eb
+    MimicTask2LocoXY_6c79376d:
+      parent: Mimic
+      run: mimic_task2_loco_6c79376d1528
+    MimicTask2SuperladyXY_dc8c04d8:
+      parent: Mimic
+      run: mimic_task2_superlady_dc8c04d8c4be
+    MimicTask2CherishmyloveXY_752b705c:
+      parent: Mimic
+      run: mimic_task2_cherishmylove_752b705cd688
+    MimicTask2TomboyXY_93c2f221:
+      parent: Mimic
+      run: mimic_task2_tomboy_93c2f221bbc3
+    MimicTask2DripXY_4bbd0ecc:
+      parent: Mimic
+      run: mimic_task2_drip_4bbd0ecc89e7
+    MimicTask2SpicyXY_033a9df5:
+      parent: Mimic
+      run: mimic_task2_spicy_033a9df577b6
+    MimicTask2SavageXY_ae9342d2:
+      parent: Mimic
+      run: mimic_task2_savage_ae9342d207de
+    MimicTask2NextlevelXY_fca2ac6a:
+      parent: Mimic
+      run: mimic_task2_nextlevel_fca2ac6ad7e8
+    MimicTask2QueencardXY_89defef9:
+      parent: Mimic
+      run: mimic_task2_queencard_89defef93f38
+    MimicTask2KitschXY_934d15b3:
+      parent: Mimic
+      run: mimic_task2_kitsch_934d15b32d40
+    MimicTask2LovemelikethisXY_b6b7d2bc:
+      parent: Mimic
+      run: mimic_task2_lovemelikethis_b6b7d2bc6163
+    MimicTask2UnforgivenXY_bbfba803:
+      parent: Mimic
+      run: mimic_task2_unforgiven_bbfba8034f7a
+    MimicTask23dXY_0b06ed69:
+      parent: Mimic
+      run: mimic_task2_3d_0b06ed69631e
+    MimicTask2PsychoXY_6d1b868b:
+      parent: Mimic
+      run: mimic_task2_psycho_6d1b868b49f2
+    MimicTask2BlackmambaXY_40d1eed8:
+      parent: Mimic
+      run: mimic_task2_blackmamba_40d1eed81da2
+    MimicTask2BabymonsterbillionaireXY_a148d4ec:
+      parent: Mimic
+      run: mimic_task2_babymonsterbillionaire_a148d4ec13e6
+    MimicTask2JisooearthquakeXY_3ae001f4:
+      parent: Mimic
+      run: mimic_task2_jisooearthquake_3ae001f410ba
+    MimicTask2CheshireXY_19cbfb1a:
+      parent: Mimic
+      run: mimic_task2_cheshire_19cbfb1a6290
+    MimicTask2XoxoXY_d3816fbd:
+      parent: Mimic
+      run: mimic_task2_xoxo_d3816fbd11a8
+    MimicTask2ArmageddonXY_21defea2:
+      parent: Mimic
+      run: mimic_task2_armageddon_21defea2aaba
+    MimicTask2HotXY_07f3f85d:
+      parent: Mimic
+      run: mimic_task2_hot_07f3f85d4ec6
+    MimicTask2SheeshXY_161e1d78:
+      parent: Mimic
+      run: mimic_task2_sheesh_161e1d789fea
+    MimicTask2WhatisloveXY_7869efa4:
+      parent: Mimic
+      run: mimic_task2_whatislove_7869efa4fe85
+    MimicTask2SoloXY_ce211219:
+      parent: Mimic
+      run: mimic_task2_solo_ce211219900b
+    MimicTask2BadboyXY_b579b208:
+      parent: Mimic
+      run: mimic_task2_badboy_b579b2088a6b
+    MimicTask2KnockknockXY_3247f2af:
+      parent: Mimic
+      run: mimic_task2_knockknock_3247f2aff2db
+    MimicTask2CheerupXY_27a45815:
+      parent: Mimic
+      run: mimic_task2_cheerup_27a458156a58
+    MimicTask2HeartshakerXY_7167b197:
+      parent: Mimic
+      run: mimic_task2_heartshaker_7167b197633c
+    MimicTask2LikeoohahhXY_b80074cc:
+      parent: Mimic
+      run: mimic_task2_likeoohahh_b80074cc63ab
+    MimicTask2LikeyXY_92bde402:
+      parent: Mimic
+      run: mimic_task2_likey_92bde402696d
+    MimicTask2SignalXY_8b264d22:
+      parent: Mimic
+      run: mimic_task2_signal_8b264d220f67
+    MimicTask2TtXY_8f3449b7:
+      parent: Mimic
+      run: mimic_task2_tt_8f3449b7a2da
+
+    MimicSeventeen:
+      parent: Mimic
+      run: mimic_seventeen
+    MimicZico:
+      parent: Mimic
+      run: mimic_zico
+    MimicCheerleading:
+      parent: Mimic
+      run: mimic_cheerleading
+
     Damping:
       run: damping
       transitions:
@@ -126,9 +585,11 @@ state_machine:
           select: mimic_selector
     Velocity:
       # run: velocity_policy_amp_hangang
-      run: velocity_policy_amp_hangang_limited
+      # run: velocity_policy_amp_hangang_limited
       # run: velocity_policy_woojin_amp_mjlab_k1_head_safe_50000
       # run: velocity_policy_walk_terrain
+      # run: velocity_motifect_stable_torso_no_phase_lpf6_93400
+      run: velocity_motifect_stable_torso_no_phase_lpf6_93400_limited
       transitions:
         - when: DampingRequested
           to: Damping
@@ -140,6 +601,17 @@ state_machine:
 
     SubVelocityTerrain:
       run: velocity_policy_walk_terrain
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: VelocityRequested
+          to: Velocity
+
+    SubVelocityHangang:
+      # run: velocity_policy_amp_hangang
+      run: velocity_motifect_stable_torso_no_phase_lpf6_93400
       transitions:
         - when: DampingRequested
           to: Damping
@@ -160,6 +632,15 @@ state_machine:
     MimicDance1:
       parent: Mimic
       run: mimic_dance1
+    MimicSupernaturalShort235Interim105k:
+      parent: Mimic
+      run: mimic_supernatural_short_transition_235_ft5k_117500
+    MimicPeaches:
+      parent: Mimic
+      run: mimic_peaches
+    MimicHammerTransitionXY5k:
+      parent: Mimic
+      run: mimic_hammer_transition_xy_5k
     MimicDance2:
       parent: Mimic
       run: mimic_dance2
@@ -217,12 +698,153 @@ state_machine:
     MimicWaveTwoHandWaistYawLarge:
       parent: Mimic
       run: mimic_wave_two_hand_waist_yaw_large
-    MimicMotifectTauntMockBow:
+    MimicBowBig:
       parent: Mimic
       run: mimic_motifect_taunt_mock_bow
+    MimicStandup:
+      parent: Mimic
+      run: mimic_standup
+    MimicLiedown:
+      parent: Mimic
+      run: mimic_liedown
+
+    MimicTaeguek_1:
+      parent: Mimic
+      run: mimic_taeguek_1
+    MimicTaeguek_2:
+      parent: Mimic
+      run: mimic_taeguek_2
+    MimicTaeguek_3:
+      parent: Mimic
+      run: mimic_taeguek_3
+    MimicTaeguek_4:
+      parent: Mimic
+      run: mimic_taeguek_4
+    MimicTaeguek_5:
+      parent: Mimic
+      run: mimic_taeguek_5
+    MimicTaeguek_6:
+      parent: Mimic
+      run: mimic_taeguek_6
+    MimicTaeguek_7:
+      parent: Mimic
+      run: mimic_taeguek_7
+    MimicTaeguek_8:
+      parent: Mimic
+      run: mimic_taeguek_8
+
+    MimicCrayonBar3:
+      parent: Mimic
+      run: mimic_crayon_bar3_a2t
 
 
 state_behaviors:
+  mimic_kes_hype_boy:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/hype_boy
+    motion: hype_boy.csv
+    fps: 50
+  mimic_kes_omg:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/omg
+    motion: omg.csv
+    fps: 50
+  mimic_kes_super_shy:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/super_shy
+    motion: super_shy.csv
+    fps: 50
+  mimic_kes_attention:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/attention
+    motion: attention.csv
+    fps: 50
+  mimic_kes_ditto:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/ditto
+    motion: ditto.csv
+    fps: 50
+  mimic_kes_eta:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/eta
+    motion: eta.csv
+    fps: 50
+  mimic_kes_how_sweet:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/how_sweet
+    motion: how_sweet.csv
+    fps: 50
+  mimic_kes_love_dive:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/love_dive
+    motion: love_dive.csv
+    fps: 50
+  mimic_kes_i_am:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/i_am
+    motion: i_am.csv
+    fps: 50
+  mimic_kes_talk_that_talk:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/talk_that_talk
+    motion: talk_that_talk.csv
+    fps: 50
+  mimic_kes_teddy_bear:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/teddy_bear
+    motion: teddy_bear.csv
+    fps: 50
+  mimic_kes_stereotype:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/stereotype
+    motion: stereotype.csv
+    fps: 50
+  mimic_kes_sneakers:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/sneakers
+    motion: sneakers.csv
+    fps: 50
+  mimic_kes_wannabe:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/wannabe
+    motion: wannabe.csv
+    fps: 50
+  mimic_kes_not_shy:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/not_shy
+    motion: not_shy.csv
+    fps: 50
+  mimic_kes_dun_dun_dance:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/dun_dun_dance
+    motion: dun_dun_dance.csv
+    fps: 50
+  mimic_kes_antifragile:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/antifragile
+    motion: antifragile.csv
+    fps: 50
+  mimic_gravity:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/gravity
+    motion: gravity.csv
+    fps: 50
+  mimic_supernatural_short_transition_235_ft5k_117500:
+    kind: mimic
+    asset: mimic/supernatural_short_transition_235_ft5k_117500
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+    on_complete: Velocity
+
+  # mimic_supernatural_short_235_interim_110500:
+  #   kind: mimic
+  #   asset: mimic/supernatural_short_235_interim_110500
+  #   motion: motion.csv
+  #   fps: 50
+  #   motion_format: mjlab
+  #   on_complete: Velocity
+
   damping:
     kind: damping
     damping:
@@ -318,6 +940,9 @@ state_behaviors:
     kind: policy
     asset: locomotion/velocity/walk_motifect_stable_torso_no_phase_lpf6_93400
 
+  velocity_motifect_stable_torso_no_phase_lpf6_93400_limited:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_stable_torso_no_phase_lpf6_93400_limited
 
   mimic_dance1:
     kind: mimic
@@ -339,10 +964,6 @@ state_behaviors:
     kind: mimic
     asset: mimic/squat
     motion: squat.csv
-  mimic_coin_pick:
-    kind: mimic
-    asset: mimic/coin_pick
-    motion: coin_pick.csv
   mimic_coin_pick_newton:
     kind: mimic
     asset: mimic/coin_pick_newton
@@ -412,3 +1033,497 @@ state_behaviors:
     asset: mimic/motifect_taunt_mock_bow
     motion: motifect_taunt_mock_bow.csv
 
+  mimic_standup:
+    kind: mimic
+    asset: mimic/stand_up
+    motion: stand_up.csv
+  mimic_liedown:
+    kind: mimic
+    asset: mimic/lie_down
+    motion: lie_down.csv
+    on_complete: Damping
+  
+  mimic_taeguek_1:
+    kind: mimic
+    asset: mimic/taeguek_01
+    motion: k1_taeguek01_collision_only_50hz.csv
+  mimic_taeguek_2:
+    kind: mimic
+    asset: mimic/taeguek_02
+    motion: k1_taeguek02_collision_only_50hz_converted.csv
+  mimic_taeguek_3:
+    kind: mimic   
+    asset: mimic/taeguek_03
+    motion: k1_taeguek03_collision_only_50hz_converted.csv
+  mimic_taeguek_4:
+    kind: mimic
+    asset: mimic/taeguek_04
+    motion: taegeuk4.csv
+  mimic_taeguek_5:
+    kind: mimic
+    asset: mimic/taeguek_05
+    motion: taegeuk5.csv
+  mimic_taeguek_6:
+    kind: mimic
+    asset: mimic/taeguek_05
+    motion: taegeuk5.csv
+  mimic_taeguek_7:
+    kind: mimic
+    asset: mimic/taeguek_07
+    motion: k1_taeguek07_arm_corrected_v1_50hz_converted.csv
+  mimic_taeguek_8:
+    kind: mimic
+    asset: mimic/taeguek_07
+    motion: k1_taeguek07_arm_corrected_v1_50hz_converted.csv
+  
+  mimic_crayon_bar3_a2t:
+    kind: mimic
+    asset: mimic/crayon_bar3
+    motion: 11_crayon_pop_bar_bar_bar_flowhmr_umr_k1.csv
+
+  mimic_peaches:
+    kind: mimic
+    asset: mimic/peaches_soft_landing_10k_109997
+    motion: motion.csv
+    fps: 50
+    on_complete: Velocity
+
+  mimic_hammer_transition_xy_5k:
+    kind: mimic
+    asset: mimic/hammer_transition_xy_on_105000
+    motion: motion.csv
+    fps: 50
+    on_complete: Velocity
+
+  mimic_kill_xy_112999_07eb337a:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-kill-this-love-source-bound-e2e-v2_112999_07eb337a4520
+    motion: motion.csv
+    fps: 50
+  mimic_anpanman_xy_112999_92bdb876:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-anpanman-source-bound-e2e-v2_112999_92bdb876401c
+    motion: motion.csv
+    fps: 50
+  mimic_butter_xy_112999_0bcc9a83:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-butter-source-bound-e2e-v2_112999_0bcc9a831119
+    motion: motion.csv
+    fps: 50
+  mimic_l_xy_112999_5fb4d087:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-l-original-postprocess-source-bound-e2e-v2_112999_5fb4d087cc56
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicpopxyk1_112999_c47d9042:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-pop-off-pop-off-e2e-v1_112999_c47d904237ed
+    motion: motion.csv
+    fps: 50
+  mimic_rude_xy_112999_84d931a4:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-rude-e2e-v1_112999_84d931a4a62a
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicicyxyk1_112999_11eaa701:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-icy-source-bound-e2e-v2_112999_11eaa7010a3e
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicdallaxyk1_112999_96212e46:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-dalla-dalla-source-bound-e2e-v2_112999_96212e46abb5
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimiclovesickxyk1_112999_28e737d0:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-lovesick-girls-source-bound-e2e-v2_112999_28e737d00b01
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicyesoryesxyk1_112999_423a5938:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-yes-or-yes-source-bound-e2e-v2_112999_423a593865db
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicdynamitexyk1_112999_9ec28a87:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-dynamite-preparation-recovery-e2e-v1_112999_9ec28a876118
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicboywithluvxyk1_112999_5b225a9a:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-boy-with-luv-continuous-e2e-v1_112999_5b225a9af4df
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicsmartflowk1_107999_fb601c79:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/smart_e289511d41ac
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_eval27_mimicthatthatxyk1_112999_c646419b:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-that-that-valid-track-e2e-v1_112999_c646419b1d97
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicdtnaxyk1_109000_a364220b:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-dance-the-night-away-preparation-recovery-e2e-v1_112999_d81a635e6d35
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimiconxyk1_107000_72da9c90:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-on-e2e-v1_110999_721e568d44ca
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicpowerk1_25000_389ffe11:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/provided-POWER_30000_9fbcf611fed5
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimiclikejenniek1_107999_f55628f7:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/movin-like-jennie-mesh-com-v1_112999_44b49b73b399
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicjiyu404xyk1_110000_d66ac6ba:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-404-jiyu-shorts-km-QzJqZRJ4-persistent-cache-recovery-e2e-v1_112999_ec4b7589bfda
+    motion: motion.csv
+    fps: 50
+  mimic_easy_xy_c_109999_a667fbf5:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-leia-easy-full-recap-interval20-recovery-v3_114999_47c78542e68e
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimichypeboyflowk1_107999_592cd45c:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-leia-hype-boy-full-recap-interval20-recovery-v3_112999_ba590429313b
+    motion: motion.csv
+    fps: 50
+  mimic_eval27_mimicbouncyflowk1_107999_c9fe2ee4:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/bouncy_61ee18539989
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_eval27_mimicdramaflowk1_107999_485ffdfe:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/drama_1bab1951792d
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_eval27_mimicomgflowk1_107999_32329a5a:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/omg_035bddbbaded
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_eval27_mimicperfectnightflowk1_107999_b7cd53a4:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/perfectnight_6d196ade019e
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_eval27_mimicslayflowk1_107999_f3050621:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/slay_040a582dafcc
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_eval27_mimicuntouchableflowk1_107999_1b7b7656:
+    kind: mimic
+    asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-leia-untouchable-full-recap-interval20-recovery-v3_112999_b4299b43fcdf
+    motion: motion.csv
+    fps: 50
+  mimic_task2_permissiontodance_1a8656a42939:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/permissiontodance_1a8656a42939
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_howyoulikethat_55a2e178dd34:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/howyoulikethat_55a2e178dd34
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_neon_c6a28b07339d:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/neon_c6a28b07339d
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_feel_special:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/feel_special
+    motion: feel_special.csv
+    fps: 50
+  mimic_task2_thefeels_f3572b0c6430:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/thefeels_f3572b0c6430
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_fancy_d42b5a98d82c:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/fancy_d42b5a98d82c
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_icantstopme_f297435a7271:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/icantstopme_f297435a7271
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_pinkvenom_8880e167d346:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/pinkvenom_8880e167d346
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_somidumbdumb_114805320ec8:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/somidumbdumb_114805320ec8
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_strategy_ed3d61a77431:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/strategy_ed3d61a77431
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_supernova_2f114f3d15e9:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/supernova_2f114f3d15e9
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_money_5e65fd611bb4:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/money_5e65fd611bb4
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_gnarly_2ffdf957f29d:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/gnarly_2ffdf957f29d
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_inthemorning_34ba869a09eb:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/inthemorning_34ba869a09eb
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_loco_6c79376d1528:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/loco_6c79376d1528
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_superlady_dc8c04d8c4be:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/superlady_dc8c04d8c4be
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_cherishmylove_752b705cd688:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/cherishmylove_752b705cd688
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_tomboy_93c2f221bbc3:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/tomboy_93c2f221bbc3
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_drip_4bbd0ecc89e7:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/drip_4bbd0ecc89e7
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_spicy_033a9df577b6:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/spicy_033a9df577b6
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_savage_ae9342d207de:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/savage_ae9342d207de
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_nextlevel_fca2ac6ad7e8:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/nextlevel_fca2ac6ad7e8
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_queencard_89defef93f38:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/queencard_89defef93f38
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_kitsch_934d15b32d40:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/kitsch_934d15b32d40
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_lovemelikethis_b6b7d2bc6163:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/lovemelikethis_b6b7d2bc6163
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_unforgiven_bbfba8034f7a:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/unforgiven_bbfba8034f7a
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_3d_0b06ed69631e:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/3d_0b06ed69631e
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_psycho_6d1b868b49f2:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/psycho_6d1b868b49f2
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_blackmamba_40d1eed81da2:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/blackmamba_40d1eed81da2
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_babymonsterbillionaire_a148d4ec13e6:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/babymonsterbillionaire_a148d4ec13e6
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_jisooearthquake_3ae001f410ba:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/jisooearthquake_3ae001f410ba
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_cheshire_19cbfb1a6290:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/cheshire_19cbfb1a6290
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_xoxo_d3816fbd11a8:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/xoxo_d3816fbd11a8
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_armageddon_21defea2aaba:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/armageddon_21defea2aaba
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_hot_07f3f85d4ec6:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/hot_07f3f85d4ec6
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_sheesh_161e1d789fea:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/sheesh_161e1d789fea
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_whatislove_7869efa4fe85:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/whatislove_7869efa4fe85
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_solo_ce211219900b:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/solo_ce211219900b
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_badboy_b579b2088a6b:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/badboy_b579b2088a6b
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_knockknock_3247f2aff2db:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/knockknock_3247f2aff2db
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_cheerup_27a458156a58:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/cheerup_27a458156a58
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_heartshaker_7167b197633c:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/heartshaker_7167b197633c
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_likeoohahh_b80074cc63ab:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/likeoohahh_b80074cc63ab
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_likey_92bde402696d:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/likey_92bde402696d
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_signal_8b264d220f67:
+    kind: mimic
+    asset: mimic/task2_verified72_20261019_v1/signal_8b264d220f67
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+  mimic_task2_tt_8f3449b7a2da:
+    kind: mimic
+    asset: mimic/task2_tt_select_add_20261019_v1/tt_8f3449b7a2da
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+
+  mimic_seventeen:
+    kind: mimic
+    asset: mimic/20261015_021746_k1_spider_motion_seventeen_spider_pretrained
+    motion: motion.csv
+    fps: 50
+  mimic_zico:
+    kind: mimic
+    asset: mimic/20261015_115410_new_zico_f503_hold1s
+    motion: motion.csv
+    fps: 50
+  mimic_cheerleading:
+    kind: mimic
+    asset: mimic/20261020_071501_cheerleading_v2_cyclo_ready
+    motion: motion.csv
+    fps: 50

@@ -10,23 +10,29 @@
   <xacro:property name="default_use_mock_hardware" value="false" />
   <xacro:property name="default_mock_sensor_commands" value="false" />
 
-  <xacro:macro name="k1_system" params="use_mock_hardware:=^|${default_use_mock_hardware} mock_sensor_commands:=^|${default_mock_sensor_commands}">
+  <xacro:macro name="k1_system" params="diagnostics_enabled:=false use_mock_hardware:=^|${default_use_mock_hardware} mock_sensor_commands:=^|${default_mock_sensor_commands}">
     <xacro:k1_right_arm_system
+      diagnostics_enabled="${diagnostics_enabled}"
       use_mock_hardware="${use_mock_hardware}"
       mock_sensor_commands="${mock_sensor_commands}" />
     <xacro:k1_left_arm_system
+      diagnostics_enabled="${diagnostics_enabled}"
       use_mock_hardware="${use_mock_hardware}"
       mock_sensor_commands="${mock_sensor_commands}" />
     <xacro:k1_left_leg_system
+      diagnostics_enabled="${diagnostics_enabled}"
       use_mock_hardware="${use_mock_hardware}"
       mock_sensor_commands="${mock_sensor_commands}" />
     <xacro:k1_right_leg_system
+      diagnostics_enabled="${diagnostics_enabled}"
       use_mock_hardware="${use_mock_hardware}"
       mock_sensor_commands="${mock_sensor_commands}" />
     <xacro:k1_imu_system
+      diagnostics_enabled="${diagnostics_enabled}"
       use_mock_hardware="${use_mock_hardware}"
       mock_sensor_commands="${mock_sensor_commands}" />
     <xacro:k1_hat_system
+      diagnostics_enabled="${diagnostics_enabled}"
       use_mock_hardware="${use_mock_hardware}"
       mock_sensor_commands="${mock_sensor_commands}" />
   </xacro:macro>

@@ -16,10 +16,15 @@
 # Author: Woojin Wie
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+import os
+import uuid
+
+from launch.actions import (
+    DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, OpaqueFunction, RegisterEventHandler)
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import Command, FindExecutable, IfElseSubstitution, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
@@ -35,6 +40,34 @@ def generate_launch_description():
                               description='Enable mock sensor commands.'),
         DeclareLaunchArgument('model', default_value='k1_rev1',
                               description='Model name.'),
+        DeclareLaunchArgument('diagnostics_enabled', default_value='true',
+                              description='Enable DHI observations and independent health processes.'),
+        DeclareLaunchArgument('diagnostics_response_evidence_enabled', default_value='true',
+                              description='Capture failed Optimized read evidence for app localization.'),
+        DeclareLaunchArgument('diagnostics_standard_aggregation', default_value='true',
+                              description='Group /diagnostics using the standard K1 rev1 analyzer.'),
+        DeclareLaunchArgument('diagnostics_hat_telemetry', default_value=LaunchConfiguration('diagnostics_enabled'),
+                              description='Publish existing HAT/BMS memory at 5 Hz.'),
+        DeclareLaunchArgument('restart', default_value='false',
+                              description='Enable automatic E-stop recovery to initial bringup state.'),
+        DeclareLaunchArgument('recovery_enabled', default_value=LaunchConfiguration('restart'),
+                              description='Enable motor hardware lifecycle recovery.'),
+        DeclareLaunchArgument('recovery_auto_rearm', default_value=LaunchConfiguration('restart'),
+                              description='Permit recovery activation into the selected rearm mode.'),
+        DeclareLaunchArgument('recovery_rearm_mode',
+                              default_value=IfElseSubstitution(
+                                  LaunchConfiguration('restart'), 'startup', 'damping'),
+                              choices=['startup', 'damping']),
+        DeclareLaunchArgument('recovery_damping_gain', default_value='3.0'),
+        DeclareLaunchArgument('start_diagnostics_nodes', default_value='true',
+                              description='Set false when a separate health launch already runs.'),
+        DeclareLaunchArgument('robot_id', default_value=os.environ.get('ROBOT_ID', 'unassigned'),
+                              description='Robot identity for app telemetry; set per robot.'),
+        DeclareLaunchArgument('diagnostics_startup_directory',
+                              default_value=os.environ.get('DHI_DIAGNOSTICS_STARTUP_DIRECTORY',
+                                                          os.path.expanduser('~/.ros/dhi-diagnostics/startup'))),
+        DeclareLaunchArgument('diagnostics_run_id', default_value=str(uuid.uuid4()),
+                              description='Unique per bringup; reuse only to replay startup history.'),
     ]
 
     start_rviz = LaunchConfiguration('start_rviz')
@@ -54,6 +87,12 @@ def generate_launch_description():
         'mock_sensor_commands:=', mock_sensor_commands,
         ' ',
         'model:=', model,
+        ' diagnostics_enabled:=', LaunchConfiguration('diagnostics_enabled'),
+        ' diagnostics_response_evidence_enabled:=', LaunchConfiguration('diagnostics_response_evidence_enabled'),
+        ' recovery_enabled:=', LaunchConfiguration('recovery_enabled'),
+        ' recovery_auto_rearm:=', LaunchConfiguration('recovery_auto_rearm'),
+        ' recovery_rearm_mode:=', LaunchConfiguration('recovery_rearm_mode'),
+        ' recovery_damping_gain:=', LaunchConfiguration('recovery_damping_gain'),
     ])
 
     controller_manager_config = PathJoinSubstitution([
@@ -71,8 +110,13 @@ def generate_launch_description():
     control_node = Node(
         package='controller_manager',
         executable='ros2_control_node',
-        parameters=[robot_description, controller_manager_config],
+        parameters=[robot_description, controller_manager_config,
+                    PathJoinSubstitution([FindPackageShare('ai_sapiens_diagnostics'), 'config', 'k1_hat_telemetry.yaml'])],
         output='both',
+        additional_env={
+            'DHI_DIAGNOSTICS_STARTUP_DIRECTORY': LaunchConfiguration('diagnostics_startup_directory'),
+            'DHI_DIAGNOSTICS_RUN_ID': LaunchConfiguration('diagnostics_run_id'),
+        },
     )
 
     robot_state_pub_node = Node(
@@ -121,8 +165,41 @@ def generate_launch_description():
         )
     )
 
+    diagnostics = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([
+            FindPackageShare('ai_sapiens_diagnostics'), 'launch', 'health.launch.py'])),
+        launch_arguments={
+            'robot_id': LaunchConfiguration('robot_id'),
+            'startup_directory': LaunchConfiguration('diagnostics_startup_directory'),
+            'startup_run_id': LaunchConfiguration('diagnostics_run_id'),
+            'start_startup_observer': 'true',
+            'start_standard_aggregator': LaunchConfiguration('diagnostics_standard_aggregation'),
+        }.items(),
+        condition=IfCondition(LaunchConfiguration('diagnostics_enabled')),
+    )
+
+    recovery = Node(
+        package='ai_sapiens_recovery', executable='recovery_node', output='screen',
+        parameters=[PathJoinSubstitution([
+            FindPackageShare('ai_sapiens_recovery'), 'config', 'k1.yaml']),
+            {'execute': True,
+             'auto_rearm': ParameterValue(LaunchConfiguration('recovery_auto_rearm'), value_type=bool),
+             'rearm_mode': LaunchConfiguration('recovery_rearm_mode')}],
+        condition=IfCondition(LaunchConfiguration('recovery_enabled')),
+    )
+
+    hat_telemetry = Node(package='controller_manager', executable='spawner',
+                         arguments=['hat_state_broadcaster'], output='screen',
+                         condition=IfCondition(LaunchConfiguration('diagnostics_hat_telemetry')))
+
     return LaunchDescription(
         declared_arguments + [
+            OpaqueFunction(function=validate_response_evidence),
+            OpaqueFunction(function=validate_recovery_options),
+            GroupAction(actions=[diagnostics],
+                        condition=IfCondition(LaunchConfiguration('start_diagnostics_nodes'))),
+            recovery,
+            hat_telemetry,
             control_node,
             robot_state_pub_node,
             joint_state_broadcaster_spawner,
@@ -132,3 +209,24 @@ def generate_launch_description():
             # rviz_node,
         ]
     )
+
+
+def validate_response_evidence(context):
+    # Explicitly disabling capture preserves compatibility with older installations.
+    value = context.launch_configurations.get('diagnostics_response_evidence_enabled', 'false')
+    if value.lower() in ('false', '0'):
+        return []
+    from ai_sapiens_diagnostics.preflight import validate_response_evidence_launch
+    return validate_response_evidence_launch(context)
+
+
+def validate_recovery_options(context):
+    enabled = IfCondition(LaunchConfiguration('recovery_enabled')).evaluate(context)
+    rearm = IfCondition(LaunchConfiguration('recovery_auto_rearm')).evaluate(context)
+    if rearm and not enabled:
+        raise RuntimeError('recovery_auto_rearm requires recovery_enabled:=true')
+    if enabled and not IfCondition(LaunchConfiguration('diagnostics_enabled')).evaluate(context):
+        raise RuntimeError('recovery_enabled requires diagnostics_enabled:=true')
+    if enabled and IfCondition(LaunchConfiguration('use_mock_hardware')).evaluate(context):
+        raise RuntimeError('K1 recovery requires real hardware; use the recovery mock tests instead')
+    return []

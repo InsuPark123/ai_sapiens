@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="k1_left_arm_system" params="use_mock_hardware:=^|false mock_sensor_commands:=^|false">
+  <xacro:arg name="diagnostics_response_evidence_enabled" default="false" />
+  <xacro:arg name="recovery_enabled" default="false" />
+  <xacro:arg name="recovery_auto_rearm" default="false" />
+  <xacro:arg name="recovery_rearm_mode" default="damping" />
+  <xacro:arg name="recovery_damping_gain" default="3.0" />
+  <xacro:macro name="k1_left_arm_system" params="diagnostics_enabled:=false use_mock_hardware:=^|false mock_sensor_commands:=^|false">
     <ros2_control name="k1_left_arm" type="system" is_async="true">
       <properties>
         <async scheduling_policy="synchronized" print_warnings="false"/>
@@ -13,6 +18,14 @@
         </xacro:if>
         <xacro:unless value="${use_mock_hardware}">
           <plugin>dynamixel_hardware_interface/DynamixelHardware</plugin>
+          <param name="diagnostics_enabled">${str(diagnostics_enabled).lower()}</param>
+          <param name="diagnostics_response_evidence_enabled">$(arg diagnostics_response_evidence_enabled)</param>
+          <param name="recovery_enabled">$(arg recovery_enabled)</param>
+          <param name="recovery_auto_rearm">$(arg recovery_auto_rearm)</param>
+          <param name="recovery_rearm_mode">$(arg recovery_rearm_mode)</param>
+          <param name="recovery_damping_gain">$(arg recovery_damping_gain)</param>
+          <param name="diagnostics_publish_rate">5</param>
+          <param name="diagnostics_stale_timeout_ms">500</param>
           <param name="port_name">e2d2udp:192.168.200.200:5002</param>
           <param name="baud_rate">6000000</param>
           <param name="error_timeout_ms">500</param>
@@ -80,6 +93,9 @@
       </joint>
 
       <gpio name="dxl11">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_shoulder_pitch_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">11</param>
         <param name="Drive Mode">64</param>
@@ -100,6 +116,9 @@
         <param name="Current Limit">4427</param>
       </gpio>
       <gpio name="dxl12">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_shoulder_roll_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">12</param>
         <param name="Drive Mode">64</param>
@@ -120,6 +139,9 @@
         <param name="Current Limit">4427</param>
       </gpio>
       <gpio name="dxl13">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_shoulder_yaw_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">13</param>
         <param name="Drive Mode">65</param>
@@ -140,6 +162,9 @@
         <param name="Current Limit">4427</param>
       </gpio>
       <gpio name="dxl14">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_elbow_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">14</param>
         <param name="Drive Mode">64</param>
@@ -160,6 +185,9 @@
         <param name="Current Limit">4427</param>
       </gpio>
       <gpio name="dxl15">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_wrist_roll_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">15</param>
         <param name="Drive Mode">64</param>

@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="k1_imu_system" params="use_mock_hardware:=^|false mock_sensor_commands:=^|false">
+  <xacro:arg name="diagnostics_response_evidence_enabled" default="false" />
+  <xacro:macro name="k1_imu_system" params="diagnostics_enabled:=false use_mock_hardware:=^|false mock_sensor_commands:=^|false">
     <ros2_control name="k1_imu" type="system" is_async="true">
       <properties>
         <async scheduling_policy="synchronized" print_warnings="false"/>
@@ -13,6 +14,10 @@
         </xacro:if>
         <xacro:unless value="${use_mock_hardware}">
           <plugin>dynamixel_hardware_interface/DynamixelHardware</plugin>
+          <param name="diagnostics_enabled">${str(diagnostics_enabled).lower()}</param>
+          <param name="diagnostics_response_evidence_enabled">$(arg diagnostics_response_evidence_enabled)</param>
+          <param name="diagnostics_publish_rate">5</param>
+          <param name="diagnostics_stale_timeout_ms">500</param>
           <param name="port_name">e2d2udp:192.168.200.200:5005</param>
           <param name="baud_rate">6000000</param>
           <param name="error_timeout_ms">500</param>

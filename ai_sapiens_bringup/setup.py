@@ -41,6 +41,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
         *package_files('config'),
+        *package_files('docs'),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

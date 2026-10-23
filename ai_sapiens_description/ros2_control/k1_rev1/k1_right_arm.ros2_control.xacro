@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="motor_temperatures_enabled" default="false" />
   <xacro:arg name="diagnostics_response_evidence_enabled" default="false" />
   <xacro:arg name="recovery_enabled" default="false" />
   <xacro:arg name="recovery_auto_rearm" default="false" />
@@ -108,6 +109,10 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>
@@ -131,6 +136,10 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>
@@ -154,6 +163,10 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>
@@ -177,6 +190,10 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>
@@ -200,6 +217,10 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>

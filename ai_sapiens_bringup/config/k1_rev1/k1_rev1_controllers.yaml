@@ -10,6 +10,9 @@
       joint_group_impedance_controller:
         type: ai_sapiens_joint_group_impedance_controller/AiSapiensJointGroupImpedanceController
 
+      motor_temperature_broadcaster:
+        type: joint_state_broadcaster/JointStateBroadcaster
+
       imu_sensor_broadcaster:
         type: imu_sensor_broadcaster/IMUSensorBroadcaster
 
@@ -19,6 +22,15 @@
       rc_broadcaster:
         type: ai_sapiens_rc_broadcaster/AiSapiensRcBroadcaster
 
+
+  motor_temperature_broadcaster:
+    ros__parameters:
+      update_rate: 5
+      use_local_topics: true
+      use_urdf_to_filter: false
+      publish_dynamic_joint_states: true
+      joints: [dxl1, dxl2, dxl3, dxl4, dxl5, dxl11, dxl12, dxl13, dxl14, dxl15, dxl21, dxl22, dxl23, dxl24, dxl25, dxl26, dxl31, dxl32, dxl33, dxl34, dxl35, dxl36, dxl41]
+      interfaces: [Present Temperature, Present Temperature (Motor)]
 
   imu_sensor_broadcaster:
     ros__parameters:

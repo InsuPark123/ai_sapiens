@@ -38,6 +38,8 @@ def generate_launch_description():
                               description='Use mock hardware mirroring command.'),
         DeclareLaunchArgument('mock_sensor_commands', default_value='false',
                               description='Enable mock sensor commands.'),
+        DeclareLaunchArgument('motor_temperatures_enabled', default_value='true',
+                              description='Read motor temperatures and publish cached diagnostics at 5 Hz.'),
         DeclareLaunchArgument('model', default_value='k1_rev1',
                               description='Model name.'),
         DeclareLaunchArgument('diagnostics_enabled', default_value='true',
@@ -87,6 +89,7 @@ def generate_launch_description():
         'mock_sensor_commands:=', mock_sensor_commands,
         ' ',
         'model:=', model,
+        ' motor_temperatures_enabled:=', LaunchConfiguration('motor_temperatures_enabled'),
         ' diagnostics_enabled:=', LaunchConfiguration('diagnostics_enabled'),
         ' diagnostics_response_evidence_enabled:=', LaunchConfiguration('diagnostics_response_evidence_enabled'),
         ' recovery_enabled:=', LaunchConfiguration('recovery_enabled'),
@@ -144,6 +147,17 @@ def generate_launch_description():
         output='screen'
     )
 
+    motor_temperature_spawner = Node(
+        package='controller_manager', executable='spawner',
+        arguments=['motor_temperature_broadcaster'], output='screen',
+        condition=IfCondition(LaunchConfiguration('motor_temperatures_enabled')),
+    )
+    motor_temperature_diagnostics = Node(
+        package='ai_sapiens_diagnostics', executable='temperature_node',
+        parameters=[{'robot_id': LaunchConfiguration('robot_id')}], output='screen',
+        condition=IfCondition(LaunchConfiguration('motor_temperatures_enabled')),
+    )
+
     rc_broadcaster_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -196,10 +210,13 @@ def generate_launch_description():
         declared_arguments + [
             OpaqueFunction(function=validate_response_evidence),
             OpaqueFunction(function=validate_recovery_options),
+            OpaqueFunction(function=validate_motor_temperatures),
             GroupAction(actions=[diagnostics],
                         condition=IfCondition(LaunchConfiguration('start_diagnostics_nodes'))),
             recovery,
             hat_telemetry,
+            motor_temperature_spawner,
+            motor_temperature_diagnostics,
             control_node,
             robot_state_pub_node,
             joint_state_broadcaster_spawner,
@@ -229,4 +246,12 @@ def validate_recovery_options(context):
         raise RuntimeError('recovery_enabled requires diagnostics_enabled:=true')
     if enabled and IfCondition(LaunchConfiguration('use_mock_hardware')).evaluate(context):
         raise RuntimeError('K1 recovery requires real hardware; use the recovery mock tests instead')
+    return []
+
+
+def validate_motor_temperatures(context):
+    enabled = IfCondition(LaunchConfiguration('motor_temperatures_enabled')).evaluate(context)
+    diagnostics = IfCondition(LaunchConfiguration('diagnostics_enabled')).evaluate(context)
+    if enabled and not diagnostics:
+        raise RuntimeError('motor_temperatures_enabled requires diagnostics_enabled:=true for sample freshness.')
     return []

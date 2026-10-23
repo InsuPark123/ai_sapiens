@@ -35,16 +35,18 @@ def test_normal_launch_enables_diagnostics_but_keeps_recovery_opt_in():
     for action in declarations.values():
         action.execute(context)
     for name in ('diagnostics_enabled', 'diagnostics_response_evidence_enabled',
-                 'diagnostics_standard_aggregation'):
+                 'diagnostics_standard_aggregation', 'motor_temperatures_enabled'):
         assert perform_substitutions(context, declarations[name].default_value) == 'true'
     for name in ('recovery_enabled', 'recovery_auto_rearm'):
         assert perform_substitutions(context, declarations[name].default_value) == 'false'
     actions = [a for a in entities if not isinstance(a, DeclareLaunchArgument)]
     assert isinstance(actions[0], OpaqueFunction)
     assert isinstance(actions[1], OpaqueFunction)
-    assert isinstance(actions[2], GroupAction)
+    assert isinstance(actions[2], OpaqueFunction)
+    assert isinstance(actions[3], GroupAction)
     nodes = [a for a in actions if isinstance(a, Node)]
-    assert len(nodes) == 7
+    active = [a for a in nodes if a.condition is None or a.condition.evaluate(context)]
+    assert len(active) == 8
     recovery = next(a for a in nodes if a.node_package == 'ai_sapiens_recovery')
     assert not recovery.condition.evaluate(context)
 
@@ -190,3 +192,32 @@ def test_site_identity_and_persistent_journal_can_be_set_without_editing_launch(
         if isinstance(action, DeclareLaunchArgument):
             action.execute(context)
     assert context.launch_configurations['robot_id'] == 'k1-43'
+
+
+@pytest.mark.parametrize('enabled', ['false', 'true'])
+def test_temperature_producer_and_broadcaster_share_opt_in(enabled):
+    module, description = normal_launch()
+    context = LaunchContext()
+    context.launch_configurations['motor_temperatures_enabled'] = enabled
+    for action in description.entities:
+        if isinstance(action, DeclareLaunchArgument):
+            action.execute(context)
+    assert module.validate_motor_temperatures(context) == []
+    nodes = [a for a in description.entities if isinstance(a, Node)]
+    producer = next(a for a in nodes if a.node_package == 'ai_sapiens_diagnostics')
+    spawner = next(a for a in nodes if a.node_package == 'controller_manager'
+                   and any(isinstance(arg, TextSubstitution) and arg.text == 'motor_temperature_broadcaster'
+                           for group in a.cmd for arg in group))
+    assert producer.condition.evaluate(context) is (enabled == 'true')
+    assert spawner.condition.evaluate(context) is (enabled == 'true')
+
+
+def test_temperature_without_dhi_freshness_is_rejected():
+    module, description = normal_launch()
+    context = LaunchContext()
+    context.launch_configurations.update(motor_temperatures_enabled='true', diagnostics_enabled='false')
+    for action in description.entities:
+        if isinstance(action, DeclareLaunchArgument):
+            action.execute(context)
+    with pytest.raises(RuntimeError, match='requires diagnostics_enabled'):
+        module.validate_motor_temperatures(context)

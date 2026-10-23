@@ -22,6 +22,7 @@ setup(
     license='Apache-2.0',
     entry_points={'console_scripts': [
         'health_node = ai_sapiens_diagnostics.node:main',
+        'temperature_node = ai_sapiens_diagnostics.temperature_node:main',
         'hat_collector = ai_sapiens_diagnostics.hat_node:main',
         'hat_collect_once = ai_sapiens_diagnostics.hat_collector:main',
     ]},

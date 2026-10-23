@@ -94,3 +94,26 @@ def test_response_capture_flag_reaches_all_six_components(evidence):
         for hardware in description.findall('./ros2_control/hardware'):
             hardware.remove(hardware.find("param[@name='diagnostics_response_evidence_enabled']"))
     assert ET.tostring(root) == ET.tostring(other)
+
+
+@pytest.mark.parametrize('mock', [False, True])
+def test_temperature_option_only_adds_two_gpio_fields_per_motor(mock):
+    from ai_sapiens_diagnostics.motor_temperature import MOTORS, INTERFACES
+    mappings = {'use_mock_hardware': str(mock).lower(), 'diagnostics_enabled': 'true'}
+    original = ET.fromstring(xacro.process_file(str(DESCRIPTION), mappings=mappings).toxml())
+    mappings['motor_temperatures_enabled'] = 'true'
+    enabled = ET.fromstring(xacro.process_file(str(DESCRIPTION), mappings=mappings).toxml())
+    found = {}
+    for system in enabled.findall('ros2_control'):
+        for gpio in system.findall('gpio'):
+            fields = [state for state in gpio.findall('state_interface') if state.attrib['name'] in INTERFACES]
+            if not fields:
+                continue
+            identity = int(gpio.find("param[@name='ID']").text)
+            assert MOTORS[identity] == system.attrib['name']
+            found[identity] = {state.attrib['name'] for state in fields}
+            for state in fields:
+                gpio.remove(state)
+    assert set(found) == set(MOTORS)
+    assert all(fields == set(INTERFACES) for fields in found.values())
+    assert ET.tostring(enabled) == ET.tostring(original)

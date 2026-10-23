@@ -98,13 +98,13 @@ selectors:
       216: MimicRedredNewton
       217: MimicTurn
 
-      # 220: MimicTaeguek_1
-      # 221: MimicTaeguek_2
-      # 222: MimicTaeguek_3
-      # 223: MimicTaeguek_4
-      # 224: MimicTaeguek_5
-      # 225: MimicTaeguek_6
-      # 236: MimicTaeguek_7
+      220: MimicTaeguek_1
+      221: MimicTaeguek_2
+      222: MimicTaeguek_3
+      223: MimicTaeguek_4
+      224: MimicTaeguek_5
+      225: MimicTaeguek_6
+      226: MimicTaeguek_7
       # 237: MimicTaeguek_8
 
 
@@ -112,9 +112,9 @@ selectors:
       241: MimicTask2PinkvenomXY_8880e167
       242: MimicAttention
       243: MimicTask2SavageXY_ae9342d2
-      244: MimicTask2UnforgivenXY_bbfba803
+      # 244: MimicTask2UnforgivenXY_bbfba803
       245: MimicTeddyBear
-      246: MimicOnXYK1_107000_72da9c90
+      # 246: MimicOnXYK1_107000_72da9c90
       247: MimicEasyXYCK1_109999_a667fbf5
       248: MimicTask2PermissiontodanceXY_1a8656a4
       249: MimicTask2BlackmambaXY_40d1eed8
@@ -158,15 +158,6 @@ selectors:
 
       216: MimicRedredNewton
       217: MimicTurn
-
-      220: MimicTaeguek_1
-      221: MimicTaeguek_2
-      222: MimicTaeguek_3
-      223: MimicTaeguek_4
-      224: MimicTaeguek_5
-      225: MimicTaeguek_6
-      236: MimicTaeguek_7
-      237: MimicTaeguek_8
 
       240: MimicCrayonBar3
       # 241: MimicSupernaturalLongYawStanceSupportFT8k
@@ -274,6 +265,184 @@ selectors:
 state_machine:
   initial: Damping
   states:
+    Damping:
+      run: damping
+      transitions:
+        - when: ReadyPoseRequested
+          to: ReadyPose
+    ReadyPose:
+      run: ready_pose
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: VelocityRequested
+          to: Velocity
+        - when: MimicRequested
+          select: mimic_selector
+    ZeroPose:
+      run: posture_zero_pose
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: VelocityRequested
+          to: Velocity
+        - when: MimicRequested
+          select: mimic_selector
+    Velocity:
+      # run: velocity_policy_amp_hangang
+      # run: velocity_policy_amp_hangang_limited
+      # run: velocity_policy_woojin_amp_mjlab_k1_head_safe_50000
+      # run: velocity_policy_walk_terrain
+      # run: velocity_motifect_stable_torso_no_phase_lpf6_93400
+      run: velocity_motifect_stable_torso_no_phase_lpf6_93400_limited
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: MimicRequested
+          trigger: edge
+          select: mimic_selector
+
+    SubVelocityTerrain:
+      run: velocity_policy_walk_terrain
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: VelocityRequested
+          to: Velocity
+
+    SubVelocityHangang:
+      # run: velocity_policy_amp_hangang
+      run: velocity_motifect_stable_torso_no_phase_lpf6_93400
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: VelocityRequested
+          to: Velocity
+
+    Mimic:
+      abstract: true
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: VelocityRequested
+          to: Velocity
+    MimicDance1:
+      parent: Mimic
+      run: mimic_dance1
+    MimicDance2:
+      parent: Mimic
+      run: mimic_dance2
+    MimicJumpNewton:
+      parent: Mimic
+      run: mimic_jump_newton
+    MimicRedredNewton:
+      parent: Mimic
+      run: mimic_redred_newton
+    MimicSquat:
+      parent: Mimic
+      run: mimic_squat
+    MimicCoinPickNewton:
+      parent: Mimic
+      run: mimic_coin_pick_newton
+    MimicBoxingNewton:
+      parent: Mimic
+      run: mimic_boxing_newton
+    MimicBowNavel:
+      parent: Mimic
+      run: mimic_bow_navel
+    MimicLemonade:
+      parent: Mimic
+      run: mimic_lemonade
+    MimicTurn:
+      parent: Mimic
+      run: mimic_turn
+    MimicFlower3:
+      parent: Mimic
+      run: flower3
+    MimicWaveOneHand:
+      parent: Mimic
+      run: mimic_wave_one_hand
+    MimicWaveTwoHand:
+      parent: Mimic
+      run: mimic_wave_two_hand
+    MimicWaveRightHandOnly:
+      parent: Mimic
+      run: mimic_wave_right_hand_only
+    MimicWaveOneHandWaistYaw:
+      parent: Mimic
+      run: mimic_wave_one_hand_waist_yaw
+    MimicWaveRightHandOnlyWaistYaw:
+      parent: Mimic
+      run: mimic_wave_right_hand_only_waist_yaw
+    MimicWaveTwoHandWaistYaw:
+      parent: Mimic
+      run: mimic_wave_two_hand_waist_yaw
+    MimicWaveOneHandWaistYawLarge:
+      parent: Mimic
+      run: mimic_wave_one_hand_waist_yaw_large
+    MimicWaveRightHandOnlyWaistYawLarge:
+      parent: Mimic
+      run: mimic_wave_right_hand_only_waist_yaw_large
+    MimicWaveTwoHandWaistYawLarge:
+      parent: Mimic
+      run: mimic_wave_two_hand_waist_yaw_large
+    MimicBowBig:
+      parent: Mimic
+      run: mimic_motifect_taunt_mock_bow
+    MimicStandup:
+      parent: Mimic
+      run: mimic_standup
+    MimicLiedown:
+      parent: Mimic
+      run: mimic_liedown
+
+    MimicTaeguek_1:
+      parent: Mimic
+      run: mimic_taeguek_1
+    MimicTaeguek_2:
+      parent: Mimic
+      run: mimic_taeguek_2
+    MimicTaeguek_3:
+      parent: Mimic
+      run: mimic_taeguek_3
+    MimicTaeguek_4:
+      parent: Mimic
+      run: mimic_taeguek_4
+    MimicTaeguek_5:
+      parent: Mimic
+      run: mimic_taeguek_5
+    MimicTaeguek_6:
+      parent: Mimic
+      run: mimic_taeguek_6
+    MimicTaeguek_7:
+      parent: Mimic
+      run: mimic_taeguek_7
+    # MimicTaeguek_8:
+    #   parent: Mimic
+    #   run: mimic_taeguek_8
+
+    MimicSupernaturalShort235Interim105k:
+      parent: Mimic
+      run: mimic_supernatural_short_transition_235_ft5k_117500
+    MimicPeaches:
+      parent: Mimic
+      run: mimic_peaches
+    MimicHammerTransitionXY5k:
+      parent: Mimic
+      run: mimic_hammer_transition_xy_5k
+    MimicCrayonBar3:
+      parent: Mimic
+      run: mimic_crayon_bar3_a2t
     MimicHypeboy:
       parent: Mimic
       run: mimic_kes_hype_boy
@@ -558,293 +727,8 @@ state_machine:
       parent: Mimic
       run: mimic_cheerleading
 
-    Damping:
-      run: damping
-      transitions:
-        - when: ReadyPoseRequested
-          to: ReadyPose
-    ReadyPose:
-      run: ready_pose
-      transitions:
-        - when: DampingRequested
-          to: Damping
-        - when: VelocityRequested
-          to: Velocity
-        - when: MimicRequested
-          select: mimic_selector
-    ZeroPose:
-      run: posture_zero_pose
-      transitions:
-        - when: DampingRequested
-          to: Damping
-        - when: ReadyPoseRequested
-          to: ReadyPose
-        - when: VelocityRequested
-          to: Velocity
-        - when: MimicRequested
-          select: mimic_selector
-    Velocity:
-      # run: velocity_policy_amp_hangang
-      # run: velocity_policy_amp_hangang_limited
-      # run: velocity_policy_woojin_amp_mjlab_k1_head_safe_50000
-      # run: velocity_policy_walk_terrain
-      # run: velocity_motifect_stable_torso_no_phase_lpf6_93400
-      run: velocity_motifect_stable_torso_no_phase_lpf6_93400_limited
-      transitions:
-        - when: DampingRequested
-          to: Damping
-        - when: ReadyPoseRequested
-          to: ReadyPose
-        - when: MimicRequested
-          trigger: edge
-          select: mimic_selector
-
-    SubVelocityTerrain:
-      run: velocity_policy_walk_terrain
-      transitions:
-        - when: DampingRequested
-          to: Damping
-        - when: ReadyPoseRequested
-          to: ReadyPose
-        - when: VelocityRequested
-          to: Velocity
-
-    SubVelocityHangang:
-      # run: velocity_policy_amp_hangang
-      run: velocity_motifect_stable_torso_no_phase_lpf6_93400
-      transitions:
-        - when: DampingRequested
-          to: Damping
-        - when: ReadyPoseRequested
-          to: ReadyPose
-        - when: VelocityRequested
-          to: Velocity
-
-    Mimic:
-      abstract: true
-      transitions:
-        - when: DampingRequested
-          to: Damping
-        - when: ReadyPoseRequested
-          to: ReadyPose
-        - when: VelocityRequested
-          to: Velocity
-    MimicDance1:
-      parent: Mimic
-      run: mimic_dance1
-    MimicSupernaturalShort235Interim105k:
-      parent: Mimic
-      run: mimic_supernatural_short_transition_235_ft5k_117500
-    MimicPeaches:
-      parent: Mimic
-      run: mimic_peaches
-    MimicHammerTransitionXY5k:
-      parent: Mimic
-      run: mimic_hammer_transition_xy_5k
-    MimicDance2:
-      parent: Mimic
-      run: mimic_dance2
-    MimicJumpNewton:
-      parent: Mimic
-      run: mimic_jump_newton
-    MimicRedredNewton:
-      parent: Mimic
-      run: mimic_redred_newton
-    MimicSquat:
-      parent: Mimic
-      run: mimic_squat
-    MimicCoinPickNewton:
-      parent: Mimic
-      run: mimic_coin_pick_newton
-    MimicBoxingNewton:
-      parent: Mimic
-      run: mimic_boxing_newton
-    MimicBowNavel:
-      parent: Mimic
-      run: mimic_bow_navel
-    MimicLemonade:
-      parent: Mimic
-      run: mimic_lemonade
-    MimicTurn:
-      parent: Mimic
-      run: mimic_turn
-    MimicFlower3:
-      parent: Mimic
-      run: flower3
-    MimicWaveOneHand:
-      parent: Mimic
-      run: mimic_wave_one_hand
-    MimicWaveTwoHand:
-      parent: Mimic
-      run: mimic_wave_two_hand
-    MimicWaveRightHandOnly:
-      parent: Mimic
-      run: mimic_wave_right_hand_only
-    MimicWaveOneHandWaistYaw:
-      parent: Mimic
-      run: mimic_wave_one_hand_waist_yaw
-    MimicWaveRightHandOnlyWaistYaw:
-      parent: Mimic
-      run: mimic_wave_right_hand_only_waist_yaw
-    MimicWaveTwoHandWaistYaw:
-      parent: Mimic
-      run: mimic_wave_two_hand_waist_yaw
-    MimicWaveOneHandWaistYawLarge:
-      parent: Mimic
-      run: mimic_wave_one_hand_waist_yaw_large
-    MimicWaveRightHandOnlyWaistYawLarge:
-      parent: Mimic
-      run: mimic_wave_right_hand_only_waist_yaw_large
-    MimicWaveTwoHandWaistYawLarge:
-      parent: Mimic
-      run: mimic_wave_two_hand_waist_yaw_large
-    MimicBowBig:
-      parent: Mimic
-      run: mimic_motifect_taunt_mock_bow
-    MimicStandup:
-      parent: Mimic
-      run: mimic_standup
-    MimicLiedown:
-      parent: Mimic
-      run: mimic_liedown
-
-    MimicTaeguek_1:
-      parent: Mimic
-      run: mimic_taeguek_1
-    MimicTaeguek_2:
-      parent: Mimic
-      run: mimic_taeguek_2
-    MimicTaeguek_3:
-      parent: Mimic
-      run: mimic_taeguek_3
-    MimicTaeguek_4:
-      parent: Mimic
-      run: mimic_taeguek_4
-    MimicTaeguek_5:
-      parent: Mimic
-      run: mimic_taeguek_5
-    MimicTaeguek_6:
-      parent: Mimic
-      run: mimic_taeguek_6
-    MimicTaeguek_7:
-      parent: Mimic
-      run: mimic_taeguek_7
-    MimicTaeguek_8:
-      parent: Mimic
-      run: mimic_taeguek_8
-
-    MimicCrayonBar3:
-      parent: Mimic
-      run: mimic_crayon_bar3_a2t
-
 
 state_behaviors:
-  mimic_kes_hype_boy:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/hype_boy
-    motion: hype_boy.csv
-    fps: 50
-  mimic_kes_omg:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/omg
-    motion: omg.csv
-    fps: 50
-  mimic_kes_super_shy:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/super_shy
-    motion: super_shy.csv
-    fps: 50
-  mimic_kes_attention:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/attention
-    motion: attention.csv
-    fps: 50
-  mimic_kes_ditto:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/ditto
-    motion: ditto.csv
-    fps: 50
-  mimic_kes_eta:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/eta
-    motion: eta.csv
-    fps: 50
-  mimic_kes_how_sweet:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/how_sweet
-    motion: how_sweet.csv
-    fps: 50
-  mimic_kes_love_dive:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/love_dive
-    motion: love_dive.csv
-    fps: 50
-  mimic_kes_i_am:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/i_am
-    motion: i_am.csv
-    fps: 50
-  mimic_kes_talk_that_talk:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/talk_that_talk
-    motion: talk_that_talk.csv
-    fps: 50
-  mimic_kes_teddy_bear:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/teddy_bear
-    motion: teddy_bear.csv
-    fps: 50
-  mimic_kes_stereotype:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/stereotype
-    motion: stereotype.csv
-    fps: 50
-  mimic_kes_sneakers:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/sneakers
-    motion: sneakers.csv
-    fps: 50
-  mimic_kes_wannabe:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/wannabe
-    motion: wannabe.csv
-    fps: 50
-  mimic_kes_not_shy:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/not_shy
-    motion: not_shy.csv
-    fps: 50
-  mimic_kes_dun_dun_dance:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/dun_dun_dance
-    motion: dun_dun_dance.csv
-    fps: 50
-  mimic_kes_antifragile:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/antifragile
-    motion: antifragile.csv
-    fps: 50
-  mimic_gravity:
-    kind: mimic
-    asset: mimic/kes_dance_20261020/gravity
-    motion: gravity.csv
-    fps: 50
-  mimic_supernatural_short_transition_235_ft5k_117500:
-    kind: mimic
-    asset: mimic/supernatural_short_transition_235_ft5k_117500
-    motion: motion.csv
-    fps: 50
-    motion_format: mjlab
-    on_complete: Velocity
-
-  # mimic_supernatural_short_235_interim_110500:
-  #   kind: mimic
-  #   asset: mimic/supernatural_short_235_interim_110500
-  #   motion: motion.csv
-  #   fps: 50
-  #   motion_format: mjlab
-  #   on_complete: Velocity
-
   damping:
     kind: damping
     damping:
@@ -1035,46 +919,46 @@ state_behaviors:
 
   mimic_standup:
     kind: mimic
-    asset: mimic/stand_up
+    asset: mimic/umr_stand_up
     motion: stand_up.csv
   mimic_liedown:
     kind: mimic
-    asset: mimic/lie_down
+    asset: mimic/mur_lie_down
     motion: lie_down.csv
     on_complete: Damping
-  
+
   mimic_taeguek_1:
     kind: mimic
     asset: mimic/taeguek_01
-    motion: k1_taeguek01_collision_only_50hz.csv
+    motion: taeguek_1.csv
   mimic_taeguek_2:
     kind: mimic
     asset: mimic/taeguek_02
-    motion: k1_taeguek02_collision_only_50hz_converted.csv
+    motion: taeguek_2.csv
   mimic_taeguek_3:
     kind: mimic   
     asset: mimic/taeguek_03
-    motion: k1_taeguek03_collision_only_50hz_converted.csv
+    motion: taeguek_3.csv
   mimic_taeguek_4:
     kind: mimic
     asset: mimic/taeguek_04
-    motion: taegeuk4.csv
+    motion: taegeuk_4.csv
   mimic_taeguek_5:
     kind: mimic
     asset: mimic/taeguek_05
-    motion: taegeuk5.csv
+    motion: taeguek_5.csv
   mimic_taeguek_6:
     kind: mimic
-    asset: mimic/taeguek_05
-    motion: taegeuk5.csv
+    asset: mimic/taeguek_06
+    motion: k1_taeguek06_collision_only_50hz_converted.csv
   mimic_taeguek_7:
     kind: mimic
     asset: mimic/taeguek_07
     motion: k1_taeguek07_arm_corrected_v1_50hz_converted.csv
-  mimic_taeguek_8:
-    kind: mimic
-    asset: mimic/taeguek_07
-    motion: k1_taeguek07_arm_corrected_v1_50hz_converted.csv
+  # mimic_taeguek_8:
+  #   kind: mimic
+  #   asset: mimic/taeguek_07
+  #   motion: taegeuk8.csv
   
   mimic_crayon_bar3_a2t:
     kind: mimic
@@ -1527,3 +1411,100 @@ state_behaviors:
     asset: mimic/20261020_071501_cheerleading_v2_cyclo_ready
     motion: motion.csv
     fps: 50
+  mimic_kes_hype_boy:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/hype_boy
+    motion: hype_boy.csv
+    fps: 50
+  mimic_kes_omg:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/omg
+    motion: omg.csv
+    fps: 50
+  mimic_kes_super_shy:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/super_shy
+    motion: super_shy.csv
+    fps: 50
+  mimic_kes_attention:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/attention
+    motion: attention.csv
+    fps: 50
+  mimic_kes_ditto:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/ditto
+    motion: ditto.csv
+    fps: 50
+  mimic_kes_eta:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/eta
+    motion: eta.csv
+    fps: 50
+  mimic_kes_how_sweet:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/how_sweet
+    motion: how_sweet.csv
+    fps: 50
+  mimic_kes_love_dive:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/love_dive
+    motion: love_dive.csv
+    fps: 50
+  mimic_kes_i_am:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/i_am
+    motion: i_am.csv
+    fps: 50
+  mimic_kes_talk_that_talk:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/talk_that_talk
+    motion: talk_that_talk.csv
+    fps: 50
+  mimic_kes_teddy_bear:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/teddy_bear
+    motion: teddy_bear.csv
+    fps: 50
+  mimic_kes_stereotype:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/stereotype
+    motion: stereotype.csv
+    fps: 50
+  mimic_kes_sneakers:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/sneakers
+    motion: sneakers.csv
+    fps: 50
+  mimic_kes_wannabe:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/wannabe
+    motion: wannabe.csv
+    fps: 50
+  mimic_kes_not_shy:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/not_shy
+    motion: not_shy.csv
+    fps: 50
+  mimic_kes_dun_dun_dance:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/dun_dun_dance
+    motion: dun_dun_dance.csv
+    fps: 50
+  mimic_kes_antifragile:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/antifragile
+    motion: antifragile.csv
+    fps: 50
+  mimic_gravity:
+    kind: mimic
+    asset: mimic/kes_dance_20261020/gravity
+    motion: gravity.csv
+    fps: 50
+  mimic_supernatural_short_transition_235_ft5k_117500:
+    kind: mimic
+    asset: mimic/supernatural_short_transition_235_ft5k_117500
+    motion: motion.csv
+    fps: 50
+    motion_format: mjlab
+    on_complete: Velocity

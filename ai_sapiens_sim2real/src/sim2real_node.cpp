@@ -25,6 +25,7 @@
 #include "ai_sapiens_sim2real/sensor_handles/joint_states_sensor_handle.hpp"
 #include "ai_sapiens_sim2real/sensor_handles/localization_sensor_handle.hpp"
 #include "ai_sapiens_sim2real/config/root_config.hpp"
+#include "ai_sapiens_sim2real/config/config_utils.hpp"
 
 namespace ai_sapiens_sim2real
 {
@@ -50,6 +51,9 @@ int Sim2RealNode::run()
     log_startup_options();
     configure();
     run_control_loop_until_shutdown();
+  } catch (const YamlConfigError & e) {
+    RCLCPP_ERROR(node_->get_logger(), "%s", e.what());
+    return 1;
   } catch (const std::exception & e) {
     RCLCPP_ERROR(node_->get_logger(), "Error: %s", e.what());
     return 1;

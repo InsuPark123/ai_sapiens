@@ -1,0 +1,21 @@
+{
+  "checkpoint": "/workspace/cyclo_lab/logs/hammer_deploy5k_20261016/checkpoint/model_105000.pt",
+  "iteration": 105000,
+  "checkpoint_sha256": "5cac986a1a4c1dd880e2b1cc1c262e5e9bcf1b65c91449bb9e5bcae1beb001a8",
+  "input_shape": [
+    1,
+    124
+  ],
+  "output_shape": [
+    1,
+    23
+  ],
+  "clip_actions": 10.0,
+  "max_onnx_parity_error": 4.57763671875e-05,
+  "self_contained": true,
+  "sha256": {
+    "exported/policy.onnx": "c6780ffdd9149daa9d5f6ea08b08e02fda1ba7d127c5e23d55c5f4a70f33dae9",
+    "params/sim2real.yaml": "cb907637a368e5d2a76f9c17559b8fbf92650828642c9d8b2f4a2e29ee4c30d1",
+    "params/motion.csv": "d4da83309e66ce26be76773ab52d9503441b2411907e0f6690c62580a266a216"
+  }
+}

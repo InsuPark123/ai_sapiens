@@ -1,0 +1,15 @@
+{
+  "trajectory": {
+    "path": "/workspace/cyclo_mjlab/source/assets/motions/K1_rev1/peaches_package_v1/motion.npz",
+    "sha256": "58e492e15e80738f63d8f528d75a21ae90a2b70a3cbec70997ffb021109eed53"
+  },
+  "csv": {
+    "path": "/workspace/cyclo_mjlab/source/assets/motions/K1_rev1/peaches_package_v1/motion.csv",
+    "sha256": "2711d1866140ed69efc71f278abe6b37dd771b561663f5f8f3aa6415f276f8da"
+  },
+  "rhythm": {
+    "path": "/workspace/cyclo_mjlab/source/assets/motions/K1_rev1/peaches_package_v1/rhythm_reference.npz",
+    "sha256": "f4180333d5013ff322dfc37c631764dab3fe2780ceca74e2944de167273676a4"
+  },
+  "task": "Cyclo-Mimic-K1-Rev1-Peaches-NoGlobalPosition-Rhythm-SoftLanding"
+}

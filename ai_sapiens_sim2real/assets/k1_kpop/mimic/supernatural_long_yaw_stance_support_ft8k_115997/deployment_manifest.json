@@ -1,0 +1,21 @@
+{
+  "checkpoint": "/workspace/cyclo_lab/logs/dance_seven_deploy_20261019/235/checkpoint/model_115997.pt",
+  "iteration": 115997,
+  "checkpoint_sha256": "d0325a28854262e6e70a2a608951df92323b58291df3d789c624059f03065f29",
+  "input_shape": [
+    1,
+    124
+  ],
+  "output_shape": [
+    1,
+    23
+  ],
+  "clip_actions": 10.0,
+  "max_onnx_parity_error": 4.57763671875e-05,
+  "self_contained": true,
+  "sha256": {
+    "exported/policy.onnx": "d3f2c4adc3830a00b935723df37da93861bc3b556edd791c4957ad563b1a4b25",
+    "params/sim2real.yaml": "cb907637a368e5d2a76f9c17559b8fbf92650828642c9d8b2f4a2e29ee4c30d1",
+    "params/motion.csv": "517c6bf2dbf82b3620b944a35da1683b59a53c46c5736d13fb346ec4027d2b7b"
+  }
+}

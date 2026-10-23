@@ -1,0 +1,21 @@
+{
+  "checkpoint": "/workspace/cyclo_lab/logs/supernatural_short_transition_deploy_117500_20261020/checkpoint/model_117500.pt",
+  "iteration": 117500,
+  "checkpoint_sha256": "b053832fc02a1db56ae89c3a91f7fd96c47cc984038ceffddc025ce3ced98956",
+  "input_shape": [
+    1,
+    124
+  ],
+  "output_shape": [
+    1,
+    23
+  ],
+  "clip_actions": 10.0,
+  "max_onnx_parity_error": 3.0517578125e-05,
+  "self_contained": true,
+  "sha256": {
+    "exported/policy.onnx": "95990fed5f0cf089c3469a8803902233ddd19954fd41e4c8e1ab5ac30f2695c2",
+    "params/sim2real.yaml": "cb907637a368e5d2a76f9c17559b8fbf92650828642c9d8b2f4a2e29ee4c30d1",
+    "params/motion.csv": "c2c72e055da163c61a0d8aedbb83bce5b729ad98915146ae56261973d9e561b9"
+  }
+}

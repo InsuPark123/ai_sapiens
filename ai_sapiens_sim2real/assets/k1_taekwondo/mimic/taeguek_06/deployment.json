@@ -1,0 +1,22 @@
+{
+  "copied_at_kst": "2026-10-23T10:29:17.572660+09:00",
+  "source_bundle": "/home/hc/robotis/cyclo_mjlab/setup/taeguek06_transition_v9_audit_20261022/model_9999_bundle",
+  "destination": "/home/hc/robotis_mujoco/policy/Mimic/1023_compose/taeguek_06",
+  "model": "Taegeuk 6 TransitionV9 model_9999",
+  "checkpoint_sha256": "a72e59125e9c0ffe99f2d3d935ba1af469dac415abadbb5a9bafbd3cfa970f54",
+  "policy_hz": 50,
+  "completed_updates": 10000,
+  "backup": null,
+  "files_sha256": {
+    "exported/policy.pt": "18deaf0534e55da138bd635305660cf44ab2d10589df742418df0e0940d7fbe0",
+    "exported/manifest.json": "257e1c4a1587611c86d493b1db50107e9048738bb2558f2cbc678892534c974c",
+    "exported/policy.onnx.data": "c7ed43ada0ded9ab03154ae203063d4f3681edae84aae13e5e8e57da8dc90ae6",
+    "exported/policy.onnx": "37e21f6b54e7f01acb7558d330876804832a147dcf979ca303886a3632273d8a",
+    "params/agent.yaml": "0211b82cac83b3686b18a2c93258be373fd19611b2e34663429868eda38914fd",
+    "params/sim2real.yaml": "199e318b5d88a89e17299de66995992f6c8bcab59840efd8715a90b317fe4b14",
+    "params/k1_taeguek06_collision_only_50hz_converted.csv": "1a43dc7ff0beeaa57f05be990d0fc44a221e8ff55f0dcfb9a26199d6322c8ae0",
+    "params/env.yaml": "4eeb883937de9d17f14e8c48956cb26b5aa8628669931d778fb512f4a56e0f9a"
+  },
+  "evaluation_report": "/home/hc/Documents/ChatGPT/태권도 학습 .. 로부월드/work/taeguek06_v9_comparison_20261022/REPORT.md",
+  "evaluation_status": "Tracking gains but support-contact and GRF regressions; copied at user request."
+}

@@ -1,0 +1,23 @@
+{
+  "checkpoint": "/workspace/cyclo_mjlab/logs/rsl_rl/k1_peaches_no_global_soft_landing/2026-10-13_09-23-42_peaches_soft_landing_total_10k/model_109997.pt",
+  "iteration": 109997,
+  "checkpoint_sha256": "7010b2ad20c7978e006857c7c153c967748f5d67f3cbd99696abd5aee9a0855f",
+  "input_shape": [
+    1,
+    124
+  ],
+  "output_shape": [
+    1,
+    23
+  ],
+  "clip_actions": 10.0,
+  "max_onnx_parity_error": 2.6702880859375e-05,
+  "self_contained": true,
+  "task": "Cyclo-Mimic-K1-Rev1-Peaches-NoGlobalPosition-Rhythm-SoftLanding",
+  "validation_scope": "CPU ONNX parity only; no sim2sim or hardware validation",
+  "sha256": {
+    "exported/policy.onnx": "dd13cfe6269226f190f73fd31b53a7eb9406e1e29f0e81f46d173964e58ced98",
+    "params/sim2real.yaml": "53fa7e90f5e1bc197d1c6d0ea4f957322aa6549a5dd24225201f4d0a8e09eb75",
+    "params/motion.csv": "2711d1866140ed69efc71f278abe6b37dd771b561663f5f8f3aa6415f276f8da"
+  }
+}

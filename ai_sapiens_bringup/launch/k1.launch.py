@@ -52,17 +52,6 @@ def generate_launch_description():
                               description='Group /diagnostics using the standard K1 rev1 analyzer.'),
         DeclareLaunchArgument('diagnostics_hat_telemetry', default_value=LaunchConfiguration('diagnostics_enabled'),
                               description='Publish existing HAT/BMS memory at 5 Hz.'),
-        DeclareLaunchArgument('restart', default_value='false',
-                              description='Enable automatic E-stop recovery to initial bringup state.'),
-        DeclareLaunchArgument('recovery_enabled', default_value=LaunchConfiguration('restart'),
-                              description='Enable motor hardware lifecycle recovery.'),
-        DeclareLaunchArgument('recovery_auto_rearm', default_value=LaunchConfiguration('restart'),
-                              description='Permit recovery activation into the selected rearm mode.'),
-        DeclareLaunchArgument('recovery_rearm_mode',
-                              default_value=IfElseSubstitution(
-                                  LaunchConfiguration('restart'), 'startup', 'damping'),
-                              choices=['startup', 'damping']),
-        DeclareLaunchArgument('recovery_damping_gain', default_value='3.0'),
         DeclareLaunchArgument('start_diagnostics_nodes', default_value='true',
                               description='Set false when a separate health launch already runs.'),
         DeclareLaunchArgument('robot_id', default_value=os.environ.get('ROBOT_ID', 'unassigned'),
@@ -95,10 +84,6 @@ def generate_launch_description():
         ' motor_temperatures_enabled:=', LaunchConfiguration('motor_temperatures_enabled'),
         ' diagnostics_enabled:=', LaunchConfiguration('diagnostics_enabled'),
         ' diagnostics_response_evidence_enabled:=', LaunchConfiguration('diagnostics_response_evidence_enabled'),
-        ' recovery_enabled:=', LaunchConfiguration('recovery_enabled'),
-        ' recovery_auto_rearm:=', LaunchConfiguration('recovery_auto_rearm'),
-        ' recovery_rearm_mode:=', LaunchConfiguration('recovery_rearm_mode'),
-        ' recovery_damping_gain:=', LaunchConfiguration('recovery_damping_gain'),
     ])
 
     controller_manager_config = PathJoinSubstitution([
@@ -204,16 +189,6 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('diagnostics_enabled')),
     )
 
-    recovery = Node(
-        package='ai_sapiens_recovery', executable='recovery_node', output='screen',
-        parameters=[PathJoinSubstitution([
-            FindPackageShare('ai_sapiens_recovery'), 'config', 'k1.yaml']),
-            {'execute': True,
-             'auto_rearm': ParameterValue(LaunchConfiguration('recovery_auto_rearm'), value_type=bool),
-             'rearm_mode': LaunchConfiguration('recovery_rearm_mode')}],
-        condition=IfCondition(LaunchConfiguration('recovery_enabled')),
-    )
-
     hat_telemetry = Node(package='controller_manager', executable='spawner',
                          arguments=['hat_state_broadcaster'], output='screen',
                          condition=IfCondition(LaunchConfiguration('diagnostics_hat_telemetry')))
@@ -221,11 +196,9 @@ def generate_launch_description():
     return LaunchDescription(
         declared_arguments + [
             OpaqueFunction(function=validate_response_evidence),
-            OpaqueFunction(function=validate_recovery_options),
             OpaqueFunction(function=validate_motor_temperatures),
             GroupAction(actions=[diagnostics],
                         condition=IfCondition(LaunchConfiguration('start_diagnostics_nodes'))),
-            recovery,
             hat_telemetry,
             motor_temperature_spawner,
             imu_temperature_spawner,
@@ -248,18 +221,6 @@ def validate_response_evidence(context):
         return []
     from ai_sapiens_diagnostics.preflight import validate_response_evidence_launch
     return validate_response_evidence_launch(context)
-
-
-def validate_recovery_options(context):
-    enabled = IfCondition(LaunchConfiguration('recovery_enabled')).evaluate(context)
-    rearm = IfCondition(LaunchConfiguration('recovery_auto_rearm')).evaluate(context)
-    if rearm and not enabled:
-        raise RuntimeError('recovery_auto_rearm requires recovery_enabled:=true')
-    if enabled and not IfCondition(LaunchConfiguration('diagnostics_enabled')).evaluate(context):
-        raise RuntimeError('recovery_enabled requires diagnostics_enabled:=true')
-    if enabled and IfCondition(LaunchConfiguration('use_mock_hardware')).evaluate(context):
-        raise RuntimeError('K1 recovery requires real hardware; use the recovery mock tests instead')
-    return []
 
 
 def validate_motor_temperatures(context):

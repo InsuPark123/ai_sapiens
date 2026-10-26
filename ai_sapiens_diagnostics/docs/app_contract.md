@@ -85,4 +85,4 @@ OFF는 기존 기동 경로를 유지하며 원본 ROS level이나 자동 복구
 같은 값이 계속 와도 실제 수신 counter가 증가하면 fresh일 수 있다. 반대로 reporter만 살아 있고 수신 counter가 멈추면 정상으로 연장하지 않는다.
 외부 앱/WS gateway 역시 **자신의 마지막 수신 이후 시간**으로 집계기 자체의 연결 끊김을 판정해야 한다. Transient-local의 마지막 정상 snapshot만으로 살아 있다고 판단하지 않는다.
 Cyclo HTTP/WS gateway와 UI 연결, CM controller 상태 수집은 이 health 노드의 역할이 아니다.
-자동 복구는 별도 recovery 패키지의 opt-in 기능이다.
+이 진단 통합은 상태 관측만 수행하며 하드웨어 자동 복구를 실행하지 않는다.

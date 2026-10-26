@@ -2,10 +2,6 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:arg name="motor_temperatures_enabled" default="false" />
   <xacro:arg name="diagnostics_response_evidence_enabled" default="false" />
-  <xacro:arg name="recovery_enabled" default="false" />
-  <xacro:arg name="recovery_auto_rearm" default="false" />
-  <xacro:arg name="recovery_rearm_mode" default="damping" />
-  <xacro:arg name="recovery_damping_gain" default="3.0" />
   <xacro:macro name="k1_left_leg_system" params="diagnostics_enabled:=false use_mock_hardware:=^|false mock_sensor_commands:=^|false">
     <ros2_control name="k1_left_leg" type="system" is_async="true">
       <properties>
@@ -21,10 +17,6 @@
           <plugin>dynamixel_hardware_interface/DynamixelHardware</plugin>
           <param name="diagnostics_enabled">${str(diagnostics_enabled).lower()}</param>
           <param name="diagnostics_response_evidence_enabled">$(arg diagnostics_response_evidence_enabled)</param>
-          <param name="recovery_enabled">$(arg recovery_enabled)</param>
-          <param name="recovery_auto_rearm">$(arg recovery_auto_rearm)</param>
-          <param name="recovery_rearm_mode">$(arg recovery_rearm_mode)</param>
-          <param name="recovery_damping_gain">$(arg recovery_damping_gain)</param>
           <param name="diagnostics_publish_rate">5</param>
           <param name="diagnostics_stale_timeout_ms">500</param>
           <param name="port_name">e2d2udp:192.168.200.200:5003</param>

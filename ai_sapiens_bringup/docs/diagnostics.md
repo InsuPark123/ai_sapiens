@@ -1,4 +1,4 @@
-# K1 diagnostics and recovery deployment
+# K1 diagnostics deployment
 
 This checkout contains the production packages and their normal K1 launch integration.
 It does not require a robot-specific diagnostics workspace, setup script, web container,
@@ -12,9 +12,8 @@ The AIS changes are limited to:
 | Component | Integration |
 |---|---|
 | `ai_sapiens_diagnostics` | Independent startup observation, health JSON and standard aggregation configuration |
-| `ai_sapiens_recovery` | Optional hardware/controller recovery supervisor |
-| `ai_sapiens_bringup` | Start the diagnostic processes from the normal launch; opt in to recovery with `restart:=true` |
-| `ai_sapiens_description` | Pass diagnostics, response-evidence and recovery parameters to DHI through Xacro |
+| `ai_sapiens_bringup` | Start the diagnostic processes from the normal launch |
+| `ai_sapiens_description` | Pass diagnostics and response-evidence parameters to DHI through Xacro |
 
 Container image creation and the installed DHI/SDK environment are managed by the operator.
 This integration does not require a new Dockerfile, compose configuration, service runner,
@@ -30,7 +29,7 @@ The reference sources are DHI `f1707863a7a956ff0a4cf4de26d2d64311232935` and SDK
 `d2049a3a67cadd7efc0f75c6df2f0c60288a3038`. These are compatibility references, not
 image requirements or a substitute for actual binary/1 kHz verification.
 The SDK must support `ScopedRxFailureCapture`; the DHI must support runtime diagnostics,
-the startup observer, response evidence and recovery when enabled.
+the startup observer and response evidence.
 The public DHI `main` in `ai_sapiens_ci.repos` alone does not establish those capabilities.
 
 After selecting the intended DHI/SDK environment, build the AIS integration in its normal
@@ -40,9 +39,9 @@ For the common layout, inside the robot container:
 ```bash
 cd /root/ros2_ws
 rosdep install --from-paths src/ai_sapiens/ai_sapiens_diagnostics \
-  src/ai_sapiens/ai_sapiens_recovery --ignore-src --rosdistro jazzy -y
+  --ignore-src --rosdistro jazzy -y
 colcon build --symlink-install --packages-select \
-  ai_sapiens_description ai_sapiens_diagnostics ai_sapiens_recovery ai_sapiens_bringup
+  ai_sapiens_description ai_sapiens_diagnostics ai_sapiens_bringup
 source install/local_setup.bash
 # If DHI/SDK are in tmp_ws, select that intended install after AIS:
 source /workspace/tmp_ws/install/local_setup.bash
@@ -57,7 +56,6 @@ Check installed packages and dynamic linkage, not just source directories:
 
 ```bash
 ros2 pkg prefix ai_sapiens_diagnostics
-ros2 pkg prefix ai_sapiens_recovery
 ros2 pkg prefix dynamixel_hardware_interface
 ros2 pkg prefix dynamixel_sdk
 ldd "$(ros2 pkg prefix dynamixel_hardware_interface)/lib/libdynamixel_hardware_interface.so"
@@ -91,7 +89,7 @@ or provision the actual DHI/SDK install separately.
 ## Start
 
 Normal bringup enables diagnostics, failed-response capture, standard aggregation,
-and the read-only HAT/BMS broadcaster. Automatic recovery remains disabled:
+and the read-only HAT/BMS broadcaster:
 
 ```bash
 ros2 launch ai_sapiens_bringup k1.launch.py
@@ -99,19 +97,7 @@ ros2 launch ai_sapiens_bringup k1.launch.py
 
 Use the actual robot ID. The generic default is `unassigned`; it labels app JSON
 and does not choose motor IDs, addresses, ROS domain or control settings.
-Enable E-stop recovery explicitly:
-
-```bash
-ros2 launch ai_sapiens_bringup k1.launch.py restart:=true
-```
-
-Recovery restores motor hardware and controllers to the startup state. It does
-not resume the policy process or bypass HAT/RC freshness, E-stop, control-input
-permission, communication or device-error checks. It requires normal baseline
-observation first; it does not repair an initial bringup failure. Run only one
-supervisor on the same host/monotonic clock namespace as DHI.
-
-To disable the diagnostics additions (with recovery off):
+To disable the diagnostics additions:
 
 ```bash
 ros2 launch ai_sapiens_bringup k1.launch.py \
@@ -126,7 +112,7 @@ firmware collector starts automatically.
 
 | Output | Publisher | Purpose |
 |---|---|---|
-| `/diagnostics` | DHI reporters, independent startup observer, controller manager, optional recovery supervisor | Standard `diagnostic_msgs/msg/DiagnosticArray`: device faults, bus failures, initialization and timing |
+| `/diagnostics` | DHI reporters, independent startup observer, controller manager | Standard `diagnostic_msgs/msg/DiagnosticArray`: device faults, bus failures, initialization and timing |
 | `/diagnostics_agg` | Standard `diagnostic_aggregator` | K1 body-part diagnostic tree |
 | `/ai_sapiens/health` | `ai_sapiens_diagnostics` health node | `std_msgs/msg/String` JSON: validated device/bus state, freshness, startup and recent events |
 | `/ai_sapiens/health/events` | Health node | State-change JSON events; consumers must persist incident history themselves |
@@ -159,7 +145,7 @@ communication settings. Source tests and a local build are not a real-time appro
 For each robot/dependency deployment, compare diagnostics OFF/ON in the same
 supported stationary setup: actual loop interval and execution mean/p99/max,
 per-bus read/write, jitter, counts/amounts over 1 ms, communication failures and
-mode fallback. Separate startup/recovery from steady state, verify loaded binaries,
+mode fallback. Separate startup and fault handling from steady state, verify loaded binaries,
 and retain raw samples. Do not infer p99 from controller-manager cumulative stats.
 
 English: The normal AIS launch owns this integration. Matching DHI/SDK binaries and

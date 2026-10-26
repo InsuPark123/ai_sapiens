@@ -27,7 +27,7 @@ def normal_launch():
     return module, module.generate_launch_description()
 
 
-def test_normal_launch_enables_diagnostics_but_keeps_recovery_opt_in():
+def test_normal_launch_enables_diagnostics():
     _, description = normal_launch()
     entities = description.entities
     context = LaunchContext()
@@ -37,18 +37,13 @@ def test_normal_launch_enables_diagnostics_but_keeps_recovery_opt_in():
     for name in ('diagnostics_enabled', 'diagnostics_response_evidence_enabled',
                  'diagnostics_standard_aggregation', 'motor_temperatures_enabled', 'imu_temperature_enabled'):
         assert perform_substitutions(context, declarations[name].default_value) == 'true'
-    for name in ('recovery_enabled', 'recovery_auto_rearm'):
-        assert perform_substitutions(context, declarations[name].default_value) == 'false'
     actions = [a for a in entities if not isinstance(a, DeclareLaunchArgument)]
     assert isinstance(actions[0], OpaqueFunction)
     assert isinstance(actions[1], OpaqueFunction)
-    assert isinstance(actions[2], OpaqueFunction)
-    assert isinstance(actions[3], GroupAction)
+    assert isinstance(actions[2], GroupAction)
     nodes = [a for a in actions if isinstance(a, Node)]
     active = [a for a in nodes if a.condition is None or a.condition.evaluate(context)]
     assert len(active) == 9
-    recovery = next(a for a in nodes if a.node_package == 'ai_sapiens_recovery')
-    assert not recovery.condition.evaluate(context)
 
 
 def test_production_launch_has_no_robot_specific_installation_path(monkeypatch):
@@ -121,58 +116,6 @@ def test_default_launch_checks_selected_capture_capability(monkeypatch):
     assert module.validate_response_evidence(context) == []
     probe.assert_called_once_with(context)
     assert context.launch_configurations['diagnostics_response_evidence_enabled'] == 'true'
-
-
-@pytest.mark.parametrize('overrides,enabled,rearm,mode', [
-    ({}, False, False, 'damping'),
-    ({'restart': 'true'}, True, True, 'startup'),
-    ({'restart': 'true', 'recovery_rearm_mode': 'damping'}, True, True, 'damping'),
-    ({'recovery_enabled': 'true'}, True, False, 'damping'),
-    ({'recovery_enabled': 'true', 'recovery_auto_rearm': 'true',
-      'recovery_rearm_mode': 'startup'}, True, True, 'startup'),
-    ({'restart': 'true', 'recovery_auto_rearm': 'false'}, True, False, 'startup'),
-])
-def test_one_normal_launch_configures_hardware_and_supervisor_together(overrides, enabled, rearm, mode):
-    from launch_ros.utilities import evaluate_parameters
-    module, description = normal_launch()
-    context = LaunchContext()
-    context.launch_configurations.update(overrides)
-    for action in description.entities:
-        if isinstance(action, DeclareLaunchArgument):
-            action.execute(context)
-    assert module.validate_recovery_options(context) == []
-    recovery = next(a for a in description.entities
-                    if isinstance(a, Node) and a.node_package == 'ai_sapiens_recovery')
-    assert recovery.condition.evaluate(context) is enabled
-    assert context.launch_configurations['recovery_auto_rearm'] == str(rearm).lower()
-    assert context.launch_configurations['recovery_rearm_mode'] == mode
-    # Resolve actual ROS typed overrides without launching any process or opening a port.
-    override = evaluate_parameters(context, recovery._Node__parameters[1:])[0]
-    assert override == {'execute': True, 'auto_rearm': rearm, 'rearm_mode': mode}
-
-
-@pytest.mark.parametrize('overrides,match', [
-    ({'recovery_auto_rearm': 'true', 'recovery_enabled': 'false'}, 'requires recovery_enabled'),
-    ({'restart': 'true', 'diagnostics_enabled': 'false'}, 'requires diagnostics_enabled'),
-    ({'restart': 'true', 'use_mock_hardware': 'true'}, 'requires real hardware'),
-])
-def test_inconsistent_recovery_flags_fail_before_hardware_actions(overrides, match):
-    module, description = normal_launch()
-    context = LaunchContext()
-    context.launch_configurations.update(overrides)
-    for action in description.entities:
-        if isinstance(action, DeclareLaunchArgument):
-            action.execute(context)
-    with pytest.raises(RuntimeError, match=match):
-        module.validate_recovery_options(context)
-
-
-def test_legacy_recovery_launch_does_not_start_a_second_supervisor():
-    path = LAUNCH_FILE.parents[2] / 'ai_sapiens_recovery/launch/k1_recovery_test.launch.py'
-    spec = importlib.util.spec_from_file_location('legacy_recovery_launch', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    assert not any(isinstance(a, Node) for a in module.generate_launch_description().entities)
 
 
 def test_site_identity_and_persistent_journal_can_be_set_without_editing_launch(monkeypatch):

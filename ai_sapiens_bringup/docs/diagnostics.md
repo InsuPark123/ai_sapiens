@@ -101,7 +101,8 @@ To disable the diagnostics additions:
 
 ```bash
 ros2 launch ai_sapiens_bringup k1.launch.py \
-  diagnostics_enabled:=false diagnostics_response_evidence_enabled:=false
+  diagnostics_enabled:=false diagnostics_response_evidence_enabled:=false \
+  motor_temperatures_enabled:=false imu_temperature_enabled:=false
 ```
 
 HAT telemetry follows `diagnostics_enabled` by default and can be separately
@@ -151,17 +152,19 @@ and retain raw samples. Do not infer p99 from controller-manager cumulative stat
 English: The normal AIS launch owns this integration. Matching DHI/SDK binaries and
 same-condition hardware timing tests remain deployment requirements.
 
+## Motor temperature
 
-## 모터 온도
-
-일반 `ros2 launch ai_sapiens_bringup k1.launch.py`는 모터·IMU 온도를 기본 수집합니다.
-기존 DHI/SDK의 모델 파일에 `Present Temperature`, `Present Temperature (Motor)`가
-지원되어 있어야 합니다. IMU는 ICM42688의 `Temperature` register를 지원해야 합니다.
-구형 `k1_imu` 모델은 온도를 지원하지 않으므로 `imu_temperature_enabled:=false`로 끄세요.
-진단 OFF 비교에는 `motor_temperatures_enabled:=false imu_temperature_enabled:=false`도 전달하세요.
-데이터는 `/motor_temperature_broadcaster/dynamic_joint_states`와
-`/imu_temperature_broadcaster/dynamic_joint_states`를 거쳐 `/diagnostics`에
-5 Hz로 발행하며, 기존 k1-status의 모터 온도 표에서 확인할 수 있습니다.
-하드웨어 읽기는 1 kHz이므로 통신량이 증가합니다. 모델·baudrate가 같은 로봇이라도
-배포 전후 1 kHz 실측이 필요하며, 이번 로컬 통합의 실기 성능 검증은 별도입니다.
-[온도 데이터 계약과 통신량 계산](../../ai_sapiens_diagnostics/docs/motor_temperatures.md)을 참고하세요.
+The normal `ros2 launch ai_sapiens_bringup k1.launch.py` collects motor and IMU
+temperatures by default. The existing DHI/SDK model files must support
+`Present Temperature` and `Present Temperature (Motor)`. The IMU must support the
+ICM42688 `Temperature` register. The older `k1_imu` model does not support temperature;
+disable it with `imu_temperature_enabled:=false`.
+For a diagnostics-OFF comparison, also pass
+`motor_temperatures_enabled:=false imu_temperature_enabled:=false`.
+Data flows through `/motor_temperature_broadcaster/dynamic_joint_states` and
+`/imu_temperature_broadcaster/dynamic_joint_states` to `/diagnostics` at 5 Hz and
+can be viewed in the existing k1-status motor temperature table.
+Hardware reads run at 1 kHz, increasing communication traffic. Measurements at 1 kHz
+before and after deployment are required even for robots with the same models and
+baud rate; hardware performance validation of this local integration remains separate.
+See [Temperature data contract and communication overhead](../../ai_sapiens_diagnostics/docs/motor_temperatures.md).

@@ -28,6 +28,15 @@ class MotorTemperatures:
         self.robot_id, self.timeout = robot_id, timeout
         self.samples, self.sources, self.blocked = {}, {}, {}
         self.dynamic_stamp = -1
+        self.ros_time = None
+
+    def observe_ros_time(self, nanoseconds):
+        # Only an observed local clock rollback starts a new timestamp epoch.
+        # An old/reordered message alone must never reset replay protection.
+        if self.ros_time is not None and nanoseconds < self.ros_time:
+            self.dynamic_stamp = -1
+            self.samples.clear()
+        self.ros_time = nanoseconds
 
     def ingest_dynamic(self, rows, stamp, now=None):
         now = time.monotonic() if now is None else now

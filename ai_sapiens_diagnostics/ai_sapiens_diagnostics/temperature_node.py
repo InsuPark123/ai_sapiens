@@ -39,11 +39,13 @@ class TemperatureNode(Node):
     def ingest_dynamic(self, cache, msg):
         if cache is None:
             return
+        now = self.get_clock().now().nanoseconds
+        cache.observe_ros_time(now)
         if len(msg.joint_names) != len(msg.interface_values):
             cache.samples = {}
             return
         stamp = msg.header.stamp.sec * 1000000000 + msg.header.stamp.nanosec
-        age = (self.get_clock().now().nanoseconds - stamp) / 1e9
+        age = (now - stamp) / 1e9
         if not 0 <= age <= cache.timeout:
             cache.samples = {}
             return
@@ -66,10 +68,12 @@ class TemperatureNode(Node):
 
     def publish(self):
         array = DiagnosticArray()
-        array.header.stamp = self.get_clock().now().to_msg()
+        now = self.get_clock().now()
+        array.header.stamp = now.to_msg()
         for cache in (self.cache, self.imu_cache):
             if cache is None:
                 continue
+            cache.observe_ros_time(now.nanoseconds)
             for row in cache.snapshot():
                 status = DiagnosticStatus(name=row['name'], hardware_id=row['hardware_id'],
                                           level=bytes([row['level']]), message=row['message'])

@@ -186,3 +186,37 @@ def test_imu_temperature_requires_diagnostics_even_without_motor_temperatures():
             action.execute(context)
     with pytest.raises(RuntimeError, match='imu_temperature_enabled requires diagnostics_enabled'):
         module.validate_motor_temperatures(context)
+
+
+@pytest.mark.parametrize('robot_id', ['10', 'true', 'k1-10'])
+def test_temperature_robot_identity_is_always_a_string(robot_id):
+    from launch_ros.utilities import evaluate_parameters
+    _, description = normal_launch()
+    context = LaunchContext()
+    context.launch_configurations['robot_id'] = robot_id
+    for action in description.entities:
+        if isinstance(action, DeclareLaunchArgument):
+            action.execute(context)
+    node = next(a for a in description.entities
+                if isinstance(a, Node) and a.node_package == 'ai_sapiens_diagnostics')
+    params = evaluate_parameters(context, node._Node__parameters)[0]
+    assert params['robot_id'] == robot_id
+    assert isinstance(params['robot_id'], str)
+
+
+def test_documented_diagnostics_off_options_pass_validation():
+    import shlex
+    guide = (LAUNCH_FILE.parents[1] / 'docs/diagnostics.md').read_text()
+    command = guide.split('To disable the diagnostics additions:', 1)[1].split('```bash', 1)[1].split('```', 1)[0]
+    overrides = dict(token.split(':=', 1) for token in shlex.split(command.replace('\\\n', ' '))
+                     if ':=' in token)
+    module, description = normal_launch()
+    context = LaunchContext()
+    context.launch_configurations.update(overrides)
+    for action in description.entities:
+        if isinstance(action, DeclareLaunchArgument):
+            action.execute(context)
+    assert module.validate_response_evidence(context) == []
+    assert module.validate_motor_temperatures(context) == []
+    for name in ('diagnostics_enabled', 'motor_temperatures_enabled', 'imu_temperature_enabled'):
+        assert context.launch_configurations[name] == 'false'

@@ -147,7 +147,7 @@ def generate_launch_description():
     )
     motor_temperature_diagnostics = Node(
         package='ai_sapiens_diagnostics', executable='temperature_node',
-        parameters=[{'robot_id': LaunchConfiguration('robot_id'),
+        parameters=[{'robot_id': ParameterValue(LaunchConfiguration('robot_id'), value_type=str),
                      'motor_temperatures_enabled': ParameterValue(LaunchConfiguration('motor_temperatures_enabled'), value_type=bool),
                      'imu_temperature_enabled': ParameterValue(LaunchConfiguration('imu_temperature_enabled'), value_type=bool)}],
         output='screen',

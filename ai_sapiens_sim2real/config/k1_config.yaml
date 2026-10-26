@@ -923,7 +923,7 @@ state_behaviors:
     motion: stand_up.csv
   mimic_liedown:
     kind: mimic
-    asset: mimic/mur_lie_down
+    asset: mimic/umr_lie_down
     motion: lie_down.csv
     on_complete: Damping
 

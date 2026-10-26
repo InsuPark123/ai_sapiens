@@ -38,6 +38,8 @@ def generate_launch_description():
                               description='Use mock hardware mirroring command.'),
         DeclareLaunchArgument('mock_sensor_commands', default_value='false',
                               description='Enable mock sensor commands.'),
+        DeclareLaunchArgument('imu_temperature_enabled', default_value='true',
+                              description='Read ICM42688 IMU temperature and publish cached diagnostics at 5 Hz.'),
         DeclareLaunchArgument('motor_temperatures_enabled', default_value='true',
                               description='Read motor temperatures and publish cached diagnostics at 5 Hz.'),
         DeclareLaunchArgument('model', default_value='k1_rev1',
@@ -89,6 +91,7 @@ def generate_launch_description():
         'mock_sensor_commands:=', mock_sensor_commands,
         ' ',
         'model:=', model,
+        ' imu_temperature_enabled:=', LaunchConfiguration('imu_temperature_enabled'),
         ' motor_temperatures_enabled:=', LaunchConfiguration('motor_temperatures_enabled'),
         ' diagnostics_enabled:=', LaunchConfiguration('diagnostics_enabled'),
         ' diagnostics_response_evidence_enabled:=', LaunchConfiguration('diagnostics_response_evidence_enabled'),
@@ -152,10 +155,19 @@ def generate_launch_description():
         arguments=['motor_temperature_broadcaster'], output='screen',
         condition=IfCondition(LaunchConfiguration('motor_temperatures_enabled')),
     )
+    imu_temperature_spawner = Node(
+        package='controller_manager', executable='spawner',
+        arguments=['imu_temperature_broadcaster'], output='screen',
+        condition=IfCondition(LaunchConfiguration('imu_temperature_enabled')),
+    )
     motor_temperature_diagnostics = Node(
         package='ai_sapiens_diagnostics', executable='temperature_node',
-        parameters=[{'robot_id': LaunchConfiguration('robot_id')}], output='screen',
-        condition=IfCondition(LaunchConfiguration('motor_temperatures_enabled')),
+        parameters=[{'robot_id': LaunchConfiguration('robot_id'),
+                     'motor_temperatures_enabled': ParameterValue(LaunchConfiguration('motor_temperatures_enabled'), value_type=bool),
+                     'imu_temperature_enabled': ParameterValue(LaunchConfiguration('imu_temperature_enabled'), value_type=bool)}],
+        output='screen',
+        condition=IfCondition(IfElseSubstitution(LaunchConfiguration('motor_temperatures_enabled'),
+                                                'true', LaunchConfiguration('imu_temperature_enabled'))),
     )
 
     rc_broadcaster_spawner = Node(
@@ -216,6 +228,7 @@ def generate_launch_description():
             recovery,
             hat_telemetry,
             motor_temperature_spawner,
+            imu_temperature_spawner,
             motor_temperature_diagnostics,
             control_node,
             robot_state_pub_node,
@@ -254,4 +267,7 @@ def validate_motor_temperatures(context):
     diagnostics = IfCondition(LaunchConfiguration('diagnostics_enabled')).evaluate(context)
     if enabled and not diagnostics:
         raise RuntimeError('motor_temperatures_enabled requires diagnostics_enabled:=true for sample freshness.')
+    imu_enabled = IfCondition(LaunchConfiguration('imu_temperature_enabled')).evaluate(context)
+    if imu_enabled and not diagnostics:
+        raise RuntimeError('imu_temperature_enabled requires diagnostics_enabled:=true for sample freshness.')
     return []

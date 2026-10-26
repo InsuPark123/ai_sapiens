@@ -209,6 +209,10 @@
         <param name="Torque Enable">1</param>
         <param name="Torque Constant">3211</param>
         <param name="Current Limit">9633</param>
+        <!-- Electronic stop: -10 to 225 deg; 30 deg threshold; 65536 counts/rev. -->
+        <param name="Min Position Limit">-1820</param>
+        <param name="Max Position Limit">40960</param>
+        <param name="Position Limit Threshold">5461</param>
       </gpio>
       <gpio name="dxl25">
         <xacro:if value="${diagnostics_enabled}">
@@ -236,6 +240,10 @@
         <param name="Torque Enable">1</param>
         <param name="Torque Constant">3211</param>
         <param name="Current Limit">9633</param>
+        <!-- Electronic stop: -45 to 45 deg; 30 deg threshold; 65536 counts/rev. -->
+        <param name="Min Position Limit">-8192</param>
+        <param name="Max Position Limit">8192</param>
+        <param name="Position Limit Threshold">5461</param>
       </gpio>
       <gpio name="dxl26">
         <xacro:if value="${diagnostics_enabled}">

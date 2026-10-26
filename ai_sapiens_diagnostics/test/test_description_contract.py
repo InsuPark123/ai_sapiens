@@ -117,3 +117,24 @@ def test_temperature_option_only_adds_two_gpio_fields_per_motor(mock):
     assert set(found) == set(MOTORS)
     assert all(fields == set(INTERFACES) for fields in found.values())
     assert ET.tostring(enabled) == ET.tostring(original)
+
+
+@pytest.mark.parametrize('mock', [False, True])
+@pytest.mark.parametrize('motors', [False, True])
+def test_imu_temperature_only_adds_one_two_byte_read_register(mock, motors):
+    mappings = {'use_mock_hardware': str(mock).lower(),
+                'motor_temperatures_enabled': str(motors).lower()}
+    original = ET.fromstring(xacro.process_file(str(DESCRIPTION), mappings=mappings).toxml())
+    mappings['imu_temperature_enabled'] = 'true'
+    enabled = ET.fromstring(xacro.process_file(str(DESCRIPTION), mappings=mappings).toxml())
+    added = []
+    for system in enabled.findall('ros2_control'):
+        for block in list(system.findall('gpio')) + list(system.findall('sensor')):
+            field = block.find("state_interface[@name='Temperature']")
+            if field is not None:
+                assert system.attrib['name'] == 'k1_imu'
+                assert block.attrib['name'] == 'imu'
+                added.append(block.tag)
+                block.remove(field)
+    assert sorted(added) == (['sensor'] if mock else ['gpio', 'sensor'])
+    assert ET.tostring(enabled) == ET.tostring(original)

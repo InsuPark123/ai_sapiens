@@ -35,7 +35,7 @@ def test_normal_launch_enables_diagnostics_but_keeps_recovery_opt_in():
     for action in declarations.values():
         action.execute(context)
     for name in ('diagnostics_enabled', 'diagnostics_response_evidence_enabled',
-                 'diagnostics_standard_aggregation', 'motor_temperatures_enabled'):
+                 'diagnostics_standard_aggregation', 'motor_temperatures_enabled', 'imu_temperature_enabled'):
         assert perform_substitutions(context, declarations[name].default_value) == 'true'
     for name in ('recovery_enabled', 'recovery_auto_rearm'):
         assert perform_substitutions(context, declarations[name].default_value) == 'false'
@@ -46,7 +46,7 @@ def test_normal_launch_enables_diagnostics_but_keeps_recovery_opt_in():
     assert isinstance(actions[3], GroupAction)
     nodes = [a for a in actions if isinstance(a, Node)]
     active = [a for a in nodes if a.condition is None or a.condition.evaluate(context)]
-    assert len(active) == 8
+    assert len(active) == 9
     recovery = next(a for a in nodes if a.node_package == 'ai_sapiens_recovery')
     assert not recovery.condition.evaluate(context)
 
@@ -195,10 +195,12 @@ def test_site_identity_and_persistent_journal_can_be_set_without_editing_launch(
 
 
 @pytest.mark.parametrize('enabled', ['false', 'true'])
-def test_temperature_producer_and_broadcaster_share_opt_in(enabled):
+@pytest.mark.parametrize('imu_enabled', ['false', 'true'])
+def test_temperature_producer_and_broadcaster_share_opt_in(enabled, imu_enabled):
     module, description = normal_launch()
     context = LaunchContext()
     context.launch_configurations['motor_temperatures_enabled'] = enabled
+    context.launch_configurations['imu_temperature_enabled'] = imu_enabled
     for action in description.entities:
         if isinstance(action, DeclareLaunchArgument):
             action.execute(context)
@@ -208,7 +210,15 @@ def test_temperature_producer_and_broadcaster_share_opt_in(enabled):
     spawner = next(a for a in nodes if a.node_package == 'controller_manager'
                    and any(isinstance(arg, TextSubstitution) and arg.text == 'motor_temperature_broadcaster'
                            for group in a.cmd for arg in group))
-    assert producer.condition.evaluate(context) is (enabled == 'true')
+    assert producer.condition.evaluate(context) is (enabled == 'true' or imu_enabled == 'true')
+    imu_spawner = next(a for a in nodes if a.node_package == 'controller_manager'
+                       and any(isinstance(arg, TextSubstitution) and arg.text == 'imu_temperature_broadcaster'
+                               for group in a.cmd for arg in group))
+    assert imu_spawner.condition.evaluate(context) is (imu_enabled == 'true')
+    from launch_ros.utilities import evaluate_parameters
+    params = evaluate_parameters(context, producer._Node__parameters)[0]
+    assert params['motor_temperatures_enabled'] is (enabled == 'true')
+    assert params['imu_temperature_enabled'] is (imu_enabled == 'true')
     assert spawner.condition.evaluate(context) is (enabled == 'true')
 
 
@@ -220,4 +230,16 @@ def test_temperature_without_dhi_freshness_is_rejected():
         if isinstance(action, DeclareLaunchArgument):
             action.execute(context)
     with pytest.raises(RuntimeError, match='requires diagnostics_enabled'):
+        module.validate_motor_temperatures(context)
+
+
+def test_imu_temperature_requires_diagnostics_even_without_motor_temperatures():
+    module, description = normal_launch()
+    context = LaunchContext()
+    context.launch_configurations.update(motor_temperatures_enabled='false',
+                                        imu_temperature_enabled='true', diagnostics_enabled='false')
+    for action in description.entities:
+        if isinstance(action, DeclareLaunchArgument):
+            action.execute(context)
+    with pytest.raises(RuntimeError, match='imu_temperature_enabled requires diagnostics_enabled'):
         module.validate_motor_temperatures(context)

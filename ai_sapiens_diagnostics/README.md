@@ -23,9 +23,10 @@ DHI initialization → startup journal → independent observer ─────�
 ros2 launch ai_sapiens_bringup k1.launch.py robot_id:=k1-18
 ```
 
-일반 launch는 diagnostics/capture/표준 집계/HAT telemetry/모터 온도 ON, 자동복구 OFF다.
+일반 launch는 diagnostics/capture/표준 집계/HAT telemetry/모터·IMU 온도 ON, 자동복구 OFF다.
 온도는 하드웨어 읽기 데이터를 모터당 2 byte 늘린다. 필요하면
-`motor_temperatures_enabled:=false`로 끈다.
+`motor_temperatures_enabled:=false`로 끈다. IMU 온도는 별도로 2 byte를 읽으며
+`imu_temperature_enabled:=false`로 끈다. 구형 IMU 모델에는 온도 항목이 없을 수 있다.
 [온도 사용법·데이터 계약·통신량 계산](docs/motor_temperatures.md)을 참고한다.
 응답 capture는 대응하는 feature-diagnostics DHI/SDK가 필요하며 launch가 포트 접근 없이
 선택된 DHI와 resolved SDK의 기능 marker를 사전 검사한다. 이것은 ABI 또는 실기 1 kHz

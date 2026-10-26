@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="imu_temperature_enabled" default="false" />
   <xacro:arg name="diagnostics_response_evidence_enabled" default="false" />
   <xacro:macro name="k1_imu_system" params="diagnostics_enabled:=false use_mock_hardware:=^|false mock_sensor_commands:=^|false">
     <ros2_control name="k1_imu" type="system" is_async="true">
@@ -64,6 +65,9 @@
         <state_interface name="orientation.z">
           <param name="initial_value">0.0</param>
         </state_interface>
+        <xacro:if value="$(arg imu_temperature_enabled)">
+          <state_interface name="Temperature"/>
+        </xacro:if>
       </sensor>
 
       <xacro:unless value="${use_mock_hardware}">
@@ -80,6 +84,9 @@
           <state_interface name="orientation.x"/>
           <state_interface name="orientation.y"/>
           <state_interface name="orientation.z"/>
+          <xacro:if value="$(arg imu_temperature_enabled)">
+            <state_interface name="Temperature"/>
+          </xacro:if>
         </gpio>
       </xacro:unless>
     </ros2_control>

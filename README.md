@@ -2,7 +2,7 @@
 
 This repository contains the official ROS 2 packages for the ROBOTIS AI Sapiens K1 platform. These packages provide the robot description, bringup configuration, controller interfaces, and simulation-to-real tools used to control the robot and develop Physical AI applications.
 
-K1 diagnostics, motor temperature telemetry (enabled by default), and optional E-stop
+K1 diagnostics, motor/IMU temperature telemetry (enabled by default), and optional E-stop
 recovery are integrated into the normal bringup.
 See the [deployment and usage guide](ai_sapiens_bringup/docs/diagnostics.md) for
 matching DHI/SDK requirements, app integration, topics and validation.

@@ -1,9 +1,10 @@
-# K1 motor temperature telemetry
+# K1 motor and IMU temperature telemetry
 
-Temperature collection is **enabled by default** in normal
+Motor and IMU temperature collection are **enabled by default** in normal
 `ros2 launch ai_sapiens_bringup k1.launch.py`. It requires `diagnostics_enabled:=true`.
-Disable with `motor_temperatures_enabled:=false`. When disabling diagnostics for an
-A/B comparison, disable temperatures too. Direct Xacro expansion defaults to OFF;
+Disable independently with `motor_temperatures_enabled:=false` and
+`imu_temperature_enabled:=false`. When disabling diagnostics for an A/B comparison,
+disable both temperature paths too. Direct Xacro expansion defaults to OFF;
 the normal launch explicitly passes its enabled setting.
 
 Data path:
@@ -28,6 +29,12 @@ These are receipt/source-age checks, not exact per-packet sample synchronization
 No thermal thresholds, torque policy, recovery permission, or shutdown action are
 added. Existing motor fault diagnostics remain separate. In k1-status, missing or
 STALE data preserves last-good values as historical rather than live.
+
+The IMU uses a separate standard `imu_temperature_broadcaster` at 5 Hz and the
+same temperature node. Its source identity is `k1_imu/dxl/202/202`; diagnostics
+are named `temperature/k1_imu/dxl/202` with `imu_temperature_c`, `unit=degC`,
+`robot_id`, `dxl_id=202`, and `quality=FRESH|STALE`. Motor and IMU caches, stamps
+and source progression are independent; either stream can be disabled.
 
 **5 Hz is the publication rate, not the hardware read rate.** The two read fields
 are added to every motor's existing 1 kHz group transaction: 46 extra payload bytes
@@ -121,3 +128,25 @@ TX bytes = 13 + N × Lwrite  # 정상 READ_AND_WRITE instruction, stuffing 전 �
 통신 실패 0, CM body >1ms 0이었다. 기존 IMU worker 1ms 초과 표본은 남아 있었다.
 이 수치는 이번 로컬 변경이나 다른 로봇의 성능 통과를 대신하지 않는다.
 이번 로컬 통합은 **구현 완료 / 실기 1 kHz 미검증**이다.
+
+
+## IMU 온도 / IMU chip temperature
+
+일반 launch의 `imu_temperature_enabled` 기본은 true다. 온도를 지원하지 않는 구형 IMU는
+`imu_temperature_enabled:=false`로 끈다. 이 옵션은 모터 온도와 독립적으로 동작한다.
+
+- 현재 ICM42688 모델: `Temperature`, address 136, 2 byte signed, scale 0.01 °C.
+  예를 들어 raw -1234는 DHI에서 이미 -12.34 °C로 변환된다. 진단 노드에서 다시 0.01을 곱하지 않는다.
+- 레거시 `k1_imu.model`에는 `Temperature` 항목이 없다. 모델/펌웨어를 확인하지 않고 136번 주소를
+  임의로 추가해서는 안 된다. 모델이 항목을 지원하지 않으면 DHI 초기화에 실패할 수 있다.
+- Xacro의 GPIO state는 하드웨어 읽기 목록이고 sensor state는 ROS export다. 두 곳에 선언하지만
+  DXL register는 한 번만 읽으므로 추가 payload는 **2 byte/cycle = 2,000 byte/s**다.
+- 6 Mbps, 8N1, 기존 transaction 유지 시 추가 wire time은 `2×10/6,000,000×1e6 = 3.33 µs`.
+  모터 23개와 IMU를 합하면 추가 응답 payload는 48,000 byte/s다. 이 값은 총 Ethernet 전송량이나
+  CM wall-time 증가량이 아니며, 초기 설정 통신도 제외한다.
+- 칩 내부 온도이며 외기/배터리/모터 온도가 아니다. firmware의 temperature validity bit를 추가로
+  읽지는 않는다. `quality=FRESH`는 DHI/read/cache의 전송 최신성 판정이다. 상태에
+  `firmware_temperature_validity_evaluated=false`를 넣어 센서 내부 유효성 판정과 구분한다.
+- k1-status는 `/api/temperatures`의 `imu` 객체로 표시한다. 기존 `samples`와 `total=23`은 모터 전용으로 유지한다.
+- 기동 전후 성능 영향은 **구현 완료 / 실기 1 kHz 미검증**이다. 과거 22호기 모터 온도 실측에는
+  이번 IMU 경로가 포함되지 않았다. DHI/SDK source 수정이나 firmware flash는 하지 않았다.

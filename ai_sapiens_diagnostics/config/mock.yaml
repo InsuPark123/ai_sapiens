@@ -1,0 +1,14 @@
+ai_sapiens_health:
+  ros__parameters:
+    robot_id: offline-mock
+    producer_timeout_sec: 1.0
+    publish_rate_hz: 20.0
+    history_size: 64
+    expected_components:
+      - dhi/mock/dxl/200/21
+      - dhi/mock/dxl/200/22
+      - dhi/mock/dxl/200/23
+      - dhi/mock/dxl/200/24
+      - dhi/mock/dxl/200/25
+      - dhi/mock/dxl/200/26
+      - dhi/mock/dxl/200/27

@@ -1,0 +1,96 @@
+analyzers:
+  ros__parameters:
+    pub_rate: 1.0
+    path: K1
+    analyzers:
+      right_arm:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: right_arm
+        startswith:
+        - k1_right_arm/
+        expected:
+        - k1_right_arm/bus
+        - k1_right_arm/dxl/1/1
+        - k1_right_arm/dxl/2/2
+        - k1_right_arm/dxl/3/3
+        - k1_right_arm/dxl/4/4
+        - k1_right_arm/dxl/5/5
+        num_items: 6
+        timeout: 3.0
+      left_arm:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: left_arm
+        startswith:
+        - k1_left_arm/
+        expected:
+        - k1_left_arm/bus
+        - k1_left_arm/dxl/11/11
+        - k1_left_arm/dxl/12/12
+        - k1_left_arm/dxl/13/13
+        - k1_left_arm/dxl/14/14
+        - k1_left_arm/dxl/15/15
+        num_items: 6
+        timeout: 3.0
+      left_leg:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: left_leg
+        startswith:
+        - k1_left_leg/
+        expected:
+        - k1_left_leg/bus
+        - k1_left_leg/dxl/21/21
+        - k1_left_leg/dxl/22/22
+        - k1_left_leg/dxl/23/23
+        - k1_left_leg/dxl/24/24
+        - k1_left_leg/dxl/25/25
+        - k1_left_leg/dxl/26/26
+        num_items: 7
+        timeout: 3.0
+      right_leg:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: right_leg
+        startswith:
+        - k1_right_leg/
+        expected:
+        - k1_right_leg/bus
+        - k1_right_leg/dxl/31/31
+        - k1_right_leg/dxl/32/32
+        - k1_right_leg/dxl/33/33
+        - k1_right_leg/dxl/34/34
+        - k1_right_leg/dxl/35/35
+        - k1_right_leg/dxl/36/36
+        - k1_right_leg/dxl/41/41
+        num_items: 8
+        timeout: 3.0
+      hat:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: hat
+        startswith:
+        - k1_hat/
+        expected:
+        - k1_hat/bus
+        - k1_hat/dxl/201/201
+        num_items: 2
+        timeout: 3.0
+      imu:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: imu
+        startswith:
+        - k1_imu/
+        expected:
+        - k1_imu/bus
+        - k1_imu/dxl/202/202
+        num_items: 2
+        timeout: 3.0
+      manager:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: ControllerManager
+        startswith:
+        - 'controller_manager:'
+        timeout: 3.0
+      startup:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: Startup
+        startswith:
+        - dhi_startup/
+        timeout: 3.0

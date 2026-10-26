@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="k1_left_leg_system" params="use_mock_hardware:=^|false mock_sensor_commands:=^|false">
+  <xacro:arg name="motor_temperatures_enabled" default="false" />
+  <xacro:arg name="diagnostics_response_evidence_enabled" default="false" />
+  <xacro:macro name="k1_left_leg_system" params="diagnostics_enabled:=false use_mock_hardware:=^|false mock_sensor_commands:=^|false">
     <ros2_control name="k1_left_leg" type="system" is_async="true">
       <properties>
         <async scheduling_policy="synchronized" print_warnings="false"/>
@@ -13,6 +15,10 @@
         </xacro:if>
         <xacro:unless value="${use_mock_hardware}">
           <plugin>dynamixel_hardware_interface/DynamixelHardware</plugin>
+          <param name="diagnostics_enabled">${str(diagnostics_enabled).lower()}</param>
+          <param name="diagnostics_response_evidence_enabled">$(arg diagnostics_response_evidence_enabled)</param>
+          <param name="diagnostics_publish_rate">5</param>
+          <param name="diagnostics_stale_timeout_ms">500</param>
           <param name="port_name">e2d2udp:192.168.200.200:5003</param>
           <param name="baud_rate">6000000</param>
           <param name="error_timeout_ms">500</param>
@@ -89,6 +95,9 @@
       </joint>
 
       <gpio name="dxl21">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_hip_pitch_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">21</param>
         <param name="Drive Mode">64</param>
@@ -101,6 +110,10 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>
@@ -109,6 +122,9 @@
         <param name="Current Limit">9633</param>
       </gpio>
       <gpio name="dxl22">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_hip_roll_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">22</param>
         <param name="Drive Mode">64</param>
@@ -121,6 +137,10 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>
@@ -129,6 +149,9 @@
         <param name="Current Limit">9633</param>
       </gpio>
       <gpio name="dxl23">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_hip_yaw_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">23</param>
         <param name="Drive Mode">65</param>
@@ -141,6 +164,10 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>
@@ -149,6 +176,9 @@
         <param name="Current Limit">9633</param>
       </gpio>
       <gpio name="dxl24">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_knee_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">24</param>
         <param name="Drive Mode">64</param>
@@ -161,14 +191,25 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>
         <param name="Torque Enable">1</param>
         <param name="Torque Constant">3211</param>
         <param name="Current Limit">9633</param>
+        <!-- Electronic stop: -10 to 225 deg; 30 deg threshold; 65536 counts/rev. -->
+        <param name="Min Position Limit">-1820</param>
+        <param name="Max Position Limit">40960</param>
+        <param name="Position Limit Threshold">5461</param>
       </gpio>
       <gpio name="dxl25">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_ankle_pitch_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">25</param>
         <param name="Drive Mode">64</param>
@@ -181,14 +222,25 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>
         <param name="Torque Enable">1</param>
         <param name="Torque Constant">3211</param>
         <param name="Current Limit">9633</param>
+        <!-- Electronic stop: -45 to 45 deg; 30 deg threshold; 65536 counts/rev. -->
+        <param name="Min Position Limit">-8192</param>
+        <param name="Max Position Limit">8192</param>
+        <param name="Position Limit Threshold">5461</param>
       </gpio>
       <gpio name="dxl26">
+        <xacro:if value="${diagnostics_enabled}">
+          <param name="diagnostic_joint">left_ankle_roll_joint</param>
+        </xacro:if>
         <param name="type">dxl</param>
         <param name="ID">26</param>
         <param name="Drive Mode">65</param>
@@ -201,6 +253,10 @@
         <state_interface name="Present Velocity"/>
         <state_interface name="Present Current"/>
         <state_interface name="Error Code"/>
+        <xacro:if value="$(arg motor_temperatures_enabled)">
+          <state_interface name="Present Temperature"/>
+          <state_interface name="Present Temperature (Motor)"/>
+        </xacro:if>
         <param name="Return Delay Time">0</param>
         <param name="MIT P Gain">0</param>
         <param name="MIT D Gain">0</param>

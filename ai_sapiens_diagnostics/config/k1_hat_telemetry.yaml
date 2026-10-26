@@ -1,0 +1,21 @@
+# Read existing HAT memory through a standard ROS controller; no DXL requests.
+/**:
+  controller_manager:
+    ros__parameters:
+      hat_state_broadcaster:
+        type: joint_state_broadcaster/JointStateBroadcaster
+  hat_state_broadcaster:
+    ros__parameters:
+      update_rate: 5
+      joints: [hat]
+      interfaces:
+        - BMS SOC
+        - BMS Voltage
+        - BMS Current
+        - BMS Temperature
+        - BMS Service Error Flags
+        - Realtime Tick
+      use_local_topics: true
+      use_urdf_to_filter: false
+      publish_dynamic_joint_states: true
+      frame_id: hat

@@ -1,0 +1,31 @@
+ai_sapiens_health:
+  ros__parameters:
+    producer_timeout_sec: 1.0
+    publish_rate_hz: 10.0
+    history_size: 64
+    expected_components:
+      - dhi/k1_hat/dxl/201/201
+      - dhi/k1_imu/dxl/202/202
+      - dhi/k1_left_arm/dxl/11/11
+      - dhi/k1_left_arm/dxl/12/12
+      - dhi/k1_left_arm/dxl/13/13
+      - dhi/k1_left_arm/dxl/14/14
+      - dhi/k1_left_arm/dxl/15/15
+      - dhi/k1_left_leg/dxl/21/21
+      - dhi/k1_left_leg/dxl/22/22
+      - dhi/k1_left_leg/dxl/23/23
+      - dhi/k1_left_leg/dxl/24/24
+      - dhi/k1_left_leg/dxl/25/25
+      - dhi/k1_left_leg/dxl/26/26
+      - dhi/k1_right_arm/dxl/1/1
+      - dhi/k1_right_arm/dxl/2/2
+      - dhi/k1_right_arm/dxl/3/3
+      - dhi/k1_right_arm/dxl/4/4
+      - dhi/k1_right_arm/dxl/5/5
+      - dhi/k1_right_leg/dxl/31/31
+      - dhi/k1_right_leg/dxl/32/32
+      - dhi/k1_right_leg/dxl/33/33
+      - dhi/k1_right_leg/dxl/34/34
+      - dhi/k1_right_leg/dxl/35/35
+      - dhi/k1_right_leg/dxl/36/36
+      - dhi/k1_right_leg/dxl/41/41

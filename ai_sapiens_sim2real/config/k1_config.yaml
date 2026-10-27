@@ -439,7 +439,8 @@ state_machine:
       run: mimic_peaches
     MimicHammerTransitionXY5k:
       parent: Mimic
-      run: mimic_hammer_transition_xy_5k
+      # run: mimic_hammer_transition_xy_5k
+      run: mimic_hammer_straight_v17_xy_on_dynamics_ft39k
     MimicCrayonBar3:
       parent: Mimic
       run: mimic_crayon_bar3_a2t
@@ -977,7 +978,12 @@ state_behaviors:
     asset: mimic/hammer_transition_xy_on_105000
     motion: motion.csv
     fps: 50
-    on_complete: Velocity
+
+  mimic_hammer_straight_v17_xy_on_dynamics_ft39k:
+    kind: mimic
+    asset: mimic/hammer_straight_v17_xy_on_dynamics_ft39k
+    motion: motion.csv
+    fps: 50
 
   mimic_kill_xy_112999_07eb337a:
     kind: mimic

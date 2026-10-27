@@ -1,0 +1,25 @@
+{
+  "checkpoint": "/workspace/cyclo_lab/logs/rsl_rl/k1_rev1_mimic_multimotion/2026-10-26_06-03-19_hammer_v17_34k_ft5k_noglo_verda2_20261026_main_plain/model_39000.pt",
+  "iteration": 39000,
+  "checkpoint_sha256": "e82ba4bec1b7bf71ec0def3f8cf98148e193e51cc46c0a05e4cf551b76e0f203",
+  "input_shape": [
+    1,
+    124
+  ],
+  "output_shape": [
+    1,
+    23
+  ],
+  "clip_actions": 10.0,
+  "max_onnx_parity_error": 2.288818359375e-05,
+  "self_contained": true,
+  "policy_metadata": {
+    "joint_names": "left_hip_pitch_joint,left_hip_roll_joint,left_hip_yaw_joint,left_knee_joint,left_ankle_pitch_joint,left_ankle_roll_joint,right_hip_pitch_joint,right_hip_roll_joint,right_hip_yaw_joint,right_knee_joint,right_ankle_pitch_joint,right_ankle_roll_joint,waist_yaw_joint,left_shoulder_pitch_joint,left_shoulder_roll_joint,left_shoulder_yaw_joint,left_elbow_joint,left_wrist_roll_joint,right_shoulder_pitch_joint,right_shoulder_roll_joint,right_shoulder_yaw_joint,right_elbow_joint,right_wrist_roll_joint",
+    "observation_names": "motion_command,motion_anchor_ori_b,base_ang_vel,joint_pos_rel,joint_vel_rel,last_action"
+  },
+  "sha256": {
+    "exported/policy.onnx": "77e1ad91ca08aa3d8ffa49d4b3653ff7227fc6724d2c7b71057aae2ba58d1381",
+    "params/sim2real.yaml": "cb907637a368e5d2a76f9c17559b8fbf92650828642c9d8b2f4a2e29ee4c30d1",
+    "params/motion.csv": "b787cfb8550614cec1a3a24ac1a78e062bda2676a4aa40c7efbf0284433c59e5"
+  }
+}

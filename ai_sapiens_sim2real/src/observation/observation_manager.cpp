@@ -65,8 +65,7 @@ std::vector<float> ObservationManager::compute()
     return obs_buffer_;
   }
 
-  // Isaac/Gym-style layout used by DWAQ: complete frames from oldest to newest.
-  // DWAQ conditions every historical frame on the command active right now.
+  // Frame-major history; DWAQ uses the current command in every frame.
   const int history_length = terms_.empty() ? 0 : terms_.front().history_length;
   for (int history_index = 0; history_index < history_length; ++history_index) {
     for (const auto & term : terms_) {

@@ -30,6 +30,7 @@
 #include "ai_sapiens_sim2real/joint_command.hpp"
 #include "ai_sapiens_sim2real/config/sim2real_config.hpp"
 #include "ai_sapiens_sim2real/policy/localization_pose.hpp"
+#include "ai_sapiens_sim2real/policy/gait_clock.hpp"
 #include "ai_sapiens_sim2real/policy/planar_motion_steering.hpp"
 
 namespace ai_sapiens_sim2real
@@ -177,9 +178,9 @@ struct PolicyState
   bool uses_motion_steering{false};
   PlanarMotionSteering motion_steering;
   double episode_time{0.0};
-  // Gait-phase clock in [0, 1). Advanced by GaitClock once per policy step and
-  // read by the gait_phase observation. Stays 0 for policies without a gait phase.
-  float gait_phase{0.0f};
+  // Raw phase-clock state. Advanced by GaitClock once per policy step and
+  // encoded by observations. The normalized phase stays in [0, 1).
+  PhaseState phase_state;
 };
 
 // Written by GroupTeleopHandle. One route replaces dependent enabled/override/request flags.

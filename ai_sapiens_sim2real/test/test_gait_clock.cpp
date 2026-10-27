@@ -395,3 +395,100 @@ TEST(GaitClock, AdaptiveConfigurationErrorsIdentifyTheField)
     EXPECT_NE(std::string(error.what()).find("gait_phase.transition_tau"), std::string::npos);
   }
 }
+
+TEST(GaitClock, AdaptiveSupportsAnyNumberOfForwardRanges)
+{
+  for (std::size_t count : {1u, 2u, 4u, 7u}) {
+    SCOPED_TRACE(count);
+    auto config = YAML::LoadFile(std::string(PHASE_TEST_DATA_DIR) + "/phase_contract.yaml");
+    auto params = config["gait_phase"]["params"];
+    params.remove("schema");
+    std::vector<float> periods(count), swings(count), thresholds;
+    for (std::size_t i = 0; i < count; ++i) {
+      periods[i] = 1.f + .2f * i;
+      swings[i] = .2f + .05f * i;
+      if (i) {thresholds.push_back(static_cast<float>(i));}
+    }
+    params["periods"] = periods;
+    params["swing_ratios"] = swings;
+    params["forward_thresholds"] = thresholds;
+    const auto clock = make_gait_clock(config, .02);
+    SharedControlData shared;
+    for (std::size_t i = 0; i < count; ++i) {
+      PhaseState state;
+      clock->reset(state);
+      shared.mode.velocity_commands.x() = i ? static_cast<float>(i) : -2.f;
+      clock->advance(state, shared);
+      EXPECT_EQ(state.phase, 0);
+      clock->advance(state, shared);
+      const float alpha = 1.f - std::exp(-.02f / .25f);
+      EXPECT_FLOAT_EQ(state.period, periods[0] + alpha * (periods[i] - periods[0]));
+      EXPECT_FLOAT_EQ(state.swing_ratio, swings[0] + alpha * (swings[i] - swings[0]));
+    }
+  }
+}
+
+TEST(GaitClock, OptionalLowRegionAndExportedBoundaryComparators)
+{
+  auto config = YAML::LoadFile(std::string(PHASE_TEST_DATA_DIR) +
+    "/../adaptive_phase/phase_contract.yaml");
+  // Deliberately distinguish all periods: production low/fast both use0.8s.
+  config["gait_phase"]["params"]["periods"] = YAML::Load("[0.9, 1.16, 0.8, 0.65]");
+  const auto clock = make_gait_clock(config, .02);
+  struct Case {Eigen::Vector3f command; float period;};
+  const Case cases[] = {
+    {{.4f, 0, .4f}, .9f}, {{-.4f, 0, -.4f}, .9f},
+    {{.40001f, 0, 0}, 1.16f}, {{0, 0, .40001f}, 1.16f},
+    {{0, .29999f, 0}, .9f}, {{0, .3f, 0}, 1.16f}, {{0, -.3f, 0}, 1.16f},
+    {{.3f, .2f, 0}, .9f}, {{.4f, .2f, 0}, 1.16f},
+    {{1.6f, 0, 0}, 1.16f}, {{1.60001f, 0, 0}, .8f}, {{2.4f, 0, 0}, .65f}};
+  for (const auto & item : cases) {
+    SharedControlData shared;
+    shared.mode.velocity_commands = item.command;
+    PhaseState state;
+    clock->reset(state);
+    clock->advance(state, shared);
+    clock->advance(state, shared);
+    EXPECT_FLOAT_EQ(state.period, .9f + (1.f - std::exp(-.02f / .25f)) * (item.period - .9f));
+  }
+  // Low priority is independent of the number of forward ranges, including none.
+  auto params = config["gait_phase"]["params"];
+  params["periods"] = YAML::Load("[0.9, 1.16]");
+  params["swing_ratios"] = YAML::Load("[0.4, 0.36]");
+  params["forward_thresholds"] = YAML::Load("[]");
+  params["forward_threshold_inclusive"] = YAML::Load("[]");
+  params.remove("range_order");
+  EXPECT_NO_THROW(make_gait_clock(config, .02));
+  params["periods"] = YAML::Load("[0.9, 1.16, 0.8, 0.65, 0.5]");
+  params["swing_ratios"] = YAML::Load("[0.4, 0.36, 0.6, 0.6, 0.6]");
+  params["forward_thresholds"] = YAML::Load("[1.6, 2.4, 3.0]");
+  params["forward_threshold_inclusive"] = YAML::Load("[false, true, false]");
+  EXPECT_NO_THROW(make_gait_clock(config, .02));
+}
+
+TEST(GaitClock, AdaptiveRejectsInvalidRangeShapesAndLowBounds)
+{
+  const auto original = YAML::LoadFile(std::string(PHASE_TEST_DATA_DIR) +
+    "/../adaptive_phase/phase_contract.yaml");
+  for (const auto * invalid : {
+      "{periods: []}", "{periods: [0.8, 1.16, 0.8]}",
+      "{swing_ratios: [0.4]}", "{forward_threshold_inclusive: [true]}",
+      "{forward_thresholds: [.nan, 2.4]}", "{range_order: [low]}",
+      "{low_planar_max_inclusive: 0}", "{low_yaw_max_inclusive: -.1}",
+      "{low_lateral_max_exclusive: .inf}", "{low_speed_priority: false}"})
+  {
+    SCOPED_TRACE(invalid);
+    auto config = YAML::Clone(original);
+    for (const auto & item : YAML::Load(invalid)) {
+      config["gait_phase"]["params"][item.first.as<std::string>()] = item.second;
+    }
+    EXPECT_THROW(make_gait_clock(config, .02), std::runtime_error);
+  }
+  for (const auto key : {"low_planar_max_inclusive", "low_yaw_max_inclusive",
+    "low_lateral_max_exclusive"})
+  {
+    auto config = YAML::Clone(original);
+    config["gait_phase"]["params"].remove(key);
+    EXPECT_THROW(make_gait_clock(config, .02), std::runtime_error);
+  }
+}

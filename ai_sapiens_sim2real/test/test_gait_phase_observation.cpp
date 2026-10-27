@@ -4,6 +4,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <cmath>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -210,4 +211,33 @@ TEST(GaitObservation, AdaptiveUsesYamlOffsetsAndStandThreshold)
   EXPECT_NEAR(result[2], -1, 1e-6);
   EXPECT_NEAR(result[3], 0, 1e-6);
   EXPECT_FLOAT_EQ(result[4], .4f);
+}
+
+TEST(GaitObservation, AdaptiveMatchesTrainingFixtureAcrossLowAndForwardRanges)
+{
+  const std::string directory = std::string(PHASE_TEST_DATA_DIR) + "/../adaptive_phase/";
+  auto config = YAML::LoadFile(directory + "phase_contract.yaml");
+  auto clock = make_gait_clock(config, .02);
+  SharedControlData shared;
+  PolicyJointContext joints;
+  ObservationContext context{shared, joints};
+  const auto observe = ObservationRegistry::get_registry().at("gait_phase");
+  clock->reset(shared.policy.phase_state);
+  std::ifstream fixture(directory + "clock_fixture.txt");
+  ASSERT_TRUE(fixture.is_open());
+  float x, y, yaw;
+  int rows = 0;
+  while (fixture >> x >> y >> yaw) {
+    std::vector<float> expected(6);
+    for (float & value : expected) {ASSERT_TRUE(static_cast<bool>(fixture >> value));}
+    shared.mode.velocity_commands = Eigen::Vector3f(x, y, yaw);
+    clock->advance(shared.policy.phase_state, shared);
+    const auto actual = observe(context, config["gait_phase"]["params"]);
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t i = 0; i < actual.size(); ++i) {
+      EXPECT_NEAR(actual[i], expected[i], 2e-4f) << "row=" << rows << " channel=" << i;
+    }
+    ++rows;
+  }
+  EXPECT_EQ(rows, 4480);
 }

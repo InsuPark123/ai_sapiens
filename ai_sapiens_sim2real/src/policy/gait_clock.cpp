@@ -16,7 +16,6 @@
 
 #include "ai_sapiens_sim2real/policy/gait_clock.hpp"
 
-#include <array>
 #include <cmath>
 #include <stdexcept>
 #include <string>
@@ -63,21 +62,53 @@ GaitClock make_command_reset_phase_clock(float increment, float threshold)
     });
 }
 
+struct PhaseTiming
+{
+  float period;
+  float swing_ratio;
+};
+
+struct ForwardBoundary
+{
+  float speed;
+  bool inclusive;
+
+  bool crossed_by(float command) const {return inclusive ? command >= speed : command > speed;}
+};
+
+struct LowSpeedRegion
+{
+  float planar_max;
+  float yaw_max;
+  float lateral_max;
+
+  bool contains(const Eigen::Vector3f & command) const
+  {
+    return command.head<2>().norm() <= planar_max && std::abs(command.z()) <= yaw_max &&
+           std::abs(command.y()) < lateral_max;
+  }
+};
+
 struct AdaptivePhaseConfig
 {
-  std::array<float, 3> periods;
-  std::array<float, 2> forward_thresholds;
-  std::array<float, 3> swing_ratios;
+  std::vector<PhaseTiming> timings;
+  std::vector<ForwardBoundary> boundaries;
+  std::optional<LowSpeedRegion> low_speed_region;
   float transition_tau;
   float reset_phase;
 };
 
+void require_phase_field(bool valid, const char * key, const char * requirement)
+{
+  if (!valid) {
+    throw std::runtime_error("gait_phase." + std::string(key) + " " + requirement);
+  }
+}
+
 template<typename T>
 T read_phase_value(const YAML::Node & params, const char * key)
 {
-  if (!params[key]) {
-    throw std::runtime_error("Missing gait_phase." + std::string(key));
-  }
+  require_phase_field(static_cast<bool>(params[key]), key, "is required");
   try {
     return params[key].as<T>();
   } catch (const YAML::Exception & error) {
@@ -88,125 +119,161 @@ T read_phase_value(const YAML::Node & params, const char * key)
 float read_phase_scalar(const YAML::Node & params, const char * key)
 {
   const float value = read_phase_value<float>(params, key);
-  if (!std::isfinite(value)) {
-    throw std::runtime_error("gait_phase." + std::string(key) + " must be finite");
-  }
+  require_phase_field(std::isfinite(value), key, "must be finite");
   return value;
 }
 
-template<std::size_t N>
-std::array<float, N> read_phase_array(const YAML::Node & params, const char * key)
+float read_positive_phase_scalar(const YAML::Node & params, const char * key)
 {
-  const auto values = read_phase_value<std::vector<float>>(params, key);
-  if (values.size() != N) {
-    throw std::runtime_error("gait_phase." + std::string(key) +
-            " must contain " + std::to_string(N) + " values");
+  const float value = read_phase_scalar(params, key);
+  require_phase_field(value > 0, key, "must be positive");
+  return value;
+}
+
+std::vector<float> read_phase_vector(const YAML::Node & params, const char * key)
+{
+  auto values = read_phase_value<std::vector<float>>(params, key);
+  for (float value : values) {
+    require_phase_field(std::isfinite(value), key, "must contain finite values");
   }
-  std::array<float, N> result{};
-  for (std::size_t i = 0; i < N; ++i) {
-    if (!std::isfinite(values[i])) {
-      throw std::runtime_error("gait_phase." + std::string(key) +
-              "[" + std::to_string(i) + "] must be finite");
-    }
-    result[i] = values[i];
-  }
-  return result;
+  return values;
 }
 
 void validate_adaptive_phase_export(const YAML::Node & params)
 {
   if (params["schema"]) {
     const auto schema = read_phase_value<std::string>(params, "schema");
-    if (schema != "k1_settle_march_phase_v1_command_only" &&
-      schema != "k1_settle_march_phase_v1")
-    {
-      throw std::runtime_error("Unsupported gait_phase.schema: " + schema);
-    }
+    require_phase_field(schema == "k1_settle_march_phase_v1_command_only" ||
+      schema == "k1_settle_march_phase_v1" || schema == "k1_sharedlow_four_range_phase_v1",
+      "schema", "is unsupported");
   }
   for (const auto key : {"min_height", "min_upright", "recovery_delay_mask",
     "deployment_walk_period_scale"})
   {
-    if (params[key]) {throw std::runtime_error("Unsupported gait_phase." + std::string(key));}
+    require_phase_field(!params[key], key, "is unsupported");
   }
-  if (read_phase_value<std::string>(params, "update") != "integrated_free_running") {
-    throw std::runtime_error("gait_phase.update must be integrated_free_running");
-  }
-  if (!read_phase_value<bool>(params, "stand_mode_priority")) {
-    throw std::runtime_error("gait_phase.stand_mode_priority must be true");
-  }
+  require_phase_field(read_phase_value<std::string>(params, "update") == "integrated_free_running",
+    "update", "must be integrated_free_running");
+  require_phase_field(read_phase_value<bool>(params, "stand_mode_priority"),
+    "stand_mode_priority", "must be true");
   const std::vector<std::string> order = {
     "sin_left", "cos_left", "sin_right", "cos_right", "swing_left", "swing_right"};
-  if (read_phase_value<std::vector<std::string>>(params, "observation_order") != order) {
-    throw std::runtime_error("gait_phase.observation_order must be "
-            "[sin_left, cos_left, sin_right, cos_right, swing_left, swing_right]");
+  require_phase_field(read_phase_value<std::vector<std::string>>(params, "observation_order") == order,
+    "observation_order", "must be [sin_left, cos_left, sin_right, cos_right, swing_left, swing_right]");
+  // Only validate the contract here; observations encode raw state outside the clock.
+  const auto offsets = read_phase_vector(params, "offsets");
+  require_phase_field(offsets.size() == 2, "offsets", "must contain two values");
+  for (float offset : offsets) {
+    require_phase_field(offset >= 0 && offset < 1, "offsets", "must be in [0, 1)");
   }
-  // Validate the observation contract here; observation encoding stays outside the clock.
-  for (float offset : read_phase_array<2>(params, "offsets")) {
-    if (offset < 0 || offset >= 1) {
-      throw std::runtime_error("gait_phase.offsets must be in [0, 1)");
-    }
+  require_phase_field(read_phase_scalar(params, "stand_command_norm_plus_yaw_threshold") >= 0,
+    "stand_command_norm_plus_yaw_threshold", "must be nonnegative");
+}
+
+std::vector<PhaseTiming> read_phase_timings(const YAML::Node & params)
+{
+  const auto periods = read_phase_vector(params, "periods");
+  const auto swings = read_phase_vector(params, "swing_ratios");
+  require_phase_field(!periods.empty(), "periods", "must not be empty");
+  require_phase_field(swings.size() == periods.size(), "swing_ratios", "must match gait_phase.periods");
+  std::vector<PhaseTiming> timings;
+  for (std::size_t i = 0; i < periods.size(); ++i) {
+    require_phase_field(periods[i] > 0, "periods", "must be positive");
+    require_phase_field(swings[i] > 0 && swings[i] < 1, "swing_ratios", "must be in (0, 1)");
+    timings.push_back({periods[i], swings[i]});
   }
-  if (read_phase_scalar(params, "stand_command_norm_plus_yaw_threshold") < 0) {
-    throw std::runtime_error("gait_phase.stand_command_norm_plus_yaw_threshold must be >= 0");
+  return timings;
+}
+
+std::vector<ForwardBoundary> read_forward_boundaries(const YAML::Node & params)
+{
+  const auto speeds = read_phase_vector(params, "forward_thresholds");
+  // Preserve existing private exports; new exports provide each training comparator.
+  const auto inclusive = params["forward_threshold_inclusive"] ?
+    read_phase_value<std::vector<bool>>(params, "forward_threshold_inclusive") :
+    std::vector<bool>(speeds.size(), true);
+  require_phase_field(inclusive.size() == speeds.size(),
+    "forward_threshold_inclusive", "must match forward_thresholds");
+  std::vector<ForwardBoundary> boundaries;
+  for (std::size_t i = 0; i < speeds.size(); ++i) {
+    require_phase_field(speeds[i] >= 0 && (i == 0 || speeds[i] > speeds[i - 1]),
+      "forward_thresholds", "must be nonnegative and strictly increasing");
+    boundaries.push_back({speeds[i], inclusive[i]});
   }
+  return boundaries;
+}
+
+std::optional<LowSpeedRegion> read_low_speed_region(const YAML::Node & params)
+{
+  if (params["low_speed_priority"] && read_phase_value<bool>(params, "low_speed_priority")) {
+    return LowSpeedRegion{
+      read_positive_phase_scalar(params, "low_planar_max_inclusive"),
+      read_positive_phase_scalar(params, "low_yaw_max_inclusive"),
+      read_positive_phase_scalar(params, "low_lateral_max_exclusive")};
+  }
+  for (const auto key : {"low_planar_max_inclusive", "low_yaw_max_inclusive",
+    "low_lateral_max_exclusive"})
+  {
+    require_phase_field(!params[key], key, "requires low_speed_priority");
+  }
+  return std::nullopt;
 }
 
 AdaptivePhaseConfig parse_adaptive_phase_config(const YAML::Node & params)
 {
   validate_adaptive_phase_export(params);
   const AdaptivePhaseConfig config{
-    read_phase_array<3>(params, "periods"),
-    read_phase_array<2>(params, "forward_thresholds"),
-    read_phase_array<3>(params, "swing_ratios"),
-    read_phase_scalar(params, "transition_tau"),
-    read_phase_scalar(params, "reset_phase")};
-  for (float period : config.periods) {
-    if (period <= 0) {throw std::runtime_error("gait_phase.periods must be positive");}
+    read_phase_timings(params), read_forward_boundaries(params), read_low_speed_region(params),
+    read_positive_phase_scalar(params, "transition_tau"), read_phase_scalar(params, "reset_phase")};
+  const auto range_count = config.boundaries.size() + 1 + config.low_speed_region.has_value();
+  require_phase_field(config.timings.size() == range_count,
+    "periods", "must match forward ranges plus optional low region");
+  if (params["range_order"]) {
+    require_phase_field(read_phase_value<std::vector<std::string>>(params, "range_order").size() ==
+      range_count, "range_order", "must match periods");
   }
-  for (float swing : config.swing_ratios) {
-    if (swing <= 0 || swing >= 1) {
-      throw std::runtime_error("gait_phase.swing_ratios must be in (0, 1)");
-    }
-  }
-  if (config.forward_thresholds[0] < 0 ||
-    config.forward_thresholds[0] >= config.forward_thresholds[1])
-  {
-    throw std::runtime_error("gait_phase.forward_thresholds must be nonnegative and strictly increasing");
-  }
-  if (config.transition_tau <= 0) {
-    throw std::runtime_error("gait_phase.transition_tau must be positive");
-  }
-  if (config.reset_phase < 0 || config.reset_phase >= 1) {
-    throw std::runtime_error("gait_phase.reset_phase must be in [0, 1)");
-  }
+  require_phase_field(config.reset_phase >= 0 && config.reset_phase < 1,
+    "reset_phase", "must be in [0, 1)");
   return config;
 }
 
+const PhaseTiming & select_phase_timing(
+  const Eigen::Vector3f & command, const AdaptivePhaseConfig & config)
+{
+  if (config.low_speed_region && config.low_speed_region->contains(command)) {
+    return config.timings.front();
+  }
+  std::size_t category = config.low_speed_region ? 1 : 0;
+  for (const auto & boundary : config.boundaries) {
+    category += boundary.crossed_by(command.x());
+  }
+  return config.timings[category];
+}
+
 PhaseState advance_adaptive_phase(
-  PhaseState state, float forward_command, const AdaptivePhaseConfig & config,
+  PhaseState state, const Eigen::Vector3f & command, const AdaptivePhaseConfig & config,
   float dt, float alpha)
 {
   if (state.first_step) {
     state.first_step = false;
     return state;
   }
-  // Each threshold is the inclusive lower bound of the next speed range.
-  const int category = (forward_command >= config.forward_thresholds[0]) +
-    (forward_command >= config.forward_thresholds[1]);
-  state.period += alpha * (config.periods[category] - state.period);
-  state.swing_ratio += alpha * (config.swing_ratios[category] - state.swing_ratio);
-  state.phase = std::fmod(state.phase + dt / state.period, 1.0f);
+  const auto & target = select_phase_timing(command, config);
+  state.period += alpha * (target.period - state.period);
+  state.swing_ratio += alpha * (target.swing_ratio - state.swing_ratio);
+  state.phase = next_phase(state.phase, dt / state.period);
   return state;
 }
 
 GaitClock make_adaptive_phase_clock(const YAML::Node & params, double step_dt)
 {
   const auto config = parse_adaptive_phase_config(params);
-  const PhaseState initial{config.reset_phase, config.periods[0], config.swing_ratios[0], true};
+  const auto & first = config.timings.front();
+  const PhaseState initial{config.reset_phase, first.period, first.swing_ratio, true};
   const float dt = static_cast<float>(step_dt);
   const float alpha = 1.0f - std::exp(-dt / config.transition_tau);
   return GaitClock([config, dt, alpha](PhaseState state, const SharedControlData & shared) {
-      return advance_adaptive_phase(state, shared.mode.velocity_commands.x(), config, dt, alpha);
+      return advance_adaptive_phase(state, shared.mode.velocity_commands, config, dt, alpha);
     }, initial, /*resolve_command_before_update=*/true);
 }
 

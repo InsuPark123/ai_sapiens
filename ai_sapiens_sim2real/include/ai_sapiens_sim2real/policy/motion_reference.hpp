@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -39,8 +40,7 @@ public:
   MotionReference(
     const std::string & motion_file,
     float fps,
-    const std::vector<std::string> & fallback_joint_order,
-    bool mjlab_format = false);
+    const std::vector<std::string> & fallback_joint_order);
 
   // Read an original CSV frame without moving the playback cursor.
   struct Frame
@@ -64,29 +64,29 @@ public:
 
   Eigen::Vector3f root_position() const
   {
-    return root_positions_[index_0_] * (1.0f - blend_) + root_positions_[index_1_] * blend_;
+    return frames_->root_positions_[index_0_] * (1.0f - blend_) + frames_->root_positions_[index_1_] * blend_;
   }
 
   Eigen::VectorXf joint_pos() const
   {
     if (has_joint_targets_) {return target_positions_;}
-    return dof_positions_[index_0_] * (1.0f - blend_) + dof_positions_[index_1_] * blend_;
+    return frames_->dof_positions_[index_0_] * (1.0f - blend_) + frames_->dof_positions_[index_1_] * blend_;
   }
 
   Eigen::VectorXf joint_vel() const
   {
     if (has_joint_targets_) {return target_velocities_;}
-    return dof_velocities_[index_0_] * (1.0f - blend_) + dof_velocities_[index_1_] * blend_;
+    return frames_->dof_velocities_[index_0_] * (1.0f - blend_) + frames_->dof_velocities_[index_1_] * blend_;
   }
 
   Eigen::Quaternionf root_quaternion() const
   {
-    return root_quaternions_[index_0_].slerp(blend_, root_quaternions_[index_1_]);
+    return frames_->root_quaternions_[index_0_].slerp(blend_, frames_->root_quaternions_[index_1_]);
   }
 
   float joint_pos_for_joint(const std::string & joint_name) const;
   const std::vector<std::string> & joint_order() const;
-  float duration() const
+  double duration() const
   {
     return duration_;
   }
@@ -103,27 +103,32 @@ private:
     const std::vector<std::string> & fallback_joint_order);
   static std::vector<Eigen::VectorXf> compute_forward_derivative(
     const std::vector<Eigen::VectorXf> & xs, float dt);
+  static std::vector<Eigen::VectorXf> compute_central_derivative(
+    const std::vector<Eigen::VectorXf> & xs, float dt);
 
   // Current interpolation cursor.
-  float dt_{0.02f};
+  double dt_{0.02};
   int num_frames_{0};
-  float duration_{0.0f};
+  double duration_{0.0};
   int index_0_{0};
   int index_1_{0};
   float blend_{0.0f};
-  bool mjlab_format_{false};
 
   bool has_joint_targets_{false};
   Eigen::VectorXf target_positions_, target_velocities_;
   Eigen::Vector3f root_shift_{Eigen::Vector3f::Zero()};
 
-  // Motion data in motion-file joint order.
-  std::vector<std::string> joint_order_;
-  std::unordered_map<std::string, Eigen::Index> joint_index_by_name_;
-  std::vector<Eigen::VectorXf> root_positions_;
-  std::vector<Eigen::Quaternionf> root_quaternions_;
-  std::vector<Eigen::VectorXf> dof_positions_;
-  std::vector<Eigen::VectorXf> dof_velocities_;
+  // Initialized once by the constructor; never mutated by seek/copy.
+  struct FrameData
+  {
+    std::vector<std::string> joint_order_;
+    std::unordered_map<std::string, Eigen::Index> joint_index_by_name_;
+    std::vector<Eigen::VectorXf> root_positions_;
+    std::vector<Eigen::Quaternionf> root_quaternions_;
+    std::vector<Eigen::VectorXf> dof_positions_;
+    std::vector<Eigen::VectorXf> dof_velocities_;
+  };
+  std::shared_ptr<FrameData> frames_{std::make_shared<FrameData>()};
 };
 
 }  // namespace ai_sapiens_sim2real

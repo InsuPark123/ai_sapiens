@@ -402,9 +402,17 @@ state_machine:
     MimicStandup:
       parent: Mimic
       run: mimic_standup
+    # Lying playback completes to Damping; get-up is requested via ReadyPose.
+    # Entry is checked against the selected motion's initial gravity direction.
     MimicLiedown:
-      parent: Mimic
       run: mimic_liedown
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: VelocityRequested
+          to: Velocity
 
     MimicTaeguek_1:
       parent: Mimic
@@ -1050,7 +1058,6 @@ state_behaviors:
     asset: mimic/task2_verified72_20261019_v1/smart_e289511d41ac
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_eval27_mimicthatthatxyk1_112999_c646419b:
     kind: mimic
     asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-that-that-valid-track-e2e-v1_112999_c646419b1d97
@@ -1096,31 +1103,26 @@ state_behaviors:
     asset: mimic/task2_verified72_20261019_v1/bouncy_61ee18539989
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_eval27_mimicdramaflowk1_107999_485ffdfe:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/drama_1bab1951792d
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_eval27_mimicomgflowk1_107999_32329a5a:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/omg_035bddbbaded
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_eval27_mimicperfectnightflowk1_107999_b7cd53a4:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/perfectnight_6d196ade019e
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_eval27_mimicslayflowk1_107999_f3050621:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/slay_040a582dafcc
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_eval27_mimicuntouchableflowk1_107999_1b7b7656:
     kind: mimic
     asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-leia-untouchable-full-recap-interval20-recovery-v3_112999_b4299b43fcdf
@@ -1131,19 +1133,16 @@ state_behaviors:
     asset: mimic/task2_verified72_20261019_v1/permissiontodance_1a8656a42939
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_howyoulikethat_55a2e178dd34:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/howyoulikethat_55a2e178dd34
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_neon_c6a28b07339d:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/neon_c6a28b07339d
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_feel_special:
     kind: mimic
     asset: mimic/kes_dance_20261020/feel_special
@@ -1154,253 +1153,211 @@ state_behaviors:
     asset: mimic/task2_verified72_20261019_v1/thefeels_f3572b0c6430
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_fancy_d42b5a98d82c:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/fancy_d42b5a98d82c
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_icantstopme_f297435a7271:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/icantstopme_f297435a7271
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_pinkvenom_8880e167d346:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/pinkvenom_8880e167d346
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_somidumbdumb_114805320ec8:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/somidumbdumb_114805320ec8
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_strategy_ed3d61a77431:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/strategy_ed3d61a77431
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_supernova_2f114f3d15e9:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/supernova_2f114f3d15e9
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_money_5e65fd611bb4:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/money_5e65fd611bb4
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_gnarly_2ffdf957f29d:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/gnarly_2ffdf957f29d
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_inthemorning_34ba869a09eb:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/inthemorning_34ba869a09eb
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_loco_6c79376d1528:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/loco_6c79376d1528
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_superlady_dc8c04d8c4be:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/superlady_dc8c04d8c4be
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_cherishmylove_752b705cd688:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/cherishmylove_752b705cd688
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_tomboy_93c2f221bbc3:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/tomboy_93c2f221bbc3
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_drip_4bbd0ecc89e7:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/drip_4bbd0ecc89e7
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_spicy_033a9df577b6:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/spicy_033a9df577b6
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_savage_ae9342d207de:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/savage_ae9342d207de
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_nextlevel_fca2ac6ad7e8:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/nextlevel_fca2ac6ad7e8
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_queencard_89defef93f38:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/queencard_89defef93f38
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_kitsch_934d15b32d40:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/kitsch_934d15b32d40
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_lovemelikethis_b6b7d2bc6163:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/lovemelikethis_b6b7d2bc6163
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_unforgiven_bbfba8034f7a:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/unforgiven_bbfba8034f7a
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_3d_0b06ed69631e:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/3d_0b06ed69631e
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_psycho_6d1b868b49f2:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/psycho_6d1b868b49f2
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_blackmamba_40d1eed81da2:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/blackmamba_40d1eed81da2
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_babymonsterbillionaire_a148d4ec13e6:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/babymonsterbillionaire_a148d4ec13e6
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_jisooearthquake_3ae001f410ba:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/jisooearthquake_3ae001f410ba
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_cheshire_19cbfb1a6290:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/cheshire_19cbfb1a6290
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_xoxo_d3816fbd11a8:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/xoxo_d3816fbd11a8
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_armageddon_21defea2aaba:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/armageddon_21defea2aaba
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_hot_07f3f85d4ec6:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/hot_07f3f85d4ec6
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_sheesh_161e1d789fea:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/sheesh_161e1d789fea
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_whatislove_7869efa4fe85:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/whatislove_7869efa4fe85
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_solo_ce211219900b:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/solo_ce211219900b
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_badboy_b579b2088a6b:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/badboy_b579b2088a6b
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_knockknock_3247f2aff2db:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/knockknock_3247f2aff2db
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_cheerup_27a458156a58:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/cheerup_27a458156a58
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_heartshaker_7167b197633c:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/heartshaker_7167b197633c
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_likeoohahh_b80074cc63ab:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/likeoohahh_b80074cc63ab
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_likey_92bde402696d:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/likey_92bde402696d
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_signal_8b264d220f67:
     kind: mimic
     asset: mimic/task2_verified72_20261019_v1/signal_8b264d220f67
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
   mimic_task2_tt_8f3449b7a2da:
     kind: mimic
     asset: mimic/task2_tt_select_add_20261019_v1/tt_8f3449b7a2da
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
 
   mimic_seventeen:
     kind: mimic
@@ -1512,5 +1469,4 @@ state_behaviors:
     asset: mimic/supernatural_short_transition_235_ft5k_117500
     motion: motion.csv
     fps: 50
-    motion_format: mjlab
     on_complete: Velocity

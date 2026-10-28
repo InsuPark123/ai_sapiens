@@ -21,6 +21,8 @@
 #include <utility>
 
 #include "ai_sapiens_sim2real/config/mimic_behavior.hpp"
+#include "ai_sapiens_sim2real/policy/mimic_heading_alignment.hpp"
+#include "ai_sapiens_sim2real/policy/motion_source.hpp"
 #include "ai_sapiens_sim2real/policy/torso_orientation.hpp"
 
 namespace ai_sapiens_sim2real
@@ -52,25 +54,29 @@ MotionPlayback MimicPolicyRuntime::load_playback(
   const std::vector<std::string> & controller_joint_names)
 {
   MotionPlayback playback;
-  const bool mjlab_format = mimic.mjlab_format.value_or(
-    static_cast<bool>(sim2real_config.observations()["robot_root_position_xy_w"]));
-  if (sim2real_config.steering() && (!mjlab_format || !std::isfinite(mimic.fps) ||
-    !std::isfinite(sim2real_config.step_dt()) ||
-    std::abs(mimic.fps * sim2real_config.step_dt() - 1.0) > 1e-5))
-  {
-    throw std::runtime_error("mimic steering requires MJLab motion with fps * step_dt == 1");
+  if (!std::isfinite(sim2real_config.step_dt()) || sim2real_config.step_dt() <= 0.0) {
+    throw std::runtime_error("Mimic policy step_dt must be finite and positive");
   }
-  playback.reference = std::make_shared<MotionReference>(
-    mimic.motion_file.string(), mimic.fps, controller_joint_names, mjlab_format);
-  const float duration = playback.reference->duration();
+  if (sim2real_config.steering() &&
+    (!std::isfinite(mimic.fps) || std::abs(mimic.fps * sim2real_config.step_dt() - 1.0) > 1e-5))
+  {
+    throw std::runtime_error("Mimic steering requires fps * step_dt == 1");
+  }
+  playback.step_dt = sim2real_config.step_dt();
+  const auto source = mimic.source ? mimic.source : std::make_shared<MotionSource>(
+    mimic.motion_file.string(), mimic.fps, controller_joint_names);
+  playback.reference = source->make_cursor();
+  const double duration = playback.reference->duration();
   // Reject an obviously bad window on the raw config (before clamping hides it).
-  const float requested_end = mimic.time_end.value_or(duration);
-  if (mimic.time_start < 0.0f || mimic.time_start > requested_end) {
+  const double requested_end = mimic.time_end ? *mimic.time_end : duration;
+  if (!std::isfinite(mimic.time_start) || !std::isfinite(requested_end) ||
+    mimic.time_start < 0.0f || mimic.time_start > requested_end)
+  {
     throw std::runtime_error("mimic time_start must be non-negative and not exceed time_end");
   }
 
-  playback.time_start = std::clamp(mimic.time_start, 0.0f, duration);
-  playback.time_end = std::clamp(requested_end, 0.0f, duration);
+  playback.time_start = std::clamp(static_cast<double>(mimic.time_start), 0.0, duration);
+  playback.time_end = std::clamp(requested_end, 0.0, duration);
   if (sim2real_config.dance_reference()) {
     const double frame = playback.time_start * mimic.fps;
     if (std::abs(frame - std::round(frame)) > 1e-3) {
@@ -133,6 +139,7 @@ MimicPolicyRuntime::MimicPolicyRuntime(
 
 void MimicPolicyRuntime::on_enter()
 {
+  playback_.reset();
   steering_release_.reset();
   playback_.reference->seek(playback_.time_start);
   policy_->uses_motion_steering = steering_.has_value();
@@ -159,10 +166,11 @@ void MimicPolicyRuntime::on_enter()
     policy_->motion_init_quat = Eigen::Quaternionf::Identity();
     return;
   }
-  const auto ref_yaw = yaw_quaternion(playback_.reference->root_quaternion()).toRotationMatrix();
-  const auto robot_yaw =
-    yaw_quaternion(torso_orientation_in_world(*sensors_, joint_context())).toRotationMatrix();
-  policy_->motion_init_quat = Eigen::Quaternionf(robot_yaw * ref_yaw.transpose());
+  const Eigen::Quaternionf reference_torso = playback_.reference->root_quaternion() *
+    Eigen::AngleAxisf(playback_.reference->joint_pos_for_joint(kWaistYawJointName),
+      Eigen::Vector3f::UnitZ());
+  policy_->motion_init_quat = mimic_heading_alignment(
+    reference_torso, torso_orientation_in_world(*sensors_, joint_context()));
 }
 
 bool MimicPolicyRuntime::prepare_observation()
@@ -230,13 +238,5 @@ void MimicPolicyRuntime::update_motion_targets()
     motion_joint_pos_, motion_joint_vel_, reference.root_shift);
 }
 
-Eigen::Quaternionf MimicPolicyRuntime::yaw_quaternion(const Eigen::Quaternionf & q)
-{
-  const float yaw = std::atan2(
-          2.0f * (q.w() * q.z() + q.x() * q.y()),
-          1.0f - 2.0f * (q.y() * q.y() + q.z() * q.z()));
-  const float half_yaw = yaw * 0.5f;
-  return Eigen::Quaternionf(std::cos(half_yaw), 0.0f, 0.0f, std::sin(half_yaw)).normalized();
-}
 
 }  // namespace ai_sapiens_sim2real

@@ -20,8 +20,8 @@ an Any2Track adapter.
 
 1. Supply a compatible asset bundle with `exported/policy.onnx`,
    `params/sim2real.yaml`, and the motion CSV under `params/`.
-2. Add a `kind: mimic` behavior referencing that asset and motion. Use 50 Hz,
-   `motion_format: mjlab`, and a finite frame-aligned playback window. Set
+2. Add a `kind: mimic` behavior referencing that asset and motion. Use 50 Hz and
+   a finite frame-aligned playback window. Set
    `on_complete` to a configured fallback state such as `Velocity`; `stay` is
    unsupported for Any2Track.
 3. Register a concrete state using that behavior and configure the transitions

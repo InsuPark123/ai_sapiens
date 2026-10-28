@@ -118,7 +118,7 @@ PolicyRuntime::~PolicyRuntime() = default;
 bool PolicyRuntime::check_inputs()
 {
   return (!requires_localization_ || shared_data_->localization.valid) &&
-         (!requires_imu_orientation_ || sensors_->orientation_valid);
+         (!requires_imu_orientation_ || sensors_->is_imu_usable);
 }
 
 void PolicyRuntime::reset()
@@ -144,7 +144,7 @@ void PolicyRuntime::enter()
     RCLCPP_INFO(node_->get_logger(),
       "[PolicyEntry] %s: reset time/action/steering/frame; orientation_source=%s",
       state_name_.c_str(), requires_imu_orientation_ ? "imu" : "localization");
-    if (sensors_->orientation_valid) {
+    if (sensors_->is_imu_usable) {
       // Gravity in the body frame compares tilt without confusing independent
       // IMU/odom world yaw origins. This is a diagnostic, not a pose correction.
       const auto imu_up = sensors_->orientation.normalized().conjugate() * Eigen::Vector3f::UnitZ();

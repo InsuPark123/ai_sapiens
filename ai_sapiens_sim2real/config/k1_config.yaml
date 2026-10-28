@@ -296,7 +296,8 @@ state_machine:
       # run: velocity_policy_woojin_amp_mjlab_k1_head_safe_50000
       # run: velocity_policy_walk_terrain
       # run: velocity_motifect_stable_torso_no_phase_lpf6_93400
-      run: velocity_motifect_stable_torso_no_phase_lpf6_93400_limited
+      # run: velocity_motifect_stable_torso_no_phase_lpf6_93400_limited
+      run: velocity_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000_limited
       transitions:
         - when: DampingRequested
           to: Damping
@@ -318,7 +319,8 @@ state_machine:
 
     SubVelocityHangang:
       # run: velocity_policy_amp_hangang
-      run: velocity_motifect_stable_torso_no_phase_lpf6_93400
+      # run: velocity_motifect_stable_torso_no_phase_lpf6_93400
+      run: velocity_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000
       transitions:
         - when: DampingRequested
           to: Damping
@@ -828,6 +830,17 @@ state_behaviors:
   velocity_motifect_stable_torso_no_phase_lpf6_93400_limited:
     kind: policy
     asset: locomotion/velocity/walk_motifect_stable_torso_no_phase_lpf6_93400_limited
+
+  # Phase NT 217K: latest saved checkpoint selected for this intermediate deployment.
+  # Command-only phase mask; periods 1.16/0.80/0.65. Inputs 420, actions 23.
+  # ONNX/TorchScript parity: 64 cases. Source only; no live rollout or install changes.
+  velocity_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000
+
+  velocity_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000_limited:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000_limited
 
   mimic_dance1:
     kind: mimic

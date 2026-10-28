@@ -15,6 +15,7 @@
 // Author: Kiwoong Park
 
 #include "ai_sapiens_sim2real/config/root_config.hpp"
+#include "ai_sapiens_sim2real/policy/motion_source.hpp"
 
 #include <array>
 #include <cmath>
@@ -364,7 +365,15 @@ MimicBehavior RootConfig::build_mimic_behavior(
   const std::string & name, const YAML::Node & behavior_node) const
 {
   const auto node = behavior_node_with_mimic_defaults(behavior_node);
+  auto mimic = read_mimic_behavior(name, node);
+  validate_mimic_behavior(name, mimic);
+  mimic.source = get_or_create_motion_source(mimic.motion_file, mimic.fps);
+  return mimic;
+}
 
+MimicBehavior RootConfig::read_mimic_behavior(
+  const std::string & name, const YAML::Node & node) const
+{
   const auto motion_path = behavior_motion_file_path(node, name);
   if (!motion_path) {
     throw std::runtime_error("state_behaviors." + name + " requires motion or motion_file");
@@ -373,23 +382,36 @@ MimicBehavior RootConfig::build_mimic_behavior(
   MimicBehavior mimic;
   mimic.motion_file = *motion_path;
   mimic.fps = node["fps"] ? node["fps"].as<float>() : 50.0f;
-  const auto motion_format = node["motion_format"] ?
-    node["motion_format"].as<std::string>() : "legacy";
-  if (motion_format != "legacy" && motion_format != "mjlab") {
-    throw std::runtime_error("state_behaviors." + name + ".motion_format must be legacy or mjlab");
-  }
-  if (node["motion_format"]) {
-    mimic.mjlab_format = motion_format == "mjlab";
-  }
   mimic.time_start = node["time_start"] ? node["time_start"].as<float>() : 0.0f;
   mimic.time_end = read_mimic_time_end(node);
   mimic.on_complete = read_mimic_on_complete(node);
+  return mimic;
+}
 
+void RootConfig::validate_mimic_behavior(
+  const std::string & name, const MimicBehavior & mimic) const
+{
+  if (!std::isfinite(mimic.fps) || mimic.fps <= 0) {
+    throw std::runtime_error("state_behaviors." + name + ".fps must be finite and positive");
+  }
   if (!mimic.on_complete.empty() && mimic.on_complete != "stay") {
     require_known_mimic_completion_state(mimic.on_complete, name);
   }
+}
 
-  return mimic;
+std::shared_ptr<MotionSource> RootConfig::get_or_create_motion_source(
+  const std::filesystem::path & motion_file, float fps) const
+{
+  std::lock_guard<std::mutex> lock(motion_sources_mutex_);
+  const auto key = std::make_pair(motion_file.string(), fps);
+  const auto found = motion_sources_.find(key);
+  if (found != motion_sources_.end()) {
+    return found->second;
+  }
+
+  auto source = std::make_shared<MotionSource>(motion_file.string(), fps, controller_joints_);
+  motion_sources_.emplace(key, source);
+  return source;
 }
 
 std::optional<float> RootConfig::read_mimic_time_end(const YAML::Node & node) const

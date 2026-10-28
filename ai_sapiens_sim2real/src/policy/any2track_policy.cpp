@@ -55,11 +55,11 @@ Any2TrackPolicy::Any2TrackPolicy(
   completion_state_(mimic.on_complete)
 {
   require(config.any2track(), "requires a supported Any2Track adapter");
-  require(std::abs(mimic.fps - 50.0f) < 1e-5 && mimic.mjlab_format.value_or(true),
-      "requires 50 Hz MJLab CSV");
+  require(std::abs(mimic.fps - 50.0f) < 1e-5,
+      "requires 50 Hz motion CSV");
   // Use the same CSV loader and installed K1 kinematics as the existing Mimic
   // runtime. Reference FK is computed once at load, never from live simulator state.
-  MotionReference motion(mimic.motion_file.string(), mimic.fps, config.policy_joints(), true);
+  MotionReference motion(mimic.motion_file.string(), mimic.fps, config.policy_joints());
   const int count = motion.frame_count();
   require(count >= 2, "motion requires at least two frames");
   const auto xml = std::filesystem::path(

@@ -78,7 +78,6 @@ private:
     const MimicBehavior & mimic,
     const Sim2RealConfig & sim2real_config,
     const std::vector<std::string> & controller_joint_names);
-  static Eigen::Quaternionf yaw_quaternion(const Eigen::Quaternionf & q);
   void update_motion_targets();
 
   // Outlives the runtime, so the reference-motion pointer the base handed to

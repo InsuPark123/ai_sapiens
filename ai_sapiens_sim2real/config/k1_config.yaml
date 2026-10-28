@@ -105,7 +105,7 @@ selectors:
       224: MimicTaeguek_5
       225: MimicTaeguek_6
       226: MimicTaeguek_7
-      # 237: MimicTaeguek_8
+      227: MimicTaeguek_8
 
 
       240: MimicLikeJennieK1_107999_f55628f7
@@ -441,9 +441,9 @@ state_machine:
     MimicTaeguek_7:
       parent: Mimic
       run: mimic_taeguek_7
-    # MimicTaeguek_8:
-    #   parent: Mimic
-    #   run: mimic_taeguek_8
+    MimicTaeguek_8:
+      parent: Mimic
+      run: mimic_taeguek_8
 
     MimicSupernaturalShort235Interim105k:
       parent: Mimic
@@ -980,7 +980,7 @@ state_behaviors:
   mimic_taeguek_4:
     kind: mimic
     asset: mimic/taeguek_04
-    motion: taegeuk_4.csv
+    motion: taeguek_4.csv
   mimic_taeguek_5:
     kind: mimic
     asset: mimic/taeguek_05
@@ -988,15 +988,15 @@ state_behaviors:
   mimic_taeguek_6:
     kind: mimic
     asset: mimic/taeguek_06
-    motion: k1_taeguek06_collision_only_50hz_converted.csv
+    motion: taeguek_6.csv
   mimic_taeguek_7:
     kind: mimic
     asset: mimic/taeguek_07
-    motion: k1_taeguek07_arm_corrected_v1_50hz_converted.csv
-  # mimic_taeguek_8:
-  #   kind: mimic
-  #   asset: mimic/taeguek_07
-  #   motion: taegeuk8.csv
+    motion: taeguek_7.csv
+  mimic_taeguek_8:
+    kind: mimic
+    asset: mimic/taeguek_08
+    motion: taeguek_8.csv
   
   mimic_crayon_bar3_a2t:
     kind: mimic

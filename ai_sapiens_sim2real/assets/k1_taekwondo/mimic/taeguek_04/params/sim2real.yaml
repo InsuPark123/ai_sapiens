@@ -26,127 +26,129 @@ step_dt: 0.02
 joint_properties:
   left_hip_pitch_joint:
     default_position: -0.3
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   left_hip_roll_joint:
     default_position: 0.0
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   left_hip_yaw_joint:
     default_position: 0.0
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   left_knee_joint:
     default_position: 0.63
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   left_ankle_pitch_joint:
     default_position: -0.33
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   left_ankle_roll_joint:
     default_position: 0.0
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   right_hip_pitch_joint:
     default_position: -0.3
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   right_hip_roll_joint:
     default_position: 0.0
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   right_hip_yaw_joint:
     default_position: 0.0
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   right_knee_joint:
     default_position: 0.63
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   right_ankle_pitch_joint:
     default_position: -0.33
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   right_ankle_roll_joint:
     default_position: 0.0
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   waist_yaw_joint:
     default_position: 0.0
-    stiffness: 76.5
-    damping: 4.87
+    stiffness: 76.45161
+    damping: 4.867061
     position_limit: null
   left_shoulder_pitch_joint:
     default_position: 0.2
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   left_shoulder_roll_joint:
     default_position: 0.2
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   left_shoulder_yaw_joint:
     default_position: 0.0
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   left_elbow_joint:
-    default_position: 0.6
-    stiffness: 22.3
-    damping: 1.42
+    default_position: 0.95
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   left_wrist_roll_joint:
     default_position: 0.0
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   right_shoulder_pitch_joint:
     default_position: 0.2
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   right_shoulder_roll_joint:
     default_position: -0.2
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   right_shoulder_yaw_joint:
     default_position: 0.0
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   right_elbow_joint:
-    default_position: 0.6
-    stiffness: 22.3
-    damping: 1.42
+    default_position: 0.95
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
   right_wrist_roll_joint:
     default_position: 0.0
-    stiffness: 22.3
-    damping: 1.42
+    stiffness: 22.30104
+    damping: 1.419728
     position_limit: null
 commands: {}
 actions:
   joint_pos:
     clip: null
-    scale: [0.317, 0.317, 0.317, 0.317, 0.317, 0.53, 0.317, 0.317, 0.317, 0.317, 0.317,
-      0.53, 0.317, 0.53, 0.53, 0.53, 0.53, 0.53, 0.53, 0.53, 0.53, 0.53, 0.53]
+    scale: [0.3167494, 0.3167494, 0.3167494, 0.3167494, 0.3167494, 0.5299864, 0.3167494,
+      0.3167494, 0.3167494, 0.3167494, 0.3167494, 0.5299864, 0.3167494, 0.5299864,
+      0.5299864, 0.5299864, 0.5299864, 0.5299864, 0.5299864, 0.5299864, 0.5299864,
+      0.5299864, 0.5299864]
     offset: [-0.3, 0.0, 0.0, 0.63, -0.33, 0.0, -0.3, 0.0, 0.0, 0.63, -0.33, 0.0, 0.0,
-      0.2, 0.2, 0.0, 0.6, 0.0, 0.2, -0.2, 0.0, 0.6, 0.0]
+      0.2, 0.2, 0.0, 0.95, 0.0, 0.2, -0.2, 0.0, 0.95, 0.0]
 observations:
   motion_command:
     params:
@@ -163,12 +165,14 @@ observations:
     scale: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     history_length: 1
   base_ang_vel:
-    params: {}
+    params:
+      sensor_name: robot/imu_ang_vel
     clip: null
     scale: [1.0, 1.0, 1.0]
     history_length: 1
   joint_pos_rel:
-    params: {}
+    params:
+      biased: true
     clip: null
     scale: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
       1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]

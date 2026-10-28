@@ -34,6 +34,7 @@ struct PhaseState
   float period{0.0f};
   float swing_ratio{0.0f};
   bool first_step{true};
+  float activation{1.0f};  // Optional command envelope; legacy clocks stay fully active.
 };
 
 // Same rule injection as main. The scalar phase is extended to raw state so a

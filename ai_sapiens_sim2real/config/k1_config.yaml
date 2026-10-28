@@ -882,6 +882,8 @@ state_behaviors:
     kind: mimic
     asset: mimic/redred_newton
     motion: redred.csv
+    policy_action_transition:
+      duration: 0.02
   mimic_squat:
     kind: mimic
     asset: mimic/squat

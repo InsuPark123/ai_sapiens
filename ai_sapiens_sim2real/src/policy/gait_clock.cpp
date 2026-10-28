@@ -16,6 +16,7 @@
 
 #include "ai_sapiens_sim2real/policy/gait_clock.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <string>
@@ -89,6 +90,17 @@ struct LowSpeedRegion
   }
 };
 
+struct PhaseActivationConfig
+{
+  LowSpeedRegion bounds;
+  float planar_fade_width;
+  float yaw_fade_width;
+  float lateral_fade_width;
+  float moving_fade_width;
+  float rise_tau;
+  float stand_threshold;
+};
+
 struct AdaptivePhaseConfig
 {
   std::vector<PhaseTiming> timings;
@@ -96,6 +108,7 @@ struct AdaptivePhaseConfig
   std::optional<LowSpeedRegion> low_speed_region;
   float transition_tau;
   float reset_phase;
+  std::optional<PhaseActivationConfig> activation;
 };
 
 void require_phase_field(bool valid, const char * key, const char * requirement)
@@ -219,12 +232,54 @@ std::optional<LowSpeedRegion> read_low_speed_region(const YAML::Node & params)
   return std::nullopt;
 }
 
+std::optional<PhaseActivationConfig> read_phase_activation(const YAML::Node & params)
+{
+  const auto region = params["activation_region"];
+  if (!region) {return std::nullopt;}
+  require_phase_field(region.IsMap(), "activation_region", "must be a map");
+  require_phase_field(read_phase_value<std::string>(region, "kind") == "low_only_smoothstep",
+    "activation_region.kind", "must be low_only_smoothstep");
+  const PhaseActivationConfig config{
+    {read_positive_phase_scalar(region, "planar_max"),
+      read_positive_phase_scalar(region, "yaw_max"),
+      read_positive_phase_scalar(region, "lateral_max")},
+    read_positive_phase_scalar(region, "planar_fade_width"),
+    read_positive_phase_scalar(region, "yaw_fade_width"),
+    read_positive_phase_scalar(region, "lateral_fade_width"),
+    read_positive_phase_scalar(region, "moving_fade_width"),
+    read_positive_phase_scalar(region, "activation_rise_tau"),
+    read_phase_scalar(params, "stand_command_norm_plus_yaw_threshold")};
+  require_phase_field(config.planar_fade_width <= config.bounds.planar_max &&
+    config.yaw_fade_width <= config.bounds.yaw_max &&
+    config.lateral_fade_width <= config.bounds.lateral_max,
+    "activation_region", "fade widths must not exceed their bounds");
+  return config;
+}
+
+float smoothstep(float value)
+{
+  value = std::clamp(value, 0.0f, 1.0f);
+  return value * value * (3.0f - 2.0f * value);
+}
+
+float activation_target(const Eigen::Vector3f & command, const PhaseActivationConfig & config)
+{
+  const float planar = command.head<2>().norm();
+  const float yaw = std::abs(command.z());
+  return smoothstep((planar + yaw - config.stand_threshold) / config.moving_fade_width) *
+         smoothstep((config.bounds.planar_max - planar) / config.planar_fade_width) *
+         smoothstep((config.bounds.yaw_max - yaw) / config.yaw_fade_width) *
+         smoothstep((config.bounds.lateral_max - std::abs(command.y())) /
+           config.lateral_fade_width);
+}
+
 AdaptivePhaseConfig parse_adaptive_phase_config(const YAML::Node & params)
 {
   validate_adaptive_phase_export(params);
   const AdaptivePhaseConfig config{
     read_phase_timings(params), read_forward_boundaries(params), read_low_speed_region(params),
-    read_positive_phase_scalar(params, "transition_tau"), read_phase_scalar(params, "reset_phase")};
+    read_positive_phase_scalar(params, "transition_tau"), read_phase_scalar(params, "reset_phase"),
+    read_phase_activation(params)};
   const auto range_count = config.boundaries.size() + 1 + config.low_speed_region.has_value();
   require_phase_field(config.timings.size() == range_count,
     "periods", "must match forward ranges plus optional low region");
@@ -258,6 +313,13 @@ PhaseState advance_adaptive_phase(
     state.first_step = false;
     return state;
   }
+  if (config.activation) {
+    const float target = activation_target(command, *config.activation);
+    const float rise_alpha = 1.0f - std::exp(-dt / config.activation->rise_tau);
+    // Fade out immediately to the command envelope; rise gradually on re-entry.
+    state.activation = std::min(
+      state.activation + rise_alpha * (target - state.activation), target);
+  }
   const auto & target = select_phase_timing(command, config);
   state.period += alpha * (target.period - state.period);
   state.swing_ratio += alpha * (target.swing_ratio - state.swing_ratio);
@@ -269,7 +331,8 @@ GaitClock make_adaptive_phase_clock(const YAML::Node & params, double step_dt)
 {
   const auto config = parse_adaptive_phase_config(params);
   const auto & first = config.timings.front();
-  const PhaseState initial{config.reset_phase, first.period, first.swing_ratio, true};
+  const PhaseState initial{config.reset_phase, first.period, first.swing_ratio, true,
+    config.activation ? 0.0f : 1.0f};
   const float dt = static_cast<float>(step_dt);
   const float alpha = 1.0f - std::exp(-dt / config.transition_tau);
   return GaitClock([config, dt, alpha](PhaseState state, const SharedControlData & shared) {
@@ -344,6 +407,7 @@ std::optional<GaitClock> make_gait_clock(const YAML::Node & observations, double
   if (params["periods"] || params["schema"]) {
     return make_adaptive_phase_clock(params, step_dt);
   }
+  require_phase_field(!params["activation_region"], "activation_region", "requires periods");
   const float increment = static_cast<float>(step_dt) / require_period(params);
   validate_offset(params);
 

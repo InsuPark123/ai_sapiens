@@ -241,3 +241,112 @@ TEST(GaitObservation, AdaptiveMatchesTrainingFixtureAcrossLowAndForwardRanges)
   }
   EXPECT_EQ(rows, 4480);
 }
+
+namespace
+{
+YAML::Node low_only_phase_config()
+{
+  auto config = YAML::LoadFile(std::string(PHASE_TEST_DATA_DIR) + "/phase_contract.yaml");
+  auto params = config["gait_phase"]["params"];
+  params.remove("schema");
+  params["periods"] = YAML::Load("[0.8]");
+  params["swing_ratios"] = YAML::Load("[0.4]");
+  params["forward_thresholds"] = YAML::Load("[]");
+  params.remove("forward_threshold_inclusive");
+  params["stand_command_norm_plus_yaw_threshold"] = .05;
+  params["activation_region"] = YAML::Load(R"(
+kind: low_only_smoothstep
+planar_max: 0.4
+yaw_max: 0.4
+lateral_max: 0.3
+planar_fade_width: 0.05
+yaw_fade_width: 0.05
+lateral_fade_width: 0.05
+moving_fade_width: 0.01
+activation_rise_tau: 0.25
+)");
+  return config;
+}
+}  // namespace
+
+TEST(GaitObservation, LowOnlyEnvelopeMatchesTrainingRiseExitAndReset)
+{
+  auto config = low_only_phase_config();
+  auto clock = make_gait_clock(config, .02);
+  SharedControlData shared;
+  PolicyJointContext joints;
+  ObservationContext context{shared, joints};
+  auto observe = ObservationRegistry::get_registry().at("gait_phase");
+  clock->reset(shared.policy.phase_state);
+  // Known smoothstep weights: full, halfway at each upper fade, half at onset,
+  // outside each bound, then re-entry. Include both directions and pure turns.
+  const Eigen::Vector3f commands[] = {
+    {.2f, 0, 0}, {-.2f, 0, 0}, {0, 0, .2f}, {0, 0, -.2f},
+    {.375f, 0, 0}, {0, 0, -.375f}, {0, -.275f, 0}, {.055f, 0, 0},
+    {.4f, 0, 0}, {0, 0, .4f}, {0, .3f, 0}, {1.0f, 0, 0},
+    {0, 0, 0}, {.05f, 0, 0}, {0, .2f, 0}};
+  const float targets[] = {1, 1, 1, 1, .5f, .5f, .5f, .5f, 0, 0, 0, 0, 0, 0, 1};
+  float weight = 0, phase = 0;
+  bool first = true;
+  for (int step = 0; step < 1800; ++step) {
+    SCOPED_TRACE(step);
+    const int segment = (step / 30) % 15;
+    shared.mode.velocity_commands = commands[segment];
+    if (step % 257 == 0) {
+      clock->reset(shared.policy.phase_state);
+      weight = phase = 0;
+      first = true;
+      EXPECT_EQ(observe(context, config["gait_phase"]["params"]), std::vector<float>(6, 0));
+    }
+    if (first) {
+      first = false;
+    } else {
+      // Closed-form one-step rise; decreasing targets take effect immediately.
+      const float target = targets[segment];
+      weight = target < weight ? target : target + (weight - target) * std::exp(-.02f / .25f);
+      phase = std::fmod(phase + .02f / .8f, 1.0f);
+    }
+    clock->advance(shared.policy.phase_state, shared);
+    EXPECT_NEAR(shared.policy.phase_state.phase, phase, 1e-6f);
+    const auto actual = observe(context, config["gait_phase"]["params"]);
+    constexpr float two_pi = 6.283185307179586f;
+    const float right = std::fmod(phase + .5f, 1.0f);
+    const std::vector<float> expected = {
+      weight * std::sin(two_pi * phase), weight * std::cos(two_pi * phase),
+      weight * std::sin(two_pi * right), weight * std::cos(two_pi * right),
+      weight * .4f, weight * .4f};
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t i = 0; i < actual.size(); ++i) {EXPECT_NEAR(actual[i], expected[i], 2e-6f);}
+  }
+}
+
+TEST(GaitObservation, LowOnlyRejectsInvalidActivationContracts)
+{
+  for (const auto * field : {"planar_max", "yaw_max", "lateral_max", "planar_fade_width",
+      "yaw_fade_width", "lateral_fade_width", "moving_fade_width", "activation_rise_tau"})
+  {
+    for (const auto * value : {"0", "-1", ".nan", ".inf"}) {
+      SCOPED_TRACE(std::string(field) + "=" + value);
+      auto config = low_only_phase_config();
+      config["gait_phase"]["params"]["activation_region"][field] = YAML::Load(value);
+      EXPECT_THROW(make_gait_clock(config, .02), std::runtime_error);
+    }
+    auto config = low_only_phase_config();
+    config["gait_phase"]["params"]["activation_region"].remove(field);
+    EXPECT_THROW(make_gait_clock(config, .02), std::runtime_error);
+  }
+  for (const auto * yaml : {"{kind: unknown}", "[]", "null",
+      "{kind: low_only_smoothstep}"})
+  {
+    auto config = low_only_phase_config();
+    config["gait_phase"]["params"]["activation_region"] = YAML::Load(yaml);
+    EXPECT_THROW(make_gait_clock(config, .02), std::runtime_error);
+  }
+  for (const auto * field : {"planar_fade_width", "yaw_fade_width", "lateral_fade_width"}) {
+    auto config = low_only_phase_config();
+    config["gait_phase"]["params"]["activation_region"][field] = 1;
+    EXPECT_THROW(make_gait_clock(config, .02), std::runtime_error);
+  }
+  auto config = YAML::Load("gait_phase: {params: {period: 0.8, activation_region: {}}}");
+  EXPECT_THROW(make_gait_clock(config, .02), std::runtime_error);
+}

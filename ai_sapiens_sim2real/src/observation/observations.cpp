@@ -182,8 +182,10 @@ std::vector<float> obs_bilateral_phase_with_swing(
   const float left = std::fmod(phase + params["offsets"][0].as<float>(), 1.0f);
   const float right = std::fmod(phase + params["offsets"][1].as<float>(), 1.0f);
   const float swing = context.shared.policy.phase_state.swing_ratio;
-  return {std::sin(kTwoPi * left), std::cos(kTwoPi * left),
-    std::sin(kTwoPi * right), std::cos(kTwoPi * right), swing, swing};
+  const float weight = context.shared.policy.phase_state.activation;
+  return {weight * std::sin(kTwoPi * left), weight * std::cos(kTwoPi * left),
+    weight * std::sin(kTwoPi * right), weight * std::cos(kTwoPi * right),
+    weight * swing, weight * swing};
 }
 
 // Keep the existing fixed-period / DWAQ ABI, including its stand values.

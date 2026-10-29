@@ -31,12 +31,16 @@ namespace ai_sapiens_sim2real
 class MotionReference;
 struct PolicyJointContext;
 struct SharedControlData;
+struct SensorData;
 
 struct ObservationContext
 {
   const SharedControlData & shared;
   const PolicyJointContext & joints;
   const MotionReference * reference_motion{nullptr};
+  const SensorData * sensor_view{nullptr};
+  const std::vector<float> * default_positions{nullptr};
+  const SensorData & sensors() const;
 };
 
 /**

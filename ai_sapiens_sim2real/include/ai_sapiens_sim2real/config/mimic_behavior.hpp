@@ -32,6 +32,7 @@ struct MimicBehavior
 {
   std::filesystem::path motion_file;    // absolute path to the reference motion
   float fps{50.0f};
+  bool is_mirrored{false};
   float time_start{0.0f};               // absolute motion start time
   std::optional<float> time_end;        // absolute motion end time; nullopt: motion's end
   std::string on_complete{"Velocity"};  // state to hand off to when the window ends

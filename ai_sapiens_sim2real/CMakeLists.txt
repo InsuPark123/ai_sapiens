@@ -357,6 +357,24 @@ if(BUILD_TESTING)
   target_link_libraries(test_mode_controller yaml-cpp Eigen3::Eigen)
 
   # MotionPlayback: absolute-motion-time seek/completion window.
+  ament_add_gtest(test_mimic_mirror test/test_mimic_mirror.cpp
+    src/policy/policy_runtime.cpp
+    src/policy/mimic_policy_runtime.cpp
+    src/policy/any2track_policy.cpp
+    src/policy/action_pipeline.cpp
+    src/policy/onnx_inference.cpp
+    src/policy/motion_reference.cpp
+    src/policy/dance_motion_reference.cpp
+    src/policy/gait_clock.cpp
+    src/config/sim2real_config.cpp
+    src/config/config_utils.cpp
+    src/observation/observation_manager.cpp
+    src/observation/observations.cpp)
+  ament_target_dependencies(test_mimic_mirror rclcpp realtime_tools ament_index_cpp)
+  target_link_libraries(test_mimic_mirror yaml-cpp Eigen3::Eigen
+    ${ONNXRUNTIME_LIBRARY} mujoco::mujoco OpenSSL::Crypto)
+  target_compile_definitions(test_mimic_mirror PRIVATE
+    MIRROR_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/mimic_mirror")
   ament_add_gtest(test_action_transition test/test_action_transition.cpp)
   ament_add_gtest(test_mimic_heading_alignment test/test_mimic_heading_alignment.cpp)
   target_link_libraries(test_mimic_heading_alignment Eigen3::Eigen)

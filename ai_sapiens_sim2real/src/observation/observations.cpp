@@ -29,6 +29,11 @@
 namespace ai_sapiens_sim2real
 {
 
+const SensorData & ObservationContext::sensors() const
+{
+  return sensor_view ? *sensor_view : shared.sensors;
+}
+
 std::map<std::string, ObservationRegistry::ObsFunc> & ObservationRegistry::get_registry()
 {
   static std::map<std::string, ObsFunc> registry;
@@ -99,9 +104,9 @@ std::vector<float> obs_base_ang_vel(
   const YAML::Node & /*params*/)
 {
   return std::vector<float>{
-    context.shared.sensors.angular_velocity.x(),
-    context.shared.sensors.angular_velocity.y(),
-    context.shared.sensors.angular_velocity.z()
+    context.sensors().angular_velocity.x(),
+    context.sensors().angular_velocity.y(),
+    context.sensors().angular_velocity.z()
   };
 }
 
@@ -111,9 +116,9 @@ std::vector<float> obs_projected_gravity(
   const YAML::Node & /*params*/)
 {
   return std::vector<float>{
-    context.shared.sensors.projected_gravity.x(),
-    context.shared.sensors.projected_gravity.y(),
-    context.shared.sensors.projected_gravity.z()
+    context.sensors().projected_gravity.x(),
+    context.sensors().projected_gravity.y(),
+    context.sensors().projected_gravity.z()
   };
 }
 
@@ -138,8 +143,9 @@ std::vector<float> obs_joint_pos_rel(
   {
     const size_t controller_index = context.joints.policy_to_controller[policy_index];
     result[policy_index] =
-      context.shared.sensors.joint_pos[static_cast<Eigen::Index>(controller_index)] -
-      context.shared.output.default_joint_pos[static_cast<Eigen::Index>(controller_index)];
+      context.sensors().joint_pos[static_cast<Eigen::Index>(controller_index)] -
+      (context.default_positions ? (*context.default_positions)[policy_index] :
+      context.shared.output.default_joint_pos[static_cast<Eigen::Index>(controller_index)]);
   }
 
   return result;
@@ -151,7 +157,7 @@ std::vector<float> obs_joint_vel_rel(
   const YAML::Node & /*params*/)
 {
   return controller_vector_to_active_policy(
-    context.shared.sensors.joint_vel, context.joints.policy_to_controller);
+    context.sensors().joint_vel, context.joints.policy_to_controller);
 }
 
 // last_action is controller-sized with the policy-order action in the front
@@ -274,14 +280,14 @@ std::vector<float> obs_motion_anchor_ori_b(
   }
 
   auto real_torso_quat_w =
-    torso_orientation_in_world(context.shared.sensors, context.joints);
+    torso_orientation_in_world(context.sensors(), context.joints);
   if (context.shared.policy.uses_global_position) {
     const auto & localization = context.shared.localization;
     const auto root_in_motion = context.shared.policy.motion_frame.orientation(
-      localization.orientation, context.shared.sensors.orientation);
+      localization.orientation, context.sensors().orientation);
     // Preserve the measured waist transform; the policy selects the root attitude source.
     real_torso_quat_w = torso_orientation_in_world(
-      context.shared.sensors, context.joints, root_in_motion);
+      context.sensors(), context.joints, root_in_motion);
   }
   const auto ref_torso_quat_w =
     context.shared.policy.motion_steering.orientation() *

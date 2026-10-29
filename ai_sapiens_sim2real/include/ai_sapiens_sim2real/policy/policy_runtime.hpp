@@ -34,6 +34,7 @@
 #include <yaml-cpp/yaml.h>  // NOLINT(build/include_order)
 
 #include "ai_sapiens_sim2real/policy/action_pipeline.hpp"
+#include "ai_sapiens_sim2real/policy/k1_mirror.hpp"
 #include "ai_sapiens_sim2real/policy/any2track_policy.hpp"
 #include "ai_sapiens_sim2real/policy/gait_clock.hpp"
 #include "ai_sapiens_sim2real/policy/motion_reference.hpp"
@@ -68,7 +69,8 @@ public:
     const std::vector<std::string> & controller_joint_names,
     SharedControlData * shared_data,
     const MotionReference * reference_motion = nullptr,
-    const MimicBehavior * any2track_mimic = nullptr);
+    const MimicBehavior * any2track_mimic = nullptr,
+    bool is_mirrored = false);
   virtual ~PolicyRuntime();
 
   void reset();
@@ -146,6 +148,7 @@ private:
   // Applies the active policy's velocity-command range before observation.
   void resolve_active_velocity_command();
   void compute_observation();
+  void refresh_sensor_view();
   std::optional<std::vector<float>> run_policy_inference();
   PolicyUpdateResult accept_action(
     const std::vector<float> & raw_action,
@@ -163,6 +166,8 @@ private:
   std::filesystem::path sim2real_config_path_;
 
   PolicyJointContext joint_context_;
+  std::optional<K1Mirror> mirror_;
+  SensorData sensor_view_;
   JointProperties joint_properties_;
   ActionPipeline action_pipeline_;
   JointCommand target_command_;

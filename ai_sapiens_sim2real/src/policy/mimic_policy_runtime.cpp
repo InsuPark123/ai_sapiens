@@ -45,7 +45,7 @@ std::unique_ptr<MimicPolicyRuntime> MimicPolicyRuntime::create(
     controller_joint_names,
     shared_data,
     load_playback(mimic, sim2real_config, controller_joint_names),
-    mimic.on_complete);
+    mimic.on_complete, mimic.is_mirrored);
 }
 
 MotionPlayback MimicPolicyRuntime::load_playback(
@@ -94,7 +94,8 @@ MimicPolicyRuntime::MimicPolicyRuntime(
   const std::vector<std::string> & controller_joint_names,
   SharedControlData * shared_data,
   MotionPlayback playback,
-  std::string completion_state)
+  std::string completion_state,
+  bool is_mirrored)
 : PolicyRuntime(
     std::move(node),
     std::move(state_name),
@@ -102,7 +103,7 @@ MimicPolicyRuntime::MimicPolicyRuntime(
     sim2real_config,
     controller_joint_names,
     shared_data,
-    playback.reference.get())
+    playback.reference.get(), nullptr, is_mirrored)
   , playback_(std::move(playback))
   , completion_state_(std::move(completion_state))
   , observation_origin_(sim2real_config.observation_origin())

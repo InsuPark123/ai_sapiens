@@ -51,7 +51,8 @@ PolicyRuntime::PolicyRuntime(
   const std::vector<std::string> & controller_joint_names,
   SharedControlData * shared_data,
   const MotionReference * reference_motion,
-  const MimicBehavior * any2track_mimic)
+  const MimicBehavior * any2track_mimic,
+  bool is_mirrored)
 : sensors_(&shared_data->sensors)
   , policy_(&shared_data->policy)
   , requests_(&shared_data->requests)
@@ -87,6 +88,18 @@ PolicyRuntime::PolicyRuntime(
         "Global-position Mimic requires both robot/reference_root_position_xy_w and a motion reference");
   }
   load_sim2real_config(sim2real_config, controller_joint_names);
+  if (is_mirrored) {
+    if (!reference_motion || sim2real_config.any2track() || requires_localization_ ||
+      sim2real_config.steering() || sim2real_config.dance_reference() ||
+      observations["velocity_commands"] || observations["gait_phase"])
+    {
+      throw std::runtime_error(
+        "mirror supports ordinary Mimic without localization, steering, dance reference or gait commands");
+    }
+    mirror_.emplace(joint_context_.policy_joint_names);
+    refresh_sensor_view();
+    sensors_ = &sensor_view_;
+  }
   log_joint_coverage(controller_joint_names);
   log_loading();
   if (sim2real_config.any2track()) {
@@ -110,6 +123,10 @@ PolicyRuntime::PolicyRuntime(
   target_command_.resize(joint_context_.policy_joint_names.size());
   target_command_.stiffness = joint_properties_.stiffness;
   target_command_.damping = joint_properties_.damping;
+  if (mirror_) {
+    target_command_.stiffness = mirror_->reflect(target_command_.stiffness, false);
+    target_command_.damping = mirror_->reflect(target_command_.damping, false);
+  }
   log_ready(observation_size);
 }
 
@@ -118,7 +135,7 @@ PolicyRuntime::~PolicyRuntime() = default;
 bool PolicyRuntime::check_inputs()
 {
   return (!requires_localization_ || shared_data_->localization.valid) &&
-         (!requires_imu_orientation_ || sensors_->is_imu_usable);
+         (!requires_imu_orientation_ || shared_data_->sensors.is_imu_usable);
 }
 
 void PolicyRuntime::reset()
@@ -131,6 +148,7 @@ void PolicyRuntime::reset()
 
 void PolicyRuntime::enter()
 {
+  refresh_sensor_view();
   policy_->uses_global_position = requires_localization_;
   policy_->motion_frame.reset();
   policy_->uses_motion_steering = false;
@@ -175,13 +193,18 @@ void PolicyRuntime::install_joint_properties() const
   const auto & action_properties = action_pipeline_.properties();
   for (size_t policy_index = 0; policy_index < policy_joint_count; ++policy_index) {
     const size_t controller_index = joint_context_.policy_to_controller[policy_index];
+    const size_t source = mirror_ ? mirror_->source(policy_index) : policy_index;
+    const float sign = mirror_ ? mirror_->sign(policy_index) : 1.0f;
     output_->default_joint_pos[static_cast<Eigen::Index>(controller_index)] =
-      joint_properties_.default_position[policy_index];
+      sign * joint_properties_.default_position[source];
     output_->feedforward[controller_index] = 0.0f;
-    output_->action_scale[controller_index] = action_properties.scale[policy_index];
-    output_->action_offset[controller_index] = action_properties.offset[policy_index];
-    output_->position_limits[controller_index] =
-      joint_properties_.position_limits[policy_index];
+    output_->action_scale[controller_index] = sign * action_properties.scale[source];
+    output_->action_offset[controller_index] = sign * action_properties.offset[source];
+    auto limit = joint_properties_.position_limits[source];
+    if (limit && sign < 0.0f) {
+      limit = std::make_pair(-limit->second, -limit->first);
+    }
+    output_->position_limits[controller_index] = limit;
   }
 }
 
@@ -242,6 +265,7 @@ PolicyUpdateResult PolicyRuntime::update(const rclcpp::Duration & period)
   if (!advance_policy_tick(period)) {
     return PolicyUpdateResult::Skipped;
   }
+  refresh_sensor_view();
   const bool command_first = gait_clock_ && gait_clock_->resolve_command_before_update();
   if (command_first) {resolve_active_velocity_command();}
   if (!prepare_observation()) {
@@ -294,6 +318,22 @@ void PolicyRuntime::resolve_active_velocity_command()
         mode_->velocity_commands.z() = scale_unit_to_axis(normalized.z(), active.angular_z);
         break;
       }
+  }
+}
+
+void PolicyRuntime::refresh_sensor_view()
+{
+  if (!mirror_) {return;}
+  sensor_view_ = shared_data_->sensors;
+  sensor_view_.orientation = K1Mirror::orientation(sensor_view_.orientation);
+  sensor_view_.angular_velocity.x() *= -1.0f;
+  sensor_view_.angular_velocity.z() *= -1.0f;
+  sensor_view_.projected_gravity.y() *= -1.0f;
+  const auto & mapping = joint_context_.policy_to_controller;
+  for (size_t i = 0; i < mapping.size(); ++i) {
+    const auto source = mapping[mirror_->source(i)];
+    sensor_view_.joint_pos[mapping[i]] = mirror_->sign(i) * shared_data_->sensors.joint_pos[source];
+    sensor_view_.joint_vel[mapping[i]] = mirror_->sign(i) * shared_data_->sensors.joint_vel[source];
   }
 }
 
@@ -381,7 +421,11 @@ PolicyUpdateResult PolicyRuntime::accept_action(
   action_limit_logged_ = false;
 
   // Only expose fully validated targets to the command output stage.
-  std::copy(processed_action.begin(), processed_action.end(), target_command_.position.begin());
+  if (mirror_) {
+    target_command_.position = mirror_->reflect(processed_action);
+  } else {
+    std::copy(processed_action.begin(), processed_action.end(), target_command_.position.begin());
+  }
 
   // The buffer is controller-sized; this policy uses the first joint_names.size() slots.
   if (any2track_) {any2track_->accept(processed_action);}
@@ -532,7 +576,8 @@ size_t PolicyRuntime::create_observation_manager(
     sim2real_config.observations(),
     shared_data,
     joint_context_,
-    reference_motion);
+    reference_motion, mirror_ ? &sensor_view_ : nullptr,
+    mirror_ ? &joint_properties_.default_position : nullptr);
   return obs_manager_->get_observation_size();
 }
 
@@ -567,6 +612,10 @@ Any2TrackSample PolicyRuntime::any2track_sample() const
 
 void PolicyRuntime::log_ready(size_t observation_size) const
 {
+  if (mirror_) {
+    RCLCPP_INFO(node_->get_logger(), "[PolicyRuntime] %s: K1 left/right mirror enabled",
+      state_name_.c_str());
+  }
   std::cout << "[PolicyRuntime] Ready: " << state_name_
             << " (obs=" << observation_size
             << ", action=" << inference_->get_output_size() << ")\n"

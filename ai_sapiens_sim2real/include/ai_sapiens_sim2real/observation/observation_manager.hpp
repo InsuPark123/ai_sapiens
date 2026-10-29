@@ -53,7 +53,9 @@ public:
     const YAML::Node & obs_config,
     const SharedControlData * shared_data,
     const PolicyJointContext & joint_context,
-    const MotionReference * reference_motion);
+    const MotionReference * reference_motion,
+    const SensorData * sensor_view = nullptr,
+    const std::vector<float> * default_positions = nullptr);
 
   /**
    * @brief Reset all observation history buffers.
@@ -116,6 +118,8 @@ private:
   const SharedControlData * shared_data_;
   PolicyJointContext joint_context_;
   const MotionReference * reference_motion_;
+  const SensorData * sensor_view_;
+  const std::vector<float> * default_positions_;
   std::vector<ObservationTermCfg> terms_;
   std::vector<float> obs_buffer_;
   bool use_gym_history_{false};

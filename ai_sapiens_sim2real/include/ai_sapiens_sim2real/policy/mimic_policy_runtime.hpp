@@ -65,7 +65,8 @@ public:
     const std::vector<std::string> & controller_joint_names,
     SharedControlData * shared_data,
     MotionPlayback playback,
-    std::string completion_state);
+    std::string completion_state,
+    bool is_mirrored = false);
 
 protected:
   void on_enter() override;

@@ -139,6 +139,8 @@ selectors:
       260: MimicHypeboy
       261: MimicDitto
 
+      265: MimicSwallowBalance
+
 
 selectors:
   mimic_selector_all_dance:  # NOT USED
@@ -432,6 +434,10 @@ state_machine:
           to: ReadyPose
         - when: VelocityRequested
           to: Velocity
+
+    MimicSwallowBalance:
+      parent: Mimic
+      run: mimic_swallow_balance
 
     MimicTaeguek_1:
       parent: Mimic
@@ -1015,6 +1021,11 @@ state_behaviors:
     asset: mimic/umr_lie_down
     motion: lie_down.csv
     on_complete: Damping
+
+  mimic_swallow_balance:
+    kind: mimic
+    asset: mimic/swallow_balance
+    motion: motion.csv
 
   mimic_taeguek_1:
     kind: mimic

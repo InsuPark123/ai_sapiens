@@ -140,7 +140,7 @@ selectors:
       261: MimicDitto
 
       265: MimicSwallowBalance
-
+      266: MimicSwallowBalanceLeftUp
 
 selectors:
   mimic_selector_all_dance:  # NOT USED
@@ -438,6 +438,9 @@ state_machine:
     MimicSwallowBalance:
       parent: Mimic
       run: mimic_swallow_balance
+    MimicSwallowBalanceLeftUp:
+      parent: Mimic
+      run: mimic_swallow_balance_left_up
 
     MimicTaeguek_1:
       parent: Mimic
@@ -1026,6 +1029,12 @@ state_behaviors:
     kind: mimic
     asset: mimic/swallow_balance
     motion: motion.csv
+
+  mimic_swallow_balance_left_up:
+    kind: mimic
+    asset: mimic/swallow_balance
+    motion: motion.csv
+    mirror: true
 
   mimic_taeguek_1:
     kind: mimic

@@ -114,7 +114,7 @@
         <!-- Electronic stop: -169 to 109 deg; 30 deg threshold; 65536 counts/rev. -->
         <param name="Min Position Limit">-30765</param>
         <param name="Max Position Limit">19842</param>
-        <param name="Position Limit Threshold">5461</param>
+        <param name="Position Limit Threshold">400</param>
       </gpio>
       <gpio name="dxl12">
         <xacro:if value="${diagnostics_enabled}">
@@ -145,7 +145,7 @@
         <!-- Electronic stop: -2 to 181 deg; 30 deg threshold; 65536 counts/rev. -->
         <param name="Min Position Limit">-364</param>
         <param name="Max Position Limit">32950</param>
-        <param name="Position Limit Threshold">5461</param>
+        <param name="Position Limit Threshold">400</param>
       </gpio>
       <gpio name="dxl13">
         <xacro:if value="${diagnostics_enabled}">
@@ -176,7 +176,7 @@
         <!-- Electronic stop: -139 to 139 deg; 30 deg threshold; 65536 counts/rev. -->
         <param name="Min Position Limit">-25304</param>
         <param name="Max Position Limit">25304</param>
-        <param name="Position Limit Threshold">5461</param>
+        <param name="Position Limit Threshold">400</param>
       </gpio>
       <gpio name="dxl14">
         <xacro:if value="${diagnostics_enabled}">
@@ -207,7 +207,7 @@
         <!-- Electronic stop: -45 to 121 deg; 30 deg threshold; 65536 counts/rev. -->
         <param name="Min Position Limit">-8192</param>
         <param name="Max Position Limit">22027</param>
-        <param name="Position Limit Threshold">5461</param>
+        <param name="Position Limit Threshold">400</param>
       </gpio>
       <gpio name="dxl15">
         <xacro:if value="${diagnostics_enabled}">

@@ -165,6 +165,9 @@ void PolicyController::load_policies(
     std::unique_ptr<PolicyRuntime> runtime;
     if (sim2real_config.any2track()) {
       if (!behavior.mimic) {throw std::runtime_error("Any2Track must use kind: mimic");}
+      if (behavior.mimic->is_mirrored) {
+        throw std::runtime_error("mirror is not supported for Any2Track");
+      }
       runtime = std::make_unique<PolicyRuntime>(
         node_, behavior.name, behavior.policy_path.string(), sim2real_config,
         controller_joints, shared_data, nullptr, &*behavior.mimic);

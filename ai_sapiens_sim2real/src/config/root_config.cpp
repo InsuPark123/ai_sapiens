@@ -386,6 +386,7 @@ MimicBehavior RootConfig::read_mimic_behavior(
 
   MimicBehavior mimic;
   mimic.motion_file = *motion_path;
+  mimic.is_mirrored = node["mirror"] ? node["mirror"].as<bool>() : false;
   mimic.fps = node["fps"] ? node["fps"].as<float>() : 50.0f;
   mimic.time_start = node["time_start"] ? node["time_start"].as<float>() : 0.0f;
   mimic.time_end = read_mimic_time_end(node);

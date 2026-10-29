@@ -98,6 +98,7 @@ selectors:
 
       216: MimicRedredNewton
       217: MimicTurn
+      218: MimicTurnMirror
 
       220: MimicTaeguek_1
       221: MimicTaeguek_2
@@ -381,6 +382,9 @@ state_machine:
     MimicTurn:
       parent: Mimic
       run: mimic_turn
+    MimicTurnMirror:
+      parent: Mimic
+      run: mimic_turn_mirror
     MimicFlower3:
       parent: Mimic
       run: flower3
@@ -951,6 +955,11 @@ state_behaviors:
     kind: mimic
     asset: mimic/turn
     motion: dance_basic_turn_v1_360_r_loop_fast_003_a325.csv
+  mimic_turn_mirror:
+    kind: mimic
+    asset: mimic/turn
+    motion: dance_basic_turn_v1_360_r_loop_fast_003_a325.csv
+    mirror: true
   flower3:
     kind: mimic
     asset: mimic/flower3

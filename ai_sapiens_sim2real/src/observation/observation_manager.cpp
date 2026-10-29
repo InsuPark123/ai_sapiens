@@ -23,10 +23,14 @@ ObservationManager::ObservationManager(
   const YAML::Node & obs_config,
   const SharedControlData * shared_data,
   const PolicyJointContext & joint_context,
-  const MotionReference * reference_motion)
+  const MotionReference * reference_motion,
+    const SensorData * sensor_view,
+    const std::vector<float> * default_positions)
 : shared_data_(shared_data)
   , joint_context_(joint_context)
   , reference_motion_(reference_motion)
+  , sensor_view_(sensor_view)
+  , default_positions_(default_positions)
 {
   if (shared_data_ == nullptr) {
     throw std::runtime_error("ObservationManager requires shared_data");
@@ -320,7 +324,8 @@ void ObservationManager::initialize_term_history(ObservationTermCfg & term) cons
 
 ObservationContext ObservationManager::make_observation_context() const
 {
-  return ObservationContext{*shared_data_, joint_context_, reference_motion_};
+  return ObservationContext{
+    *shared_data_, joint_context_, reference_motion_, sensor_view_, default_positions_};
 }
 
 }  // namespace ai_sapiens_sim2real

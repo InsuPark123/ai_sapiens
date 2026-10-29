@@ -915,3 +915,22 @@ TEST(ModeController, LyingOrientationAllowsReadyPoseToVelocity)
     EXPECT_EQ(fixture.controller_->status_snapshot().active_state, "Velocity");
   }
 }
+
+TEST(PolicyEntryValidator, MirroredMimicUsesReflectedEntryTilt)
+{
+  const auto path = mode_controller_test::write_root_config();
+  std::ofstream(path.string() + ".csv") <<
+    "0,0,0,0.70710678,0,0,0.70710678,0\n0,0,0,0.70710678,0,0,0.70710678,0\n";
+  std::ofstream(path, std::ios::app) << "    mirror: true\n";
+  ai_sapiens_sim2real::RootConfig config(path);
+  const auto validator = ai_sapiens_sim2real::PolicyEntryValidator::from_config(config);
+  ai_sapiens_sim2real::StateBehavior target;
+  target.mimic = true;
+  target.policy_name = "mimic_run";
+  const Eigen::Quaternionf original(Eigen::AngleAxisf(1.57079632679f, Eigen::Vector3f::UnitX()));
+  const Eigen::Quaternionf reflected(Eigen::AngleAxisf(-1.57079632679f, Eigen::Vector3f::UnitX()));
+  EXPECT_FALSE(validator.evaluate(target, original, true).allowed());
+  EXPECT_TRUE(validator.evaluate(target, reflected, true).allowed());
+  std::filesystem::remove(path);
+  std::filesystem::remove(path.string() + ".csv");
+}

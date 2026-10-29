@@ -2,6 +2,7 @@
 
 #include "ai_sapiens_sim2real/config/root_config.hpp"
 #include "ai_sapiens_sim2real/policy/motion_reference.hpp"
+#include "ai_sapiens_sim2real/policy/k1_mirror.hpp"
 #include "ai_sapiens_sim2real/policy/motion_source.hpp"
 
 namespace ai_sapiens_sim2real
@@ -16,7 +17,8 @@ PolicyEntryValidator PolicyEntryValidator::from_config(const RootConfig & config
     const auto & mimic = *behavior.mimic;
     auto motion = mimic.source->make_cursor();
     motion->seek(mimic.time_start);
-    references.emplace(behavior.name, motion->root_quaternion());
+    references.emplace(behavior.name, mimic.is_mirrored ?
+      K1Mirror::orientation(motion->root_quaternion()) : motion->root_quaternion());
   }
   return PolicyEntryValidator(std::move(references));
 }

@@ -1,0 +1,26 @@
+{
+  "target": "unit26",
+  "selector": 263,
+  "checkpoint_iteration": 109999,
+  "policy_training_reference": "recovery_v5",
+  "inference_motion_reference": "recovery_v9",
+  "checkpoint_sha256": "60caac2b74873335ab24401e744c0fe6d7ce68c6d004c919cbfa8a2b5d545c45",
+  "reference_npz_sha256": "580073beb8234be5f97fb948894829e6f23b04ae7df99b51fcf3bb78ca6aa004",
+  "fps": 50,
+  "frames": 726,
+  "timestamp_span_s": 14.5,
+  "hold_s": 4.56,
+  "source": "HuB official swallow_balance.pkl via G1 to K1 rev2 retarget",
+  "license": "unconfirmed, no public redistribution",
+  "files": {
+    "exported/policy.onnx": "21087874833bc47495e3083918499acf582744e3cf8ea52e967e61ebfeaf3852",
+    "params/agent.yaml": "deb316d967652170a517f318e6cb7d7108a822e74ec4ea098bc26cea2cd01e37",
+    "params/sim2real.yaml": "27b4846b9ca768c46562db7f9dc59802a09f4e1a8d8a66e7844c44b303939aad",
+    "params/motion.csv": "805c9413f29ae3494d9390815361c89b9c58b6c5c7a2a5b6fcb1033e08dba483"
+  },
+  "limitations": [
+    "No new pair C++ Sim2Sim or unit26 runtime semantic compatibility inspection completed",
+    "File staging is not runtime activation",
+    "41 sample ONNX export equivalence verified; robot has not executed this candidate"
+  ]
+}

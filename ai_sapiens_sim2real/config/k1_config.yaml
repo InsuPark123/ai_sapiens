@@ -31,6 +31,7 @@ policy_asset_roots:
   - ../assets/k1
   - ../assets/k1_kpop
   - ../assets/k1_taekwondo
+  - ../assets/k1_limbo
 
 mimic_defaults:
   fps: 50
@@ -107,6 +108,12 @@ selectors:
       226: MimicTaeguek_7
       227: MimicTaeguek_8
 
+      233: MimicLimbo80
+      234: MimicLimbo90
+      235: MimicLimbo100
+      236: MimicLimbo110
+      237: MimicLimbo120
+      238: MimicLimbo130
 
       240: MimicLikeJennieK1_107999_f55628f7
       241: MimicTask2PinkvenomXY_8880e167
@@ -446,6 +453,25 @@ state_machine:
     MimicTaeguek_8:
       parent: Mimic
       run: mimic_taeguek_8
+
+    MimicLimbo80:
+      parent: Mimic
+      run: mimic_limbo_80
+    MimicLimbo90:
+      parent: Mimic
+      run: mimic_limbo_90
+    MimicLimbo100:
+      parent: Mimic
+      run: mimic_limbo_100
+    MimicLimbo110:
+      parent: Mimic
+      run: mimic_limbo_110
+    MimicLimbo120:
+      parent: Mimic
+      run: mimic_limbo_120
+    MimicLimbo130:
+      parent: Mimic
+      run: mimic_limbo_130
 
     MimicSupernaturalShort235Interim105k:
       parent: Mimic
@@ -1013,7 +1039,32 @@ state_behaviors:
     kind: mimic
     asset: mimic/taeguek_08
     motion: taeguek_8.csv
-  
+
+  mimic_limbo_80:
+    kind: mimic
+    asset: mimic/limbo_80
+    motion: limbo_80.csv
+  mimic_limbo_90:
+    kind: mimic
+    asset: mimic/limbo_90
+    motion: limbo_90.csv
+  mimic_limbo_100:
+    kind: mimic
+    asset: mimic/limbo_100
+    motion: limbo_100.csv
+  mimic_limbo_110:
+    kind: mimic
+    asset: mimic/limbo_110
+    motion: limbo_110.csv
+  mimic_limbo_120:
+    kind: mimic
+    asset: mimic/limbo_120
+    motion: limbo_120.csv
+  mimic_limbo_130:
+    kind: mimic
+    asset: mimic/limbo_130
+    motion: limbo_130.csv
+
   mimic_crayon_bar3_a2t:
     kind: mimic
     asset: mimic/crayon_bar3

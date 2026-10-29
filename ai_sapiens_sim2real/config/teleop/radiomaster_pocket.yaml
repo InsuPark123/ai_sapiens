@@ -13,9 +13,11 @@ group_mode:
   when:
     CH5: 2000
 
-api_mode:
-  when:
-    CH8: 2000
+# CH8 triggers the policy-local locomotion/motion gate.
+# API mode must use a different switch when enabled.
+# api_mode:
+#   when:
+#     CH8: 2000
 
 input_code:
   channels:

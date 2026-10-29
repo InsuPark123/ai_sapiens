@@ -1,6 +1,6 @@
 # Copyright 2026 ROBOTIS CO., LTD.
 # SPDX-License-Identifier: Apache-2.0
-"""Regenerate the tiny deterministic mirror integration fixture (requires onnx)."""
+"""Regenerate the tiny deterministic policy runtime fixture (requires onnx)."""
 from pathlib import Path
 import onnx
 from onnx import TensorProto, helper

@@ -24,7 +24,8 @@ namespace ai_sapiens_sim2real
 MotionReference::MotionReference(
   const std::string & motion_file,
   float fps,
-  const std::vector<std::string> & fallback_joint_order)
+  const std::vector<std::string> & fallback_joint_order,
+  Derivative derivative, bool normalize_orientation)
 {
   if (!std::isfinite(fps) || fps <= 0.0f) {
     throw std::runtime_error("MotionReference fps must be finite and positive");
@@ -49,12 +50,14 @@ MotionReference::MotionReference(
     {
       throw std::runtime_error("Motion has an invalid root quaternion");
     }
-    frames_->root_quaternions_.back().normalize();
+    if (normalize_orientation) {frames_->root_quaternions_.back().normalize();}
     frames_->dof_positions_.push_back(Eigen::VectorXf::Map(data[i].data() + 7, data[i].size() - 7));
   }
 
-  // Match training: central differences inside, one-sided differences at endpoints.
-  frames_->dof_velocities_ = compute_central_derivative(frames_->dof_positions_, dt_);
+  // Default Mimic uses central differences; some exported policies require forward differences.
+  frames_->dof_velocities_ = derivative == Derivative::Forward ?
+    compute_forward_derivative(frames_->dof_positions_, dt_) :
+    compute_central_derivative(frames_->dof_positions_, dt_);
 
   for (size_t i = 0; i < frames_->joint_order_.size(); ++i) {
     frames_->joint_index_by_name_[frames_->joint_order_[i]] = static_cast<Eigen::Index>(i);

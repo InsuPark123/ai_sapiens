@@ -54,6 +54,10 @@ TEST(RadiomasterDualInput, IndependentTicksGroupSwitchAndSelectorMapping)
   EXPECT_TRUE(a.group_requested); EXPECT_FALSE(b.group_requested);
   EXPECT_EQ(a.input_code, 4); EXPECT_EQ(a.selector_code, 201);
   EXPECT_FLOAT_EQ(a.velocity.x(), 0.5f);
+  EXPECT_TRUE(a.rc_valid[8]);
+  EXPECT_EQ(a.rc_us[8], 1500);
+  EXPECT_TRUE(a.rc_valid[10]);
+  EXPECT_EQ(a.rc_us[10], 1500);
   const auto previous = a.received_at;
   const auto group_previous = b.received_at;
   msg.channels[4].rc_us = 1000;

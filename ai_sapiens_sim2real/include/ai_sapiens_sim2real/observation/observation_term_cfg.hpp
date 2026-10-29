@@ -32,6 +32,7 @@ class MotionReference;
 struct PolicyJointContext;
 struct SharedControlData;
 struct SensorData;
+struct PolicyObservationOverrides;
 
 struct ObservationContext
 {
@@ -40,6 +41,7 @@ struct ObservationContext
   const MotionReference * reference_motion{nullptr};
   const SensorData * sensor_view{nullptr};
   const std::vector<float> * default_positions{nullptr};
+  const PolicyObservationOverrides * overrides{nullptr};
   const SensorData & sensors() const;
 };
 

@@ -34,7 +34,7 @@ TEST(MimicMirror, ModelCoordinatesStayLocalAndCompletionHandsOffPhysicalCommand)
 {
   if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
   const auto node = std::make_shared<rclcpp::Node>("mimic_mirror_test");
-  const std::filesystem::path directory(MIRROR_TEST_DATA_DIR);
+  const std::filesystem::path directory(COMMON_POLICY_TEST_DATA_DIR);
   Sim2RealConfig config(directory / "sim2real.yaml");
   const auto names = config.policy_joints();
   const K1Mirror mirror(names);
@@ -55,7 +55,7 @@ TEST(MimicMirror, ModelCoordinatesStayLocalAndCompletionHandsOffPhysicalCommand)
   virtual_robot.sensors.orientation = K1Mirror::orientation(real.sensors.orientation);
   virtual_robot.sensors.compute_projected_gravity();
   MimicBehavior mimic;
-  mimic.motion_file = directory / "motion.csv";
+  mimic.motion_file = std::filesystem::path(MIRROR_TEST_DATA_DIR) / "motion.csv";
   mimic.on_complete = "Velocity";
   mimic.source = std::make_shared<MotionSource>(mimic.motion_file.string(), 50.0f,
     std::vector<std::string>{"left_hip_roll_joint", "right_hip_roll_joint", "waist_yaw_joint"});
@@ -110,7 +110,7 @@ TEST(MimicMirror, RejectsCommandObservationsBeforeLoadingModel)
 {
   if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
   const auto node = std::make_shared<rclcpp::Node>("unsupported_mirror_test");
-  const std::filesystem::path directory(MIRROR_TEST_DATA_DIR);
+  const std::filesystem::path directory(COMMON_POLICY_TEST_DATA_DIR);
   for (const auto & term : {"velocity_commands", "gait_phase"}) {
     auto document = YAML::LoadFile((directory / "sim2real.yaml").string());
     document["observations"][term] = YAML::Load("{}");
@@ -122,7 +122,7 @@ TEST(MimicMirror, RejectsCommandObservationsBeforeLoadingModel)
     shared.resize(2, 2);
     MimicBehavior mimic;
     mimic.is_mirrored = true;
-    mimic.motion_file = directory / "motion.csv";
+    mimic.motion_file = std::filesystem::path(MIRROR_TEST_DATA_DIR) / "motion.csv";
     mimic.source = std::make_shared<MotionSource>(mimic.motion_file.string(), 50.0f,
       std::vector<std::string>{"left_hip_roll_joint", "right_hip_roll_joint", "waist_yaw_joint"});
     try {

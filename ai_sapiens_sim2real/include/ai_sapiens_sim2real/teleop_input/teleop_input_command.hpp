@@ -18,6 +18,7 @@
 #define AI_SAPIENS_SIM2REAL__TELEOP_INPUT__TELEOP_INPUT_COMMAND_HPP_
 
 #include <chrono>
+#include <array>
 #include <cstdint>
 
 #include <Eigen/Dense>  // NOLINT(build/include_order)
@@ -32,6 +33,9 @@ struct TeleopInputCommand
   bool group_requested{false};
   uint16_t input_code{0};
   uint16_t selector_code{0};
+  // Raw receiver channels are needed by policy-local controls such as mimic gate.
+  std::array<uint16_t, 17> rc_us{};
+  std::array<bool, 17> rc_valid{};
   Eigen::Vector3f velocity{Eigen::Vector3f::Zero()};
   std::chrono::steady_clock::time_point received_at{};
 };

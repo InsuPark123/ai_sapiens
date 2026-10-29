@@ -566,7 +566,8 @@ public:
   void configure(const rclcpp::Node::SharedPtr &, const YAML::Node &) override {}
   std::string name() const override {return "dual_test";}
   ai_sapiens_sim2real::AxisRanges output_axis_ranges() const override {return {};}
-  void send(uint16_t code, bool group = false, float velocity = 0.0f, bool api = false)
+  void send(uint16_t code, bool group = false, float velocity = 0.0f, bool api = false,
+    uint16_t trigger = 1500)
   {
     ai_sapiens_sim2real::TeleopInputCommand command;
     command.input_code = code;
@@ -574,6 +575,8 @@ public:
     command.group_requested = group;
     command.api_mode = api;
     command.velocity.x() = velocity;
+    command.rc_us[8] = trigger;
+    command.rc_valid[8] = true;
     accept_valid_command(command);
   }
 };
@@ -933,4 +936,25 @@ TEST(PolicyEntryValidator, MirroredMimicUsesReflectedEntryTilt)
   EXPECT_TRUE(validator.evaluate(target, reflected, true).allowed());
   std::filesystem::remove(path);
   std::filesystem::remove(path.string() + ".csv");
+}
+
+TEST(DualModeController, PolicyLocalChannelsFollowIndividualAuthority)
+{
+  DualFixture f;
+  f.ready();
+  f.individual->send(3, false, 0.0f, false, 2000);
+  f.tick();
+  EXPECT_TRUE(f.shared_data_.teleop.rc_valid[8]);
+  EXPECT_EQ(f.shared_data_.teleop.rc_us[8], 2000);
+  f.individual->send(3, true, 0.0f, false, 2000);
+  f.tick();
+  ASSERT_TRUE(f.shared_data_.group.participating);
+  EXPECT_FALSE(f.shared_data_.teleop.rc_valid[8]);
+  EXPECT_EQ(f.shared_data_.teleop.rc_us[8], 0);
+  f.individual->send(3, false, 0.0f, false, 2000);
+  f.tick();
+  EXPECT_FALSE(f.shared_data_.teleop.rc_valid[8]);
+  f.tick();
+  EXPECT_TRUE(f.shared_data_.teleop.rc_valid[8]);
+  EXPECT_EQ(f.shared_data_.teleop.rc_us[8], 2000);
 }

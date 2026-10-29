@@ -91,6 +91,8 @@ struct TeleopInput
   bool velocity_fresh{false};
   uint16_t input_code{0};
   uint16_t selector_code{0};
+  std::array<uint16_t, 17> rc_us{};
+  std::array<bool, 17> rc_valid{};
   std::chrono::steady_clock::time_point update_time{};
 };
 

@@ -142,6 +142,8 @@ selectors:
       265: MimicSwallowBalance
       266: MimicSwallowBalanceLeftUp
 
+      269: SubVelocityLocoMimic
+
 selectors:
   mimic_selector_all_dance:  # NOT USED
     table:
@@ -337,6 +339,16 @@ state_machine:
       # run: velocity_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000
       # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_212000
       run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: VelocityRequested
+          to: Velocity
+
+    SubVelocityLocoMimic:
+      run: loco_mimic
       transitions:
         - when: DampingRequested
           to: Damping
@@ -788,6 +800,9 @@ state_machine:
 
 
 state_behaviors:
+  loco_mimic:
+    kind: policy
+    asset: locomotion/velocity/mimic_v17b_sd_20261029
   damping:
     kind: damping
     damping:

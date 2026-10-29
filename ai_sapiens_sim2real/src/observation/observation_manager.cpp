@@ -15,6 +15,7 @@
 // Author: Woojin Wie
 
 #include "ai_sapiens_sim2real/observation/observation_manager.hpp"
+#include "ai_sapiens_sim2real/observation/policy_observation_overrides.hpp"
 
 namespace ai_sapiens_sim2real
 {
@@ -25,10 +26,12 @@ ObservationManager::ObservationManager(
   const PolicyJointContext & joint_context,
   const MotionReference * reference_motion,
     const SensorData * sensor_view,
-    const std::vector<float> * default_positions)
+    const std::vector<float> * default_positions,
+    const PolicyObservationOverrides * overrides)
 : shared_data_(shared_data)
   , joint_context_(joint_context)
   , reference_motion_(reference_motion)
+  , overrides_(overrides)
   , sensor_view_(sensor_view)
   , default_positions_(default_positions)
 {
@@ -43,7 +46,7 @@ void ObservationManager::reset()
 {
   const auto context = make_observation_context();
   for (auto & term : terms_) {
-    auto obs = term.func(context, term.params);
+    auto obs = evaluate_term(term, context);
     term.reset(obs);
   }
 }
@@ -55,7 +58,7 @@ std::vector<float> ObservationManager::compute()
 
   for (auto & term : terms_) {
     // Get raw observation from the active policy context.
-    auto obs = term.func(context, term.params);
+    auto obs = evaluate_term(term, context);
 
     // Add to history with clip/scale processing
     term.add(obs);
@@ -305,7 +308,7 @@ void ObservationManager::read_term_scale_order(
 void ObservationManager::initialize_term_history(ObservationTermCfg & term) const
 {
   // Initialize history buffer with the current observation.
-  auto initial_obs = term.func(make_observation_context(), term.params);
+  auto initial_obs = evaluate_term(term, make_observation_context());
   if (initial_obs.empty()) {
     throw std::runtime_error("Observation '" + term.name + "' returned an empty vector");
   }
@@ -322,10 +325,18 @@ void ObservationManager::initialize_term_history(ObservationTermCfg & term) cons
   term.reset(initial_obs);
 }
 
+std::vector<float> ObservationManager::evaluate_term(
+  const ObservationTermCfg & term, const ObservationContext & context) const
+{
+  auto values = term.func(context, term.params);
+  if (overrides_) {overrides_->apply(term.name, values);}
+  return values;
+}
+
 ObservationContext ObservationManager::make_observation_context() const
 {
   return ObservationContext{
-    *shared_data_, joint_context_, reference_motion_, sensor_view_, default_positions_};
+    *shared_data_, joint_context_, reference_motion_, sensor_view_, default_positions_, overrides_};
 }
 
 }  // namespace ai_sapiens_sim2real

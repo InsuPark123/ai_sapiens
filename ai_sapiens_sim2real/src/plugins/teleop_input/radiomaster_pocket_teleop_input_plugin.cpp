@@ -155,6 +155,12 @@ TeleopInputCommand RadiomasterPocketTeleopInputPlugin::make_command_from_message
   command.group_requested = is_group_mode_requested(channels);
   command.input_code = select_input_code(channels);
   command.selector_code = select_selector_code(channels);
+  for (size_t channel = 1; channel < command.rc_us.size(); ++channel) {
+    if (channels[channel]) {
+      command.rc_us[channel] = channels[channel]->rc_us;
+      command.rc_valid[channel] = true;
+    }
+  }
 
   command.velocity.x() = axis_value(channels, linear_x_);
   command.velocity.y() = axis_value(channels, linear_y_);

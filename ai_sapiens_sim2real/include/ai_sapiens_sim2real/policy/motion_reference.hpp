@@ -37,10 +37,12 @@ namespace ai_sapiens_sim2real
 class MotionReference
 {
 public:
+  enum class Derivative {Central, Forward};
   MotionReference(
     const std::string & motion_file,
     float fps,
-    const std::vector<std::string> & fallback_joint_order);
+    const std::vector<std::string> & fallback_joint_order,
+    Derivative derivative = Derivative::Central, bool normalize_orientation = true);
 
   // Read an original CSV frame without moving the playback cursor.
   struct Frame

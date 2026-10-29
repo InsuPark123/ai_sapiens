@@ -356,8 +356,8 @@ if(BUILD_TESTING)
   ament_target_dependencies(test_mode_controller rclcpp realtime_tools std_msgs)
   target_link_libraries(test_mode_controller yaml-cpp Eigen3::Eigen)
 
-  # MotionPlayback: absolute-motion-time seek/completion window.
-  ament_add_gtest(test_mimic_mirror test/test_mimic_mirror.cpp
+  # Shared integration-test runtime; each feature keeps its own test target.
+  set(POLICY_RUNTIME_TEST_SOURCES
     src/policy/policy_runtime.cpp
     src/policy/mimic_policy_runtime.cpp
     src/policy/any2track_policy.cpp
@@ -370,11 +370,19 @@ if(BUILD_TESTING)
     src/config/config_utils.cpp
     src/observation/observation_manager.cpp
     src/observation/observations.cpp)
+  ament_add_gtest(test_mimic_mirror test/test_mimic_mirror.cpp
+    ${POLICY_RUNTIME_TEST_SOURCES})
   ament_target_dependencies(test_mimic_mirror rclcpp realtime_tools ament_index_cpp)
   target_link_libraries(test_mimic_mirror yaml-cpp Eigen3::Eigen
     ${ONNXRUNTIME_LIBRARY} mujoco::mujoco OpenSSL::Crypto)
   target_compile_definitions(test_mimic_mirror PRIVATE
-    MIRROR_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/mimic_mirror")
+    MIRROR_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/mimic_mirror"
+    COMMON_POLICY_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/common/two_joint_policy")
+  ament_add_gtest(test_policy_observation_overrides test/test_policy_observation_overrides.cpp
+    src/observation/observation_manager.cpp src/observation/observations.cpp
+    src/policy/motion_reference.cpp)
+  ament_target_dependencies(test_policy_observation_overrides rclcpp realtime_tools)
+  target_link_libraries(test_policy_observation_overrides yaml-cpp Eigen3::Eigen)
   ament_add_gtest(test_action_transition test/test_action_transition.cpp)
   ament_add_gtest(test_mimic_heading_alignment test/test_mimic_heading_alignment.cpp)
   target_link_libraries(test_mimic_heading_alignment Eigen3::Eigen)
@@ -444,6 +452,36 @@ if(BUILD_TESTING)
     test_keyboard_teleop_input_plugin
     rclcpp
     ai_sapiens_interfaces)
+endif()
+
+# ============================================================================
+# Locomotion Mimic module: build and integration-test connections
+# ============================================================================
+add_library(locomotion_mimic OBJECT
+  src/modules/locomotion_mimic/runtime.cpp
+  src/modules/locomotion_mimic/config.cpp)
+ament_target_dependencies(locomotion_mimic rclcpp realtime_tools)
+target_link_libraries(locomotion_mimic yaml-cpp Eigen3::Eigen)
+
+target_link_libraries(ai_sapiens_sim2real_node locomotion_mimic)
+
+if(BUILD_TESTING)
+  # PolicyRuntime owns the module connection, including in ordinary-policy tests.
+  target_link_libraries(test_mimic_mirror locomotion_mimic)
+  ament_add_gtest(test_locomotion_mimic_runtime test/test_locomotion_mimic_runtime.cpp
+    ${POLICY_RUNTIME_TEST_SOURCES})
+  ament_target_dependencies(test_locomotion_mimic_runtime rclcpp realtime_tools ament_index_cpp)
+  target_link_libraries(test_locomotion_mimic_runtime locomotion_mimic yaml-cpp Eigen3::Eigen
+    ${ONNXRUNTIME_LIBRARY} mujoco::mujoco OpenSSL::Crypto)
+  target_compile_definitions(test_locomotion_mimic_runtime PRIVATE
+    COMMON_POLICY_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/common/two_joint_policy")
+
+  ament_add_gtest(test_locomotion_mimic test/test_locomotion_mimic.cpp
+    test/test_locomotion_mimic_hold.cpp
+    src/observation/observations.cpp
+    src/policy/motion_reference.cpp)
+  ament_target_dependencies(test_locomotion_mimic rclcpp realtime_tools)
+  target_link_libraries(test_locomotion_mimic locomotion_mimic yaml-cpp Eigen3::Eigen)
 endif()
 
 ament_package()

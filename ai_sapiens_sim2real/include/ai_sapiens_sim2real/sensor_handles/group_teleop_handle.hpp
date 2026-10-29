@@ -108,6 +108,15 @@ private:
       state_->group.frame.overrides_individual() ? code(result.command) : individual_.input_code;
     output.selector_code =
       state_->group.frame.overrides_individual() ? result.selector : individual_.selector_code;
+    // Forward individual RC channels only while individual commands own the route.
+    // MimicGate and other per-channel controls must not see an unselected input.
+    if (state_->group.frame.overrides_individual()) {
+      output.rc_us.fill(0);
+      output.rc_valid.fill(false);
+    } else {
+      output.rc_us = individual_.rc_us;
+      output.rc_valid = individual_.rc_valid;
+    }
     output.velocity_fresh = individual_.velocity_fresh;
   }
 

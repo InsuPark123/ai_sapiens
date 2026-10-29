@@ -46,6 +46,7 @@ namespace ai_sapiens_sim2real
 {
 
 class OnnxInference;
+class LocomotionMimic;
 
 /**
  * @brief A policy state: observe, run inference, and produce a validated target
@@ -175,6 +176,7 @@ private:
   Any2TrackSample any2track_sample() const;
   std::unique_ptr<Any2TrackPolicy> any2track_;
   std::unique_ptr<OnnxInference> inference_;
+  std::unique_ptr<LocomotionMimic> locomotion_mimic_;
   std::unique_ptr<ObservationManager> obs_manager_;
   // Set only when this policy declares a gait_phase observation.
   std::optional<GaitClock> gait_clock_;

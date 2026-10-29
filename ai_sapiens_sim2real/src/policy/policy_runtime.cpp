@@ -18,6 +18,7 @@
 
 #include <cmath>
 
+#include "ai_sapiens_sim2real/modules/locomotion_mimic/runtime.hpp"
 #include "ai_sapiens_sim2real/policy/onnx_inference.hpp"
 
 namespace ai_sapiens_sim2real
@@ -100,6 +101,8 @@ PolicyRuntime::PolicyRuntime(
     refresh_sensor_view();
     sensors_ = &sensor_view_;
   }
+  locomotion_mimic_ = LocomotionMimic::create_if_configured(
+    sim2real_config, reference_motion != nullptr, mirror_.has_value());
   log_joint_coverage(controller_joint_names);
   log_loading();
   if (sim2real_config.any2track()) {
@@ -117,6 +120,9 @@ PolicyRuntime::PolicyRuntime(
     inference_->validate_policy_metadata(
       joint_context_.policy_joint_names, obs_manager_->get_term_names(), requires_localization_);
     gait_clock_ = make_gait_clock(sim2real_config.observations(), step_dt_);
+  }
+  if (locomotion_mimic_) {
+    locomotion_mimic_->set_observation_layout(observation_size, obs_manager_->get_term_names());
   }
   validate_observation_size(observation_size);
   obs_buffer_[onnx_input_name_].resize(observation_size);
@@ -216,6 +222,7 @@ void PolicyRuntime::install_velocity_command_ranges() const
 void PolicyRuntime::reset_episode_state()
 {
   policy_->episode_time = 0.0f;
+  if (locomotion_mimic_) {locomotion_mimic_->reset();}
   action_limit_logged_ = false;
   if (policy_->last_action.size() < joint_context_.policy_joint_names.size()) {
     throw std::runtime_error("Policy state '" + state_name_ + "' last_action buffer too small");
@@ -274,6 +281,10 @@ PolicyUpdateResult PolicyRuntime::update(const rclcpp::Duration & period)
 
   if (!command_first) {resolve_active_velocity_command();}
   prepare_command_observation();
+  if (locomotion_mimic_) {
+    mode_->velocity_commands = locomotion_mimic_->update(
+      *shared_data_, joint_context_, action_pipeline_.properties());
+  }
   compute_observation();
   PolicyUpdateResult result = PolicyUpdateResult::TargetUnavailable;
   if (const auto raw_action = run_policy_inference()) {
@@ -353,7 +364,11 @@ void PolicyRuntime::compute_observation()
 std::optional<std::vector<float>> PolicyRuntime::run_policy_inference()
 {
   try {
-    auto raw_action = inference_->run(any2track_ ? any2track_->inputs() : obs_buffer_);
+    auto raw_action = locomotion_mimic_ ? locomotion_mimic_->infer(
+      obs_buffer_.at(onnx_input_name_), [this](const std::vector<float> & input) {
+        std::unordered_map<std::string, std::vector<float>> inputs{{onnx_input_name_, input}};
+        return inference_->run(inputs);
+      }) : inference_->run(any2track_ ? any2track_->inputs() : obs_buffer_);
     if (any2track_) {
       // Validate the residual inside the inference failure boundary as well.
       any2track_->target(raw_action);
@@ -577,7 +592,8 @@ size_t PolicyRuntime::create_observation_manager(
     shared_data,
     joint_context_,
     reference_motion, mirror_ ? &sensor_view_ : nullptr,
-    mirror_ ? &joint_properties_.default_position : nullptr);
+    mirror_ ? &joint_properties_.default_position : nullptr,
+    locomotion_mimic_ ? &locomotion_mimic_->observations() : nullptr);
   return obs_manager_->get_observation_size();
 }
 

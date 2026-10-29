@@ -144,6 +144,8 @@ void TeleopInputHandle::copy_command_state(
   teleop_->group_requested = command.group_requested;
   teleop_->input_code = command.input_code;
   teleop_->selector_code = command.selector_code;
+  teleop_->rc_us = command.rc_us;
+  teleop_->rc_valid = command.rc_valid;
   teleop_->update_time = command.received_at;
 }
 

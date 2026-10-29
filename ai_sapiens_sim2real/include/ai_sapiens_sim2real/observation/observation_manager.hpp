@@ -55,7 +55,8 @@ public:
     const PolicyJointContext & joint_context,
     const MotionReference * reference_motion,
     const SensorData * sensor_view = nullptr,
-    const std::vector<float> * default_positions = nullptr);
+    const std::vector<float> * default_positions = nullptr,
+    const PolicyObservationOverrides * overrides = nullptr);
 
   /**
    * @brief Reset all observation history buffers.
@@ -113,11 +114,14 @@ private:
     const YAML::Node & term_config,
     bool global_scale_first);
   void initialize_term_history(ObservationTermCfg & term) const;
+  std::vector<float> evaluate_term(
+    const ObservationTermCfg & term, const ObservationContext & context) const;
   ObservationContext make_observation_context() const;
 
   const SharedControlData * shared_data_;
   PolicyJointContext joint_context_;
   const MotionReference * reference_motion_;
+  const PolicyObservationOverrides * overrides_;
   const SensorData * sensor_view_;
   const std::vector<float> * default_positions_;
   std::vector<ObservationTermCfg> terms_;

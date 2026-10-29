@@ -119,7 +119,7 @@ selectors:
       248: MimicTask2PermissiontodanceXY_1a8656a4
       249: MimicTask2BlackmambaXY_40d1eed8
       250: MimicTask2XoxoXY_d3816fbd
-      251: MimicHammerTransitionXY5k
+      251: MimicHammerStraightV17FT39k
       252: MimicTask2NeonXY_c6a28b07
       253: MimicSuperShy
       254: MimicLXYK1_112999_5fb4d087
@@ -455,7 +455,9 @@ state_machine:
       run: mimic_peaches
     MimicHammerTransitionXY5k:
       parent: Mimic
-      # run: mimic_hammer_transition_xy_5k
+      run: mimic_hammer_transition_xy_5k
+    MimicHammerStraightV17FT39k:
+      parent: Mimic
       run: mimic_hammer_straight_v17_xy_on_dynamics_ft39k
     MimicCrayonBar3:
       parent: Mimic

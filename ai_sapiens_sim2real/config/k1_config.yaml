@@ -969,7 +969,8 @@ state_behaviors:
 
   mimic_standup:
     kind: mimic
-    asset: mimic/umr_stand_up
+    # asset: mimic/umr_stand_up
+    asset: mimic/stand_up
     motion: stand_up.csv
   mimic_liedown:
     kind: mimic

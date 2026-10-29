@@ -144,7 +144,7 @@ commands:
     ranges:
       lin_vel_x:
       - -0.8
-      - 3.0
+      - 1.5 # 3.0
       lin_vel_y:
       - -0.5
       - 0.5

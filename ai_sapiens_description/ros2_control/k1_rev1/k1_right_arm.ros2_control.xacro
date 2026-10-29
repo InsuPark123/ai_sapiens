@@ -111,10 +111,6 @@
         <param name="Torque Enable">1</param>
         <param name="Torque Constant">1653</param>
         <param name="Current Limit">4427</param>
-        <!-- Electronic stop: -169 to 109 deg; 30 deg threshold; 65536 counts/rev. -->
-        <param name="Min Position Limit">-30765</param>
-        <param name="Max Position Limit">19842</param>
-        <param name="Position Limit Threshold">400</param>
       </gpio>
       <gpio name="dxl2">
         <xacro:if value="${diagnostics_enabled}">
@@ -142,10 +138,6 @@
         <param name="Torque Enable">1</param>
         <param name="Torque Constant">1653</param>
         <param name="Current Limit">4427</param>
-        <!-- Electronic stop: -181 to 2 deg; 30 deg threshold; 65536 counts/rev. -->
-        <param name="Min Position Limit">-32950</param>
-        <param name="Max Position Limit">364</param>
-        <param name="Position Limit Threshold">400</param>
       </gpio>
       <gpio name="dxl3">
         <xacro:if value="${diagnostics_enabled}">
@@ -173,10 +165,6 @@
         <param name="Torque Enable">1</param>
         <param name="Torque Constant">1653</param>
         <param name="Current Limit">4427</param>
-        <!-- Electronic stop: -139 to 139 deg; 30 deg threshold; 65536 counts/rev. -->
-        <param name="Min Position Limit">-25304</param>
-        <param name="Max Position Limit">25304</param>
-        <param name="Position Limit Threshold">400</param>
       </gpio>
       <gpio name="dxl4">
         <xacro:if value="${diagnostics_enabled}">
@@ -204,10 +192,6 @@
         <param name="Torque Enable">1</param>
         <param name="Torque Constant">1653</param>
         <param name="Current Limit">4427</param>
-        <!-- Electronic stop: -45 to 121 deg; 30 deg threshold; 65536 counts/rev. -->
-        <param name="Min Position Limit">-8192</param>
-        <param name="Max Position Limit">22027</param>
-        <param name="Position Limit Threshold">400</param>
       </gpio>
       <gpio name="dxl5">
         <xacro:if value="${diagnostics_enabled}">

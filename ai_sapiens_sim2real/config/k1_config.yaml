@@ -299,8 +299,9 @@ state_machine:
       # run: velocity_motifect_stable_torso_no_phase_lpf6_93400_limited
       # run: velocity_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000_limited
       # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_207000
-      run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_207000_limited
+      # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_207000_limited
       # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_212000
+      run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000_limited
       transitions:
         - when: DampingRequested
           to: Damping
@@ -324,7 +325,8 @@ state_machine:
       # run: velocity_policy_amp_hangang
       # run: velocity_motifect_stable_torso_no_phase_lpf6_93400
       # run: velocity_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000
-      run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_212000
+      # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_212000
+      run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000
       transitions:
         - when: DampingRequested
           to: Damping
@@ -865,6 +867,14 @@ state_behaviors:
   velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_212000:
     kind: policy
     asset: locomotion/velocity/walk_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_212000
+
+  velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000
+
+  velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000_limited:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000_limited
 
   mimic_dance1:
     kind: mimic

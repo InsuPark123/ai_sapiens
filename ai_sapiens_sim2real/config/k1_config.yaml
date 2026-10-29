@@ -494,7 +494,8 @@ state_machine:
       run: mimic_kes_talk_that_talk
     MimicTeddyBear:
       parent: Mimic
-      run: mimic_kes_teddy_bear
+      # run: mimic_kes_teddy_bear
+      run: mimic_teddy_bear
     MimicStereotype:
       parent: Mimic
       run: mimic_kes_stereotype
@@ -1472,6 +1473,11 @@ state_behaviors:
     kind: mimic
     asset: mimic/kes_dance_20261020/teddy_bear
     motion: teddy_bear.csv
+    fps: 50
+  mimic_teddy_bear:
+    kind: mimic
+    asset: mimic/teddy28200_20261028
+    motion: reference.csv
     fps: 50
   mimic_kes_stereotype:
     kind: mimic

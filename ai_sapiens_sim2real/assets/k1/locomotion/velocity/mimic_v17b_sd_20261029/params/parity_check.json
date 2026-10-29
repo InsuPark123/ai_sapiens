@@ -1,0 +1,7 @@
+{
+  "samples": 256,
+  "w0_bitwise_equal_walk": true,
+  "max_error": 3.528594970703125e-05,
+  "walk_onnx_vs_torchscript_max_error": 6.198883056640625e-06,
+  "passed": true
+}

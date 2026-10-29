@@ -39,7 +39,7 @@ To remove the feature:
 3. Remove the Locomotion Mimic block in `CMakeLists.txt`, the module
    directories and the dedicated `test_locomotion_mimic*` test files.
 4. Restore the desired CH8 API-mode binding if that switch is no longer used
-   for motion triggering, and remove the local policy asset folder.
+   for motion triggering, and remove the tracked policy asset folder.
 
 ### Shared support introduced for this feature
 
@@ -86,8 +86,9 @@ Assets are installed locally at
 `assets/k1/locomotion/velocity/mimic_v17b_sd_20261029/`. The model and clips
 are unchanged; the supplied YAML's trigger channel is changed from 5 to 8,
 matching the actual K1-26 configuration. `deployment.json` records source and
-file hashes. Locomotion assets are ignored by Git; a source-only checkout does
-not include them. Rebuild the entire package, including teleop plugins, because
+file hashes. This deployment bundle is tracked in Git, including the ONNX, all
+24 motion CSVs, configuration and provenance reports. Other locomotion asset
+folders remain ignored. Rebuild the entire package, including teleop plugins, because
 raw-channel transport extends the plugin command structure.
 
 Selector 269 enters `SubVelocityLocoMimic`. Inside that state, selectors 200–223

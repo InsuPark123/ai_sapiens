@@ -1,0 +1,210 @@
+{
+  "checkpoint": "logs/rsl_rl/k1_hangang_mimic_student/2026-10-27_18-33-18_dagger_v17b_wsa1/model_1000.pt",
+  "checkpoint_sha256": "7b8c0845360b35721b667771e78a248da157d6b77bfd6342c2ee5132394fce93",
+  "walk_reference_sha256": "00d82e8841bc52443a0e080cd0c3106d99c2e04df8e4f2348fd0a323bfedeadf",
+  "walk_yaml_sha256": "10773bb34d38f0300aaac1ec62129b01b1e9abc059a7db1626454ffc41b515e6",
+  "policy_onnx_sha256": "1d7615b70af831f96ec2d421244d469a1ac3259b9f2e07220371995b4c61eb18",
+  "observation_dim": 539,
+  "w_index": 514,
+  "clips": [
+    {
+      "clip": "bow_navel",
+      "source": "/workspace/cyclo_lab_private/checkpoints/robot_snapshot_20261008/assets/k1/mimic/bow_navel/params/bow_navel_p3_04.csv",
+      "frames": 349,
+      "npz_frames": 349,
+      "max_joint_diff_vs_npz": 4.999647154613207e-10,
+      "sha256": "52de7994528ba7a5f2f5fa2c1e278d7423d115209ef7f2ba44e5afd058e9d44f"
+    },
+    {
+      "clip": "motifect_taunt_mock_bow",
+      "source": "/workspace/cyclo_lab_private/checkpoints/robot_snapshot_20261008/assets/k1/mimic/motifect_taunt_mock_bow/params/motifect_taunt_mock_bow.csv",
+      "frames": 365,
+      "npz_frames": 365,
+      "max_joint_diff_vs_npz": 5.000000413701855e-10,
+      "sha256": "0bd1ef032ebbf3981b234cce6755f613732a5e451040ba26692f2411916d69ce"
+    },
+    {
+      "clip": "wave_right_hand_only",
+      "source": "/workspace/cyclo_lab_private/checkpoints/robot_snapshot_20261008/assets/k1/mimic/wave_right_hand_only/params/wave_right_hand_only.csv",
+      "frames": 279,
+      "npz_frames": 279,
+      "max_joint_diff_vs_npz": 4.999160807539482e-10,
+      "sha256": "23ef7fe2776fc6bfcbba6e14f3c2e529f110f6f88b5d74264a7e75b3343eec72"
+    },
+    {
+      "clip": "wave_two_hand",
+      "source": "/workspace/cyclo_lab_private/checkpoints/robot_snapshot_20261008/assets/k1/mimic/wave_two_hand_2/params/wave_both_hands_deploy_no_transition_lpf6hz_edge_safe.csv",
+      "frames": 279,
+      "npz_frames": 279,
+      "max_joint_diff_vs_npz": 5.93289357642135e-08,
+      "sha256": "89379eb6b32a2c6f12ecec6d46afd46b215784392df10b666e73b0a2da13f692"
+    },
+    {
+      "clip": "dance1",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/dance1.csv",
+      "frames": 300,
+      "npz_frames": 300,
+      "max_joint_diff_vs_npz": 1.0352111834421862e-07,
+      "sha256": "84e29b12d7615c8dfa0ebd3ef1f0e0755e79c70fcb4ece0d6c16e756849c3a28"
+    },
+    {
+      "clip": "dance2",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/dance2.csv",
+      "frames": 299,
+      "npz_frames": 299,
+      "max_joint_diff_vs_npz": 5.8941650449284566e-08,
+      "sha256": "fd71ac10a46174870c06d0b679ed37ea550332a3e860992c903a1a0d009faa55"
+    },
+    {
+      "clip": "bye_bye_salute",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/bye_bye_salute.csv",
+      "frames": 128,
+      "npz_frames": 128,
+      "max_joint_diff_vs_npz": 5.8642273037534665e-08,
+      "sha256": "a2bfc5ff5c30a054f0ea85665b368be20e9bcf6478319217da28a91e4f985495"
+    },
+    {
+      "clip": "kissing_hands_thanks",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/kissing_hands_thanks.csv",
+      "frames": 376,
+      "npz_frames": 376,
+      "max_joint_diff_vs_npz": 1.1697326662840624e-07,
+      "sha256": "60c7a62818c04b4a1ca609b0f343e8f55d15796ac73c5de9bc3828b920917556"
+    },
+    {
+      "clip": "present_left",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/present_left.csv",
+      "frames": 280,
+      "npz_frames": 280,
+      "max_joint_diff_vs_npz": 5.958435056463429e-08,
+      "sha256": "aac9148ba5f520c08bfd1a81ea009e36f83bb0d038a5887492a32aefd9f157dc"
+    },
+    {
+      "clip": "boss_dust_brushing",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/boss_dust_brushing.csv",
+      "frames": 394,
+      "npz_frames": 394,
+      "max_joint_diff_vs_npz": 1.1594970716899411e-07,
+      "sha256": "1c14342fa9d0531f7bd2d9e6fe6506ca4d3c499c9cfdde4fb3d1d8b76ea236cf"
+    },
+    {
+      "clip": "bravo",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/bravo.csv",
+      "frames": 394,
+      "npz_frames": 394,
+      "max_joint_diff_vs_npz": 5.9535827601209235e-08,
+      "sha256": "f81a452a8712ef34ddd8af26baa538da333ad7e8f7d096583219df2fc4b72b3b"
+    },
+    {
+      "clip": "triumphant_delight",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/triumphant_delight.csv",
+      "frames": 183,
+      "npz_frames": 183,
+      "max_joint_diff_vs_npz": 1.1744689931703078e-07,
+      "sha256": "85192fa283b236ab82170b476bb23b3d247ef54564433ea15abae9e979085a3e"
+    },
+    {
+      "clip": "looking_around",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/looking_around.csv",
+      "frames": 620,
+      "npz_frames": 620,
+      "max_joint_diff_vs_npz": 1.1912658681723087e-07,
+      "sha256": "175be3b5a0fcefb94480aacae7d7fb4f6fcaf70645a6b3511bbaf9d3e1bdf683"
+    },
+    {
+      "clip": "six_seven_three",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/six_seven_three.csv",
+      "frames": 218,
+      "npz_frames": 218,
+      "max_joint_diff_vs_npz": 5.9515685935096485e-08,
+      "sha256": "182fecfa6f867e9b6edaad6be4ae3468d97083c7f7f6545064334c685338292c"
+    },
+    {
+      "clip": "come_here",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/come_here.csv",
+      "frames": 326,
+      "npz_frames": 326,
+      "max_joint_diff_vs_npz": 1.1468261718050599e-07,
+      "sha256": "7239e803e52f3c60a775f46eb73df7e285c0320baa6e5d51b0c1cd01de7652ad"
+    },
+    {
+      "clip": "shake_hands",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/shake_hands.csv",
+      "frames": 400,
+      "npz_frames": 400,
+      "max_joint_diff_vs_npz": 5.942260750124717e-08,
+      "sha256": "9ebb1bf28149d75af21da27409b8295b2813a914da209218f81b247a37a19923"
+    },
+    {
+      "clip": "shake_hands_fake",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/shake_hands_fake.csv",
+      "frames": 348,
+      "npz_frames": 348,
+      "max_joint_diff_vs_npz": 1.1665283183859287e-07,
+      "sha256": "1d1fd5182f8eae86a82769dfd26322fb946d8cc74bcf5600675f72d528c9a8e2"
+    },
+    {
+      "clip": "inducing_response",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/inducing_response.csv",
+      "frames": 621,
+      "npz_frames": 621,
+      "max_joint_diff_vs_npz": 1.1901672358760607e-07,
+      "sha256": "51a877aa03d5aa7a7a791442ec559283cd01604fa19def883a9a3127d490f019"
+    },
+    {
+      "clip": "texas_comp",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/texas_comp.csv",
+      "frames": 508,
+      "npz_frames": 508,
+      "max_joint_diff_vs_npz": 1.1735107419141855e-07,
+      "sha256": "73c52ecc75535545f50aa1d08db05202ce08ede9a887f8893c836e24706ffb59"
+    },
+    {
+      "clip": "spiderman",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/spiderman.csv",
+      "frames": 350,
+      "npz_frames": 350,
+      "max_joint_diff_vs_npz": 1.1673339850304387e-07,
+      "sha256": "36b85322841c0db08583456d7562790434396297dd5f509e73f330f2bcf86d43"
+    },
+    {
+      "clip": "sit_on_heels",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/sit_on_heels.csv",
+      "frames": 683,
+      "npz_frames": 683,
+      "max_joint_diff_vs_npz": 1.1646728514946858e-07,
+      "sha256": "a0f11cc11edaab137f711850ae3ec6c968b03572a91e212cf1fb75d0f9ed7b81"
+    },
+    {
+      "clip": "ironman_pose",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/ironman_pose.csv",
+      "frames": 286,
+      "npz_frames": 286,
+      "max_joint_diff_vs_npz": 4.999542224659592e-09,
+      "sha256": "8b0a2b109008a27d65e582ddcac69bfd07df3e8cb943425c2c286c9f4f7476ac"
+    },
+    {
+      "clip": "sitting_floor",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/sitting_floor.csv",
+      "frames": 382,
+      "npz_frames": 382,
+      "max_joint_diff_vs_npz": 1.1904113783600678e-07,
+      "sha256": "386cc79a9adbc4eaba78a1820c09225a5f88e95e34dd694381495c8d9082b31a"
+    },
+    {
+      "clip": "lying_side",
+      "source": "/workspace/cyclo_lab_private/source/cyclo_lab/cyclo_lab/assets/k1_hangang_mimic/csv/lying_side.csv",
+      "frames": 622,
+      "npz_frames": 622,
+      "max_joint_diff_vs_npz": 5.000000025123796e-09,
+      "sha256": "c585376b8b997d1446fd941925697619e3f0a15b920d099c68e8358e7cb0c587"
+    }
+  ],
+  "parity": {
+    "samples": 256,
+    "w0_bitwise_equal_walk": true,
+    "max_error": 3.528594970703125e-05,
+    "walk_onnx_vs_torchscript_max_error": 6.198883056640625e-06,
+    "passed": true
+  }
+}

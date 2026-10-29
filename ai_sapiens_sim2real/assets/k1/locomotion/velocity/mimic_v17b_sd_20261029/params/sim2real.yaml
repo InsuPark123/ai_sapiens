@@ -1,0 +1,615 @@
+policy_joints:
+- left_hip_pitch_joint
+- left_hip_roll_joint
+- left_hip_yaw_joint
+- left_knee_joint
+- left_ankle_pitch_joint
+- left_ankle_roll_joint
+- right_hip_pitch_joint
+- right_hip_roll_joint
+- right_hip_yaw_joint
+- right_knee_joint
+- right_ankle_pitch_joint
+- right_ankle_roll_joint
+- waist_yaw_joint
+- left_shoulder_pitch_joint
+- left_shoulder_roll_joint
+- left_shoulder_yaw_joint
+- left_elbow_joint
+- left_wrist_roll_joint
+- right_shoulder_pitch_joint
+- right_shoulder_roll_joint
+- right_shoulder_yaw_joint
+- right_elbow_joint
+- right_wrist_roll_joint
+step_dt: 0.02
+joint_properties:
+  left_hip_pitch_joint:
+    default_position: -0.3
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  left_hip_roll_joint:
+    default_position: 0.0
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  left_hip_yaw_joint:
+    default_position: 0.0
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  left_knee_joint:
+    default_position: 0.63
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  left_ankle_pitch_joint:
+    default_position: -0.33
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  left_ankle_roll_joint:
+    default_position: 0.0
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  right_hip_pitch_joint:
+    default_position: -0.3
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  right_hip_roll_joint:
+    default_position: 0.0
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  right_hip_yaw_joint:
+    default_position: 0.0
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  right_knee_joint:
+    default_position: 0.63
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  right_ankle_pitch_joint:
+    default_position: -0.33
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  right_ankle_roll_joint:
+    default_position: 0.0
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  waist_yaw_joint:
+    default_position: 0.0
+    stiffness: 76.45161
+    damping: 4.867061
+    position_limit: null
+  left_shoulder_pitch_joint:
+    default_position: 0.2
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  left_shoulder_roll_joint:
+    default_position: 0.2
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  left_shoulder_yaw_joint:
+    default_position: 0.0
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  left_elbow_joint:
+    default_position: 0.95
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  left_wrist_roll_joint:
+    default_position: 0.0
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  right_shoulder_pitch_joint:
+    default_position: 0.2
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  right_shoulder_roll_joint:
+    default_position: -0.2
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  right_shoulder_yaw_joint:
+    default_position: 0.0
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  right_elbow_joint:
+    default_position: 0.95
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+  right_wrist_roll_joint:
+    default_position: 0.0
+    stiffness: 22.30104
+    damping: 1.419728
+    position_limit: null
+commands:
+  base_velocity:
+    ranges:
+      lin_vel_x:
+      - -0.8
+      - 1.5
+      lin_vel_y:
+      - -0.5
+      - 0.5
+      ang_vel_z:
+      - -1.8
+      - 1.8
+      heading: null
+actions:
+  joint_pos:
+    clip: null
+    scale:
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    - 0.25
+    offset:
+    - -0.3
+    - 0.0
+    - 0.0
+    - 0.63
+    - -0.33
+    - 0.0
+    - -0.3
+    - 0.0
+    - 0.0
+    - 0.63
+    - -0.33
+    - 0.0
+    - 0.0
+    - 0.2
+    - 0.2
+    - 0.0
+    - 0.95
+    - 0.0
+    - 0.2
+    - -0.2
+    - 0.0
+    - 0.95
+    - 0.0
+observations:
+  base_ang_vel:
+    params: {}
+    clip:
+    - -500.0
+    - 500.0
+    scale:
+    - 0.2
+    - 0.2
+    - 0.2
+    history_length: 5
+  projected_gravity:
+    params: {}
+    clip:
+    - -100.0
+    - 100.0
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 5
+  velocity_commands:
+    params:
+      command_name: base_velocity
+    clip:
+    - -100.0
+    - 100.0
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 5
+  joint_pos:
+    params: {}
+    clip:
+    - -100.0
+    - 100.0
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 5
+  joint_vel:
+    params: {}
+    clip:
+    - -2000.0
+    - 2000.0
+    scale:
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    - 0.05
+    history_length: 5
+  actions:
+    params: {}
+    clip:
+    - -100.0
+    - 100.0
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    history_length: 5
+  mimic_gate:
+    scale:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    clip: null
+    history_length: 1
+    params:
+      trigger_channel: 8
+      trigger_on_min_us: 1950
+      trigger_on_max_us: 2050
+      abort_on_release: true
+      dial_base: 200
+      clips:
+      - clips/bow_navel.csv
+      - clips/motifect_taunt_mock_bow.csv
+      - clips/wave_right_hand_only.csv
+      - clips/wave_two_hand.csv
+      - clips/dance1.csv
+      - clips/dance2.csv
+      - clips/bye_bye_salute.csv
+      - clips/kissing_hands_thanks.csv
+      - clips/present_left.csv
+      - clips/boss_dust_brushing.csv
+      - clips/bravo.csv
+      - clips/triumphant_delight.csv
+      - clips/looking_around.csv
+      - clips/six_seven_three.csv
+      - clips/come_here.csv
+      - clips/shake_hands.csv
+      - clips/shake_hands_fake.csv
+      - clips/inducing_response.csv
+      - clips/texas_comp.csv
+      - clips/spiderman.csv
+      - clips/sit_on_heels.csv
+      - clips/ironman_pose.csv
+      - clips/sitting_floor.csv
+      - clips/lying_side.csv
+      clip_names:
+      - bow_navel
+      - motifect_taunt_mock_bow
+      - wave_right_hand_only
+      - wave_two_hand
+      - dance1
+      - dance2
+      - bye_bye_salute
+      - kissing_hands_thanks
+      - present_left
+      - boss_dust_brushing
+      - bravo
+      - triumphant_delight
+      - looking_around
+      - six_seven_three
+      - come_here
+      - shake_hands
+      - shake_hands_fake
+      - inducing_response
+      - texas_comp
+      - spiderman
+      - sit_on_heels
+      - ironman_pose
+      - sitting_floor
+      - lying_side
+      fps: 50.0
+      quiet_seconds: 0.7
+      pending_timeout_seconds: 2.5
+      ramp_seconds: 0.5
+      bridge_min_seconds: 0.5
+      bridge_max_seconds: 1.2
+      bridge_joint_speed: 1.2
+      bridge_torso_speed: 0.1
+      abort_max_reference_tilt: 0.5
+      acceleration_limits:
+      - 1.0
+      - 1.0
+      - 1.5
+      quiet_command: 0.1
+      quiet_leg_speed: 0.35
+      quiet_ang_speed: 0.35
+      # 2026-10-13 걷는 중 켜면 팔만 사용(다리는 보행 정책), 서서 켜면 원래 동작 전체
+      # 2026-10-13 다이얼표 (200+순서): shake_hands_fake는 다이얼에서 빼고 악수 분기로만 사용, 216 = inducing_response
+      # 2026-10-22 v10: 217 = texas_comp, 218 = spiderman (대기 클립); 2026-10-23 v11: 219 = sit_on_heels (앉아서 대기 / 일어나기)
+      dial_clips: [bow_navel, motifect_taunt_mock_bow, wave_right_hand_only, wave_two_hand, dance1, dance2, bye_bye_salute,
+                   kissing_hands_thanks, present_left, boss_dust_brushing, bravo, triumphant_delight, looking_around,
+                   six_seven_three, come_here, shake_hands, inducing_response, texas_comp, spiderman,
+                   sit_on_heels]
+      # 2026-10-23 인사 반복 칸 복원 (v8의 217 반복을 v11에 이식): dial_base + len(dial_clips) = 220. SA 켜면 아래 순서로 무한 반복,
+      # SA 끄면 지금 하던 동작을 끝까지 하고 멈춤 (다음 동작 준비 중이면 바로 멈춤)
+      dial_loops:
+      - [wave_right_hand_only, wave_two_hand, kissing_hands_thanks]
+      # 2026-10-23 v12: 221 = ironman_pose (반복 칸 1개짜리 대기 클립): SA 올림 -> 점프 후 무릎 꿇고 손 짚고 대기 (2026-10-26 v13: final_v6, 114프레임),
+      # SA 내림 -> 일어나기 후 멈춤 (런타임 패치 10), SD(CH8) 뒤집기 -> 일어나기 (SA 올린 채면 다시 반복)
+      - [ironman_pose]
+      # 2026-10-26 v13: 222 = sitting_floor (반복 칸 1개짜리 대기 클립): SA 올림 -> 바닥에 앉아 대기 (209프레임),
+      # SA 내림 -> 일어나기 후 멈춤, SD(CH8) 뒤집기 -> 일어나기 (221 ironman_pose와 같은 방식)
+      - [sitting_floor]
+      # 2026-10-28 v17b: 223 = lying_side (반복 칸 1개짜리 대기 클립): SA 올림 -> 옆으로 누워 대기 (299프레임),
+      # SA 내림 -> 일어나기 후 멈춤, SD(CH8) 뒤집기 -> 일어나기 (222 sitting_floor와 같은 방식)
+      - [lying_side]
+      # 2026-10-13 빠른 시작: 서 있어도 정지확인 0.7초를 기다리지 않고, 동작 진입 0.25초 (SA→손 움직임 1.84→0.9초, 시뮬)
+      fast_start_clips: [shake_hands]
+      fast_start_ramp_seconds: 0.25
+      # 2026-10-13 서서 켠 동작도 스틱을 움직이면 걷기 전환(팔=동작, 다리=보행정책, 다리 넘김 0.4초)
+      switch_walk_seconds: 0.4
+      walk_clips: [wave_right_hand_only, wave_two_hand, bye_bye_salute, kissing_hands_thanks, present_left, bravo,
+                   six_seven_three, come_here, shake_hands, shake_hands_fake]
+      arms_only_ref_clips: [bye_bye_salute, kissing_hands_thanks, present_left, bravo, six_seven_three, come_here,
+                            shake_hands, shake_hands_fake]
+      # 2026-10-13 악수: 2.0초(100프레임)에서 손 내밀고 대기 -> SD(CH8) 뒤집기, CH10 <= 1250us 페이크(2.5초부터), >= 1750us 악수 계속
+      interactive:
+        clip: shake_hands
+        hold_frame: 100
+        low_clip: shake_hands_fake
+        low_frame: 125
+        select_channel: 10
+        select_low_max_us: 1250
+        select_high_min_us: 1750
+        confirm_channel: 8
+      # 2026-10-22 대기 클립 (런타임 패치 6): SA 올림 -> 대기 프레임까지 재생 후 대기 (texas: 근육 포즈 7.2초, spiderman: 런지 4.5초),
+      # SA 내림 -> 대기 없이 끝까지 (일어나기) 재생 후 보행, SD(CH8) 뒤집기 -> 다음 구간, 대기 최대 hold_max_seconds 후 자동 진행
+      # 2026-10-23 sit_on_heels: 앉은 자세 (384프레임)에서 대기, SA 내림 -> 일어나기
+      hold_clips:
+        texas_comp: [360]
+        spiderman: [226]
+        sit_on_heels: [384]
+        ironman_pose: [114]
+        sitting_floor: [209]
+        lying_side: [299]
+      # 2026-10-23 사용자: 대기 무한 (런타임 패치 9, 0 = 자동 진행 없음) -> SA 내림(끝까지 일어나기) 또는 SD(CH8) 뒤집기로만 진행
+      hold_max_seconds: 0.0
+deployment_metadata:
+  source: walk_stable_amp_1 (checkpoints/walk_stable_amp_1) + mimic student v17b
+  input_layout: term-major history (walk part); walk policy internally permutes to
+    time-major
+  history_length: 5
+  single_frame_dim: 78
+  observation_dim: 539
+  action_dim: 23
+  normalization: none in the ONNX; the walk obs scales are in observations.*.scale
+  raw_action_limit: 10.0
+  mimic_student_checkpoint: logs/rsl_rl/k1_hangang_mimic_student/2026-10-27_18-33-18_dagger_v17b_wsa1/model_1000.pt
+  mimic_w_index: 514

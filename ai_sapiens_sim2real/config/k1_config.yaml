@@ -116,28 +116,30 @@ selectors:
       237: MimicLimbo120
       238: MimicLimbo130
 
-      240: MimicLikeJennieK1_107999_f55628f7
-      241: MimicTask2PinkvenomXY_8880e167
+      240: MimicEasyXYCK1_109999_a667fbf5
+      241: MimicSmartFlowK1_107999_fb601c79
       242: MimicAttention
-      243: MimicTask2SavageXY_ae9342d2
-      # 244: MimicTask2UnforgivenXY_bbfba803
-      245: MimicTeddyBear
-      # 246: MimicOnXYK1_107000_72da9c90
-      247: MimicEasyXYCK1_109999_a667fbf5
-      248: MimicTask2PermissiontodanceXY_1a8656a4
-      249: MimicTask2BlackmambaXY_40d1eed8
-      250: MimicTask2XoxoXY_d3816fbd
+      243: MimicDitto
+      244: MimicSuperShy
+      245: MimicHypeboy
+      246: MimicTeddyBear
+      247: MimicTask2XoxoXY_d3816fbd
+      248: MimicTask2QueencardXY_89defef9
+      249: MimicTask2NeonXY_c6a28b07
+      250: MimicTask2PermissiontodanceXY_1a8656a4
       251: MimicHammerStraightV17FT39k
-      252: MimicTask2NeonXY_c6a28b07
-      253: MimicSuperShy
-      254: MimicLXYK1_112999_5fb4d087
-      255: MimicSmartFlowK1_107999_fb601c79
-      256: MimicPowerK1_25000_389ffe11
-      257: MimicJiyu404XYK1_110000_d66ac6ba
-      258: MimicTask2QueencardXY_89defef9
+      252: MimicJiyu404XYK1_110000_d66ac6ba
+      253: MimicPowerK1_25000_389ffe11
+      254: MimicTask2SavageXY_ae9342d2
+      255: MimicTask2BlackmambaXY_40d1eed8
+      256: MimicTask2PinkvenomXY_8880e167
+      257: MimicLikeJennieK1_107999_f55628f7
+      258: MimicLXYK1_112999_5fb4d087
+
       259: MimicCheerleading
-      260: MimicHypeboy
-      261: MimicDitto
+
+      # 260: MimicTask2UnforgivenXY_bbfba803
+      # 261: MimicOnXYK1_107000_72da9c90
 
       265: MimicSwallowBalance
       266: MimicSwallowBalanceLeftUp

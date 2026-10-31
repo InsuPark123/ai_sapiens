@@ -33,7 +33,7 @@ Common observation functions contain no correction or module-specific branches.
 
 To remove the feature:
 
-1. Remove `loco_mimic`, `SubVelocityLocoMimic` and selector 269 from root config.
+1. Remove `loco_mimic`, `SubVelocityLocoMimic` and selectors 269–288 from root config.
 2. Remove the module pointer/include and its five lifecycle connections from
    `PolicyRuntime`; use its original single inference dispatch.
 3. Remove the Locomotion Mimic block in `CMakeLists.txt`, the module
@@ -92,9 +92,14 @@ records source and file hashes. This deployment bundle is tracked in Git, includ
 folders remain ignored. Rebuild the entire package, including teleop plugins, because
 raw-channel transport extends the plugin command structure.
 
-Selector 269 enters `SubVelocityLocoMimic`. Inside that state, selectors 270–288
-choose the configured clip or loop slot (270–284 for individual clips, 285–288
-for loop slots). These are internal selections; enter selector 269 first.
+Selectors 269–288 all enter the same `SubVelocityLocoMimic` state through the
+existing mode-entry controls. Selector 269 enters without selecting a motion;
+270–288 also select a clip or loop slot (270–284 for individual clips, 285–288
+for loop slots). Entry does not start playback: a fresh CH8 OFF-to-ON edge is
+required after entry, even if CH8 was already ON. Changing the selector while
+inside this state does not re-enter the policy or reset its observation history.
+Group authority continues to suppress the raw RC channels, so these aliases do
+not enable group-triggered motion playback.
 The selector list excludes `bow_navel`, `motifect_taunt_mock_bow`, `dance1`,
 `dance2` and `inducing_response`. Their entries in the full 24-clip arrays and
 motion files remain intact to preserve the model's observation dimensions and

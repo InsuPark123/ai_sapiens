@@ -49,7 +49,7 @@ TEST(LocomotionMimicAsset, RealExportLoadsAndHandsOffWithoutLeakingOverrides)
   }
   shared.teleop.unavailable = false;
   shared.teleop.rc_valid[8] = true;
-  shared.teleop.rc_us[8] = 1000;
+  shared.teleop.rc_us[8] = 2000;  // A held entry trigger must not start playback.
   shared.teleop.selector_code = 270;  // wave_right_hand_only
   shared.mode.velocity_source = VelocitySource::Teleop;
   shared.teleop.velocity_command_normalized.x() = .3f;
@@ -58,6 +58,13 @@ TEST(LocomotionMimicAsset, RealExportLoadsAndHandsOffWithoutLeakingOverrides)
   ASSERT_EQ(runtime.observation_size(), 539U);
   runtime.enter();
   const auto dt = rclcpp::Duration::from_seconds(.02);
+  ASSERT_EQ(runtime.update(dt), PolicyUpdateResult::TargetReady);
+  EXPECT_FLOAT_EQ(shared.policy.input[514], 0.f);
+  for (int tick = 0; tick < 50; ++tick) {
+    ASSERT_EQ(runtime.update(dt), PolicyUpdateResult::TargetReady);
+    EXPECT_FLOAT_EQ(shared.policy.input[514], 0.f);
+  }
+  shared.teleop.rc_us[8] = 1000;
   ASSERT_EQ(runtime.update(dt), PolicyUpdateResult::TargetReady);
   EXPECT_FLOAT_EQ(shared.policy.input[514], 0.f);
   shared.teleop.rc_us[8] = 2000;

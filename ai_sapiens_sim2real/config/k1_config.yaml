@@ -144,7 +144,27 @@ selectors:
       265: MimicSwallowBalance
       266: MimicSwallowBalanceLeftUp
 
+      # Entry aliases only; motion playback requires a fresh CH8 trigger after entry.
       269: SubVelocityLocoMimic
+      270: SubVelocityLocoMimic
+      271: SubVelocityLocoMimic
+      272: SubVelocityLocoMimic
+      273: SubVelocityLocoMimic
+      274: SubVelocityLocoMimic
+      275: SubVelocityLocoMimic
+      276: SubVelocityLocoMimic
+      277: SubVelocityLocoMimic
+      278: SubVelocityLocoMimic
+      279: SubVelocityLocoMimic
+      280: SubVelocityLocoMimic
+      281: SubVelocityLocoMimic
+      282: SubVelocityLocoMimic
+      283: SubVelocityLocoMimic
+      284: SubVelocityLocoMimic
+      285: SubVelocityLocoMimic
+      286: SubVelocityLocoMimic
+      287: SubVelocityLocoMimic
+      288: SubVelocityLocoMimic
 
       299: SubVelocityHangangLimited
 

@@ -77,7 +77,7 @@ selectors:
     table:
       200: MimicStandup
       201: MimicLiedown
-      202: SubVelocityHangang
+      202: SubVelocityNoLimit
       203: SubVelocityTerrain
 
       204: MimicSquat
@@ -145,6 +145,8 @@ selectors:
       266: MimicSwallowBalanceLeftUp
 
       269: SubVelocityLocoMimic
+
+      299: SubVelocityHangangLimited
 
 selectors:
   mimic_selector_all_dance:  # NOT USED
@@ -335,12 +337,22 @@ state_machine:
         - when: VelocityRequested
           to: Velocity
 
-    SubVelocityHangang:
+    SubVelocityNoLimit:
       # run: velocity_policy_amp_hangang
       # run: velocity_motifect_stable_torso_no_phase_lpf6_93400
       # run: velocity_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000
       # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_212000
       run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000
+      transitions:
+        - when: DampingRequested
+          to: Damping
+        - when: ReadyPoseRequested
+          to: ReadyPose
+        - when: VelocityRequested
+          to: Velocity
+
+    SubVelocityHangangLimited:
+      run: velocity_policy_amp_hangang_limited
       transitions:
         - when: DampingRequested
           to: Damping

@@ -26,6 +26,7 @@ TEST(LocomotionMimicAsset, RealExportLoadsAndHandsOffWithoutLeakingOverrides)
       config.path(), config.step_dt(), names);
   ASSERT_EQ(resolved.clips.size(), 24U);
   ASSERT_EQ(resolved.trigger_channel, 8);
+  ASSERT_EQ(resolved.dial_base, 270);
   const auto yaml = YAML::LoadFile(config.path().string());
   const auto paths = yaml["observations"]["mimic_gate"]["params"]["clips"];
   for (size_t i = 0; i < resolved.clips.size(); ++i) {
@@ -49,7 +50,7 @@ TEST(LocomotionMimicAsset, RealExportLoadsAndHandsOffWithoutLeakingOverrides)
   shared.teleop.unavailable = false;
   shared.teleop.rc_valid[8] = true;
   shared.teleop.rc_us[8] = 1000;
-  shared.teleop.selector_code = 202;  // wave_right_hand_only
+  shared.teleop.selector_code = 272;  // wave_right_hand_only
   shared.mode.velocity_source = VelocitySource::Teleop;
   shared.teleop.velocity_command_normalized.x() = .3f;
   PolicyRuntime runtime(node, "loco_mimic", (root / "exported/policy.onnx").string(),

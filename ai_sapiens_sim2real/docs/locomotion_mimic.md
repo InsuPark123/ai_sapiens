@@ -85,15 +85,17 @@ robot export matches the supplied v17b model:
 Assets are installed locally at
 `assets/k1/locomotion/velocity/mimic_v17b_sd_20261029/`. The model and clips
 are unchanged; the supplied YAML's trigger channel is changed from 5 to 8,
-matching the actual K1-26 configuration. `deployment.json` records source and
-file hashes. This deployment bundle is tracked in Git, including the ONNX, all
+matching the source K1-26 configuration. The internal selector base is changed
+from 200 to 270 to avoid overlap with existing policies. `deployment.json`
+records source and file hashes. This deployment bundle is tracked in Git, including the ONNX, all
 24 motion CSVs, configuration and provenance reports. Other locomotion asset
 folders remain ignored. Rebuild the entire package, including teleop plugins, because
 raw-channel transport extends the plugin command structure.
 
-Selector 269 enters `SubVelocityLocoMimic`. Inside that state, selectors 200–223
-choose the configured clip or loop slot. Damping, ReadyPose and Velocity retain
-explicit exits. CH8 no longer doubles as API-mode selection in the local
+Selector 269 enters `SubVelocityLocoMimic`. Inside that state, selectors 270–293
+choose the configured clip or loop slot (270–289 for individual clips, 290–293
+for loop slots). These are internal selections; enter selector 269 first.
+Damping, ReadyPose and Velocity retain explicit exits. CH8 no longer doubles as API-mode selection in the local
 RadioMaster configuration. Individual raw channels are withheld while group
 commands own the input route, matching the original stash.
 

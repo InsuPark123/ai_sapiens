@@ -109,6 +109,10 @@ selectors:
       226: MimicTaeguek_7
       227: MimicTaeguek_8
 
+      228: MimicTkFrontKick
+      229: MimicTkSideKick
+      230: MimicTkStepPunch
+
       233: MimicLimbo80
       234: MimicLimbo90
       235: MimicLimbo100
@@ -492,6 +496,16 @@ state_machine:
     MimicTaeguek_8:
       parent: Mimic
       run: mimic_taeguek_8
+
+    MimicTkFrontKick:
+      parent: Mimic
+      run: mimic_tk_front_kick
+    MimicTkSideKick:
+      parent: Mimic
+      run: mimic_tk_side_kick
+    MimicTkStepPunch:
+      parent: Mimic
+      run: mimic_tk_step_punch
 
     MimicLimbo80:
       parent: Mimic
@@ -1097,6 +1111,19 @@ state_behaviors:
     kind: mimic
     asset: mimic/taeguek_08
     motion: taeguek_8.csv
+
+  mimic_tk_front_kick:
+    kind: mimic
+    asset: mimic/tk_front_kick
+    motion: front_kick.csv
+  mimic_tk_side_kick:
+    kind: mimic
+    asset: mimic/tk_side_kick
+    motion: side_kick.csv
+  mimic_tk_step_punch:
+    kind: mimic
+    asset: mimic/tk_step_punch
+    motion: step_punch.csv
 
   mimic_limbo_80:
     kind: mimic

@@ -1,0 +1,79 @@
+{
+  "source": {
+    "status": "layout_checks_passed",
+    "kind": "mimic",
+    "run": "/home/robotis/Downloads/taguendo_deafult_motion/front_kick",
+    "files": {
+      "policy": {
+        "path": "/home/robotis/Downloads/taguendo_deafult_motion/front_kick/exported/policy.onnx",
+        "bytes": 936709,
+        "sha256": "8dc1959b568c791774badc1745ed0560d9c72a85fe1d0fe3e84450bb8c54223e"
+      },
+      "config": {
+        "path": "/home/robotis/Downloads/taguendo_deafult_motion/front_kick/params/sim2real.yaml",
+        "bytes": 5156,
+        "sha256": "199e318b5d88a89e17299de66995992f6c8bcab59840efd8715a90b317fe4b14"
+      },
+      "motion": {
+        "path": "/home/robotis/Downloads/taguendo_deafult_motion/front_kick/params/front_kick.csv",
+        "bytes": 89493,
+        "sha256": "2f020957fe8207cff5dd43b5a3d97dbd78c013b52389841443f1525277776600"
+      }
+    },
+    "manifest_consistency": null,
+    "provenance_authenticity_verified": false,
+    "requires_review": [
+      "Trusted original export record; supplied manifests are unsigned assertions, and copied mixed-run files without an authentic record cannot be certified",
+      "ONNX validity, dimensions, joint/observation/action semantics and runtime compatibility",
+      "Mimic reference matches training; format, units, FPS and playback window",
+      "Robot identity, operator safety, backup, rollback and separate execution authorization"
+    ]
+  },
+  "staged": {
+    "status": "layout_checks_passed",
+    "kind": "mimic",
+    "run": "/home/robotis/kiwoong/private_ws/ai_sapiens/ai_sapiens_sim2real/assets/k1/mimic/tk_front_kick",
+    "files": {
+      "policy": {
+        "path": "/home/robotis/kiwoong/private_ws/ai_sapiens/ai_sapiens_sim2real/assets/k1/mimic/tk_front_kick/exported/policy.onnx",
+        "bytes": 936709,
+        "sha256": "8dc1959b568c791774badc1745ed0560d9c72a85fe1d0fe3e84450bb8c54223e"
+      },
+      "config": {
+        "path": "/home/robotis/kiwoong/private_ws/ai_sapiens/ai_sapiens_sim2real/assets/k1/mimic/tk_front_kick/params/sim2real.yaml",
+        "bytes": 5156,
+        "sha256": "199e318b5d88a89e17299de66995992f6c8bcab59840efd8715a90b317fe4b14"
+      },
+      "motion": {
+        "path": "/home/robotis/kiwoong/private_ws/ai_sapiens/ai_sapiens_sim2real/assets/k1/mimic/tk_front_kick/params/front_kick.csv",
+        "bytes": 89493,
+        "sha256": "2f020957fe8207cff5dd43b5a3d97dbd78c013b52389841443f1525277776600"
+      }
+    },
+    "manifest_consistency": null,
+    "provenance_authenticity_verified": false,
+    "requires_review": [
+      "Trusted original export record; supplied manifests are unsigned assertions, and copied mixed-run files without an authentic record cannot be certified",
+      "ONNX validity, dimensions, joint/observation/action semantics and runtime compatibility",
+      "Mimic reference matches training; format, units, FPS and playback window",
+      "Robot identity, operator safety, backup, rollback and separate execution authorization"
+    ]
+  },
+  "model_metadata": {
+    "command_names": "reference_trajectory",
+    "joint_damping": "4.867061,4.867061,4.867061,4.867061,4.867061,1.419728,4.867061,4.867061,4.867061,4.867061,4.867061,1.419728,4.867061,1.419728,1.419728,1.419728,1.419728,1.419728,1.419728,1.419728,1.419728,1.419728,1.419728",
+    "observation_names": "motion_command,motion_anchor_ori_b,base_ang_vel,joint_pos_rel,joint_vel_rel,last_action",
+    "joint_stiffness": "76.45161,76.45161,76.45161,76.45161,76.45161,22.30104,76.45161,76.45161,76.45161,76.45161,76.45161,22.30104,76.45161,22.30104,22.30104,22.30104,22.30104,22.30104,22.30104,22.30104,22.30104,22.30104,22.30104",
+    "default_joint_pos": "-0.3,0.0,0.0,0.63,-0.33,0.0,-0.3,0.0,0.0,0.63,-0.33,0.0,0.0,0.2,0.2,0.0,0.95,0.0,0.2,-0.2,0.0,0.95,0.0",
+    "joint_names": "left_hip_pitch_joint,left_hip_roll_joint,left_hip_yaw_joint,left_knee_joint,left_ankle_pitch_joint,left_ankle_roll_joint,right_hip_pitch_joint,right_hip_roll_joint,right_hip_yaw_joint,right_knee_joint,right_ankle_pitch_joint,right_ankle_roll_joint,waist_yaw_joint,left_shoulder_pitch_joint,left_shoulder_roll_joint,left_shoulder_yaw_joint,left_elbow_joint,left_wrist_roll_joint,right_shoulder_pitch_joint,right_shoulder_roll_joint,right_shoulder_yaw_joint,right_elbow_joint,right_wrist_roll_joint",
+    "metadata_source": "saved training params/sim2real.yaml",
+    "action_scale": "0.3167494,0.3167494,0.3167494,0.3167494,0.3167494,0.5299864,0.3167494,0.3167494,0.3167494,0.3167494,0.3167494,0.5299864,0.3167494,0.5299864,0.5299864,0.5299864,0.5299864,0.5299864,0.5299864,0.5299864,0.5299864,0.5299864,0.5299864",
+    "checkpoint": "model_7500.pt",
+    "checkpoint_sha256": "55495d0ab45ab6fbd9af2d7d3d284d91fc228ea051bc424ade23f0a9fad1b785",
+    "run_path": "2026-10-31_07-49-48_front_kick_stable_landing_from_scratch"
+  },
+  "repository_commit": "556acfba27b928e94be5df3de48aa64cfe2b1c92",
+  "fps": 50,
+  "fps_source": "existing mimic_defaults; no explicit motion FPS in supplied export",
+  "validation": "ONNX checker and CPU inference; dimensions, metadata/YAML consistency, finite CSV and normalized quaternions. Simulation and hardware not run."
+}

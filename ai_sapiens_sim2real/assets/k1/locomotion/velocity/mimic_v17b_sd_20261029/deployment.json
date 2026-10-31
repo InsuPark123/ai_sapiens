@@ -35,7 +35,8 @@
     "params/clips/wave_two_hand.csv": "89379eb6b32a2c6f12ecec6d46afd46b215784392df10b666e73b0a2da13f692",
     "params/export_report.json": "441471646af9a1145ef0da54b66b7a62dd9f77f4a071680c4f38dda0242e2514",
     "params/parity_check.json": "09a91ad20046a7868af47ec09b4df6cc350d351b48bb74206ae2a7c760759ba6",
-    "params/sim2real.yaml": "7db820820cf40840a2323de4f0618d804be720a6eaac671410f175faa316c2a6",
+    "params/sim2real.yaml": "b6603f18b4aff400a2244e657333ab6e15143fda94c5f5789f47507022c6704f",
     "params/sim2real.yaml.orig-export": "a4418f1811de3036e1311d588c01fd546e5bb5451ec1bf625a3d619486fbb594"
-  }
+  },
+  "dial_base": 270
 }

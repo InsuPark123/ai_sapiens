@@ -33,7 +33,7 @@ Common observation functions contain no correction or module-specific branches.
 
 To remove the feature:
 
-1. Remove `loco_mimic`, `SubVelocityLocoMimic` and selector 269 from root config.
+1. Remove `loco_mimic`, `SubVelocityLocoMimic` and selectors 269–288 from root config.
 2. Remove the module pointer/include and its five lifecycle connections from
    `PolicyRuntime`; use its original single inference dispatch.
 3. Remove the Locomotion Mimic block in `CMakeLists.txt`, the module
@@ -85,15 +85,25 @@ robot export matches the supplied v17b model:
 Assets are installed locally at
 `assets/k1/locomotion/velocity/mimic_v17b_sd_20261029/`. The model and clips
 are unchanged; the supplied YAML's trigger channel is changed from 5 to 8,
-matching the actual K1-26 configuration. `deployment.json` records source and
-file hashes. This deployment bundle is tracked in Git, including the ONNX, all
+matching the source K1-26 configuration. The internal selector base is changed
+from 200 to 270 to avoid overlap with existing policies. `deployment.json`
+records source and file hashes. This deployment bundle is tracked in Git, including the ONNX, all
 24 motion CSVs, configuration and provenance reports. Other locomotion asset
 folders remain ignored. Rebuild the entire package, including teleop plugins, because
 raw-channel transport extends the plugin command structure.
 
-Selector 269 enters `SubVelocityLocoMimic`. Inside that state, selectors 200–223
-choose the configured clip or loop slot. Damping, ReadyPose and Velocity retain
-explicit exits. CH8 no longer doubles as API-mode selection in the local
+Selectors 269–288 all enter the same `SubVelocityLocoMimic` state through the
+existing mode-entry controls. Selector 269 enters without selecting a motion;
+270–288 also select a clip or loop slot (270–284 for individual clips, 285–288
+for loop slots). Entry does not start playback: a fresh CH8 OFF-to-ON edge is
+required after entry, even if CH8 was already ON. Changing the selector while
+inside this state does not re-enter the policy or reset its observation history.
+Group authority continues to suppress the raw RC channels, so these aliases do
+not enable group-triggered motion playback.
+The selector list excludes `bow_navel`, `motifect_taunt_mock_bow`, `dance1`,
+`dance2` and `inducing_response`. Their entries in the full 24-clip arrays and
+motion files remain intact to preserve the model's observation dimensions and
+clip identities. Damping, ReadyPose and Velocity retain explicit exits. CH8 no longer doubles as API-mode selection in the local
 RadioMaster configuration. Individual raw channels are withheld while group
 commands own the input route, matching the original stash.
 

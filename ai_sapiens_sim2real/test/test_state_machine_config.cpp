@@ -664,3 +664,35 @@ TEST(RootConfig, NestedYamlErrorKeepsTheOriginalFileAndParserLocation)
   }
   std::filesystem::remove(path);
 }
+
+TEST(StateMachineConfig, LocoMimicEntryAliasesPreserveSelectionWithoutReentry)
+{
+  const auto path = std::filesystem::path(__FILE__).parent_path().parent_path() /
+    "config/k1_config.yaml";
+  const auto node = YAML::LoadFile(path.string());
+  SharedControlData shared;
+  shared.joint_map.controller_joint_names = node["robot_joint_order"].as<std::vector<std::string>>();
+  const auto behaviors = StateBehaviorsConfig::from_yaml(node, shared);
+  const auto conditions = TeleopConditionsConfig::from_yaml(node);
+  const auto selectors = SelectorsConfig::from_yaml(node);
+  const auto states = StateMachineConfig::from_yaml(node);
+  RootConfigValidator(states, behaviors, conditions, selectors).validate();
+  const ModeStateMachine runtime(states, behaviors, conditions, selectors);
+
+  for (uint16_t selector = 269; selector <= 288; ++selector) {
+    const ai_sapiens_sim2real::ModeFsmTeleopInput input{true, 4, selector};
+    for (const auto * source : {"ReadyPose", "Velocity"}) {
+      const auto request = runtime.resolve_state_request_with_trigger_rules(
+        source, input, {true, 3, selector});
+      ASSERT_TRUE(request.has_value()) << selector << " from " << source;
+      EXPECT_EQ(request->name, "SubVelocityLocoMimic");
+      EXPECT_EQ(runtime.policy_for_state(request->name), "loco_mimic");
+    }
+    EXPECT_FALSE(runtime.resolve_state_request_with_trigger_rules(
+        "Velocity", input, {true, 4, 269}).has_value());
+    EXPECT_FALSE(runtime.resolve_state_request_with_trigger_rules(
+        "SubVelocityLocoMimic", input, {true, 3, 269}).has_value());
+    EXPECT_FALSE(runtime.resolve_state_request_with_trigger_rules(
+        "SubVelocityLocoMimic", input, {true, 4, 269}).has_value());
+  }
+}

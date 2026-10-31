@@ -92,10 +92,13 @@ records source and file hashes. This deployment bundle is tracked in Git, includ
 folders remain ignored. Rebuild the entire package, including teleop plugins, because
 raw-channel transport extends the plugin command structure.
 
-Selector 269 enters `SubVelocityLocoMimic`. Inside that state, selectors 270–293
-choose the configured clip or loop slot (270–289 for individual clips, 290–293
+Selector 269 enters `SubVelocityLocoMimic`. Inside that state, selectors 270–288
+choose the configured clip or loop slot (270–284 for individual clips, 285–288
 for loop slots). These are internal selections; enter selector 269 first.
-Damping, ReadyPose and Velocity retain explicit exits. CH8 no longer doubles as API-mode selection in the local
+The selector list excludes `bow_navel`, `motifect_taunt_mock_bow`, `dance1`,
+`dance2` and `inducing_response`. Their entries in the full 24-clip arrays and
+motion files remain intact to preserve the model's observation dimensions and
+clip identities. Damping, ReadyPose and Velocity retain explicit exits. CH8 no longer doubles as API-mode selection in the local
 RadioMaster configuration. Individual raw channels are withheld while group
 commands own the input route, matching the original stash.
 

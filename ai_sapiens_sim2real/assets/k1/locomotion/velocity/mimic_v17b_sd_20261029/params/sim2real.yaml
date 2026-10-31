@@ -551,24 +551,21 @@ observations:
       quiet_leg_speed: 0.35
       quiet_ang_speed: 0.35
       # 2026-10-13 걷는 중 켜면 팔만 사용(다리는 보행 정책), 서서 켜면 원래 동작 전체
-      # 2026-10-13 다이얼표 (270+순서): shake_hands_fake는 다이얼에서 빼고 악수 분기로만 사용, 286 = inducing_response
-      # 2026-10-22 v10: 287 = texas_comp, 288 = spiderman (대기 클립); 2026-10-23 v11: 289 = sit_on_heels (앉아서 대기 / 일어나기)
-      dial_clips: [bow_navel, motifect_taunt_mock_bow, wave_right_hand_only, wave_two_hand, dance1, dance2, bye_bye_salute,
-                   kissing_hands_thanks, present_left, boss_dust_brushing, bravo, triumphant_delight, looking_around,
-                   six_seven_three, come_here, shake_hands, inducing_response, texas_comp, spiderman,
-                   sit_on_heels]
-      # 2026-10-23 인사 반복 칸 복원 (v8의 217 반복을 v11에 이식): dial_base + len(dial_clips) = 290. SA 켜면 아래 순서로 무한 반복,
-      # SA 끄면 지금 하던 동작을 끝까지 하고 멈춤 (다음 동작 준비 중이면 바로 멈춤)
+      # Selectable clips start at 270. Keep the full clips/clip_names arrays unchanged:
+      # their order and size are part of the trained model's observation contract.
+      dial_clips: [wave_right_hand_only, wave_two_hand, bye_bye_salute,
+                   kissing_hands_thanks, present_left, boss_dust_brushing, bravo,
+                   triumphant_delight, looking_around, six_seven_three, come_here,
+                   shake_hands, texas_comp, spiderman, sit_on_heels]
+      # Loop slots follow the 15 individual clips, starting at selector 285.
       dial_loops:
+      # 285: repeat right-hand wave, two-hand wave, then thanks.
       - [wave_right_hand_only, wave_two_hand, kissing_hands_thanks]
-      # 2026-10-23 v12: 291 = ironman_pose (반복 칸 1개짜리 대기 클립): SA 올림 -> 점프 후 무릎 꿇고 손 짚고 대기 (2026-10-26 v13: final_v6, 114프레임),
-      # SA 내림 -> 일어나기 후 멈춤 (런타임 패치 10), SD(CH8) 뒤집기 -> 일어나기 (SA 올린 채면 다시 반복)
+      # 286: Ironman pose; hold after landing, then stand on release/confirmation.
       - [ironman_pose]
-      # 2026-10-26 v13: 292 = sitting_floor (반복 칸 1개짜리 대기 클립): SA 올림 -> 바닥에 앉아 대기 (209프레임),
-      # SA 내림 -> 일어나기 후 멈춤, SD(CH8) 뒤집기 -> 일어나기 (291 ironman_pose와 같은 방식)
+      # 287: floor sitting; hold, then stand on release/confirmation.
       - [sitting_floor]
-      # 2026-10-28 v17b: 293 = lying_side (반복 칸 1개짜리 대기 클립): SA 올림 -> 옆으로 누워 대기 (299프레임),
-      # SA 내림 -> 일어나기 후 멈춤, SD(CH8) 뒤집기 -> 일어나기 (292 sitting_floor와 같은 방식)
+      # 288: side lying; hold, then stand on release/confirmation.
       - [lying_side]
       # 2026-10-13 빠른 시작: 서 있어도 정지확인 0.7초를 기다리지 않고, 동작 진입 0.25초 (SA→손 움직임 1.84→0.9초, 시뮬)
       fast_start_clips: [shake_hands]

@@ -200,6 +200,7 @@ void PolicyController::load_policies(
         shared_data);
     }
 
+    runtime->set_action_boundary_delta_check(behavior.is_action_boundary_delta_check_enabled);
     register_runtime(
       shared_data, behavior.name, std::move(runtime), behavior.action_transition);
   }

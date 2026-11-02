@@ -353,6 +353,11 @@ RootConfig::PolicyBehavior RootConfig::read_policy_behavior(
 {
   PolicyBehavior behavior;
   behavior.name = name;
+
+  if (const auto check = behavior_node["action_boundary_delta_check"]) {
+    behavior.is_action_boundary_delta_check_enabled = check.as<bool>();
+  }
+
   behavior.action_transition = read_action_transition_config(
     behavior_node["policy_action_transition"], policy_action_transition_,
     "state_behaviors." + name + ".policy_action_transition");

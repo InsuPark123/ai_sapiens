@@ -62,6 +62,7 @@ public:
     std::filesystem::path sim2real_config_path;
     std::optional<MimicBehavior> mimic;
     ActionTransitionConfig action_transition;
+    bool is_action_boundary_delta_check_enabled{false};
   };
 
   explicit RootConfig(const std::filesystem::path & path);

@@ -122,7 +122,7 @@ void PolicyDiagnostics::log_action_limit(
          << "\n\n--- ACTION: rejected target ---\n"
          << "Processed position [rad, policy coordinates]; change limit="
          << metadata_->action_change_limit * 180.0f / 3.14159265f << " deg"
-         << " AND |raw mimic action| >= " << metadata_->raw_action_boundary
+         << " AND |raw action| >= " << metadata_->raw_action_boundary
          << " (" << boundary_check_label(result.validation.boundary_check) << ")\n"
          << "  " << std::left << std::setw(16) << "joint"
          << " " << std::right << std::setw(10) << "processed" << "   previous      delta flag\n"

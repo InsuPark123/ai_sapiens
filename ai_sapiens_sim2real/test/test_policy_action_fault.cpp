@@ -375,6 +375,44 @@ TEST_F(PolicyActionFault, WalkingAcceptsLargeDeltaButStillRejectsAbsoluteLimit)
   EXPECT_EQ(tick(), PolicyUpdateResult::TargetUnavailable);
 }
 
+TEST_F(PolicyActionFault, WalkingBoundaryDeltaCheckRequiresExplicitOptIn)
+{
+  const auto source = std::filesystem::path(COMMON_POLICY_TEST_DATA_DIR);
+  const Sim2RealConfig config(source / "sim2real.yaml");
+  const auto node = std::make_shared<rclcpp::Node>("walking_boundary_delta_test");
+
+  for (const bool is_enabled : {false, true}) {
+    data.sensors.joint_pos << .4f, -.7f;
+    runtime = std::make_unique<PolicyRuntime>(node, "walking_boundary_test",
+      (source / "policy.onnx").string(), config, config.policy_joints(), &data);
+    runtime->set_action_boundary_delta_check(is_enabled);
+    runtime->enter();
+    ASSERT_EQ(tick(0), PolicyUpdateResult::TargetReady);
+
+    // A large delta without reaching the raw boundary remains valid.
+    data.sensors.joint_pos[0] = 7.f;
+    ASSERT_EQ(tick(), PolicyUpdateResult::TargetReady);
+    data.sensors.joint_pos[0] = .4f;
+    ASSERT_EQ(tick(), PolicyUpdateResult::TargetReady);
+    const auto target = runtime->target_command().position;
+    const auto last_action = data.policy.last_action;
+
+    // Raw -10 and a large delta on the same joint, still inside the absolute limit.
+    data.sensors.joint_pos[0] = -9.9f;
+    EXPECT_EQ(tick(),
+      is_enabled ? PolicyUpdateResult::TargetUnavailable : PolicyUpdateResult::TargetReady);
+
+    if (is_enabled) {
+      EXPECT_EQ(runtime->target_command().position, target);
+      EXPECT_EQ(data.policy.last_action, last_action);
+    }
+
+    data.sensors.joint_pos[0] = .4f;
+    EXPECT_EQ(tick(), PolicyUpdateResult::TargetReady);
+    EXPECT_FALSE(data.requests.action_limit_exceeded);
+  }
+}
+
 TEST_F(MimicActionFault, RequiresClipBoundaryAndDeltaOnTheSameJoint)
 {
   // Large delta alone is accepted, even on an unclipped Mimic model.

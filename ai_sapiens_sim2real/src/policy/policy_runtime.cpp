@@ -524,7 +524,8 @@ PolicyActionResult PolicyRuntime::evaluate_policy_action()
 
 bool PolicyRuntime::is_action_change_check_enabled() const
 {
-  return is_reference_mimic_ || (locomotion_mimic_ && locomotion_mimic_->has_motion_weight());
+  return is_action_boundary_delta_check_enabled_ || is_reference_mimic_ ||
+         (locomotion_mimic_ && locomotion_mimic_->has_motion_weight());
 }
 
 std::vector<bool> PolicyRuntime::evaluate_raw_action_boundaries(const std::vector<float> & raw)

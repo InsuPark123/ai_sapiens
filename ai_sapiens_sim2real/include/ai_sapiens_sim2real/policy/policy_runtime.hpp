@@ -78,6 +78,12 @@ public:
   virtual ~PolicyRuntime();
 
   void set_fault_recorder(std::shared_ptr<ActionFaultRecorder> recorder);
+  // Configure before enter(); this opt-in does not disable automatic Mimic checks.
+  void set_action_boundary_delta_check(bool is_enabled)
+  {
+    is_action_boundary_delta_check_enabled_ = is_enabled;
+  }
+
   void reset();
   bool check_inputs();
   bool requires_localization() const {return requires_localization_;}
@@ -209,6 +215,7 @@ private:
   bool requires_localization_{false};
   bool requires_imu_orientation_{false};
   bool is_reference_mimic_{false};
+  bool is_action_boundary_delta_check_enabled_{false};
   const ActionSafetyLimits action_safety_limits_;
   // Share the retry budget across rejected actions and inference exceptions:
   // only a validated action resets it, so alternating failures cannot hold forever.

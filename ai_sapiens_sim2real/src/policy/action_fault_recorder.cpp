@@ -168,7 +168,7 @@ std::string serialize(const ActionFaultRecord & record)
               << " attempt=" << record.attempt << "\nPolicy: " << m.state
               << "\nlimit=" << m.action_limit << " rad, change_limit=" << m.action_change_limit
               << " rad (" << boundary_check_label(s.validation.boundary_check)
-              << "), AND |raw mimic action| >= " << m.raw_action_boundary << ", dt=" << m.step_dt
+              << "), AND |raw action| >= " << m.raw_action_boundary << ", dt=" << m.step_dt
               << " s, mirror=" << (m.is_mirrored ? "yes" : "no")
               << "\n\nActions [rad, policy coordinates]:\n"
               << "  joint             processed   previous      delta flag\n"
@@ -249,11 +249,22 @@ ActionFaultRecorder::ActionFaultRecorder(Options options, rclcpp::Logger logger)
     }
   }
   // Choose the path before enqueue() needs it, without creating an empty run.
+  const auto now = std::time(nullptr);
+  std::tm utc{};
+  if (!gmtime_r(&now, &utc)) {
+    throw std::runtime_error("cannot format action fault session time");
+  }
+
+  constexpr char suffix_characters[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   std::random_device random;
+  std::uniform_int_distribution<size_t> suffix_index(0, sizeof(suffix_characters) - 2);
   do {
     std::ostringstream name;
-    name << "run-" << std::hex << std::setfill('0') << std::setw(8)
-         << static_cast<uint32_t>(random());
+    name << "run-" << std::put_time(&utc, "%Y%m%dT%H%M%SZ") << '-';
+    for (int i = 0; i < 6; ++i) {
+      name << suffix_characters[suffix_index(random)];
+    }
     session_directory_ = options_.directory / name.str();
   } while (std::filesystem::exists(session_directory_));
 

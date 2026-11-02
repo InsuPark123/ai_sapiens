@@ -85,68 +85,67 @@ selectors:
       206: MimicDance2
       207: MimicBoxingNewton
 
-      208: MimicWaveOneHandWaistYaw
-      209: MimicWaveRightHandOnlyWaistYaw
-      210: MimicWaveTwoHandWaistYaw
+      209: MimicSwallowBalance
+      210: MimicSwallowBalanceLeftUp
 
-      211: MimicWaveOneHandWaistYawLarge
-      212: MimicWaveRightHandOnlyWaistYawLarge
-      213: MimicWaveTwoHandWaistYawLarge
+      211: MimicWaveOneHandWaistYaw
+      212: MimicWaveRightHandOnlyWaistYaw
+      213: MimicWaveTwoHandWaistYaw
 
-      214: MimicBowBig
-      215: MimicBowNavel
+      214: MimicWaveOneHandWaistYawLarge
+      215: MimicWaveRightHandOnlyWaistYawLarge
+      216: MimicWaveTwoHandWaistYawLarge
 
-      216: MimicRedredNewton
-      217: MimicTurn
-      218: MimicTurnMirror
+      217: MimicBowBig
+      218: MimicBowNavel
 
-      220: MimicTaeguek_1
-      221: MimicTaeguek_2
-      222: MimicTaeguek_3
-      223: MimicTaeguek_4
-      224: MimicTaeguek_5
-      225: MimicTaeguek_6
-      226: MimicTaeguek_7
-      227: MimicTaeguek_8
+      219: MimicRedredNewton
+      220: MimicTurn
+      221: MimicTurnMirror
 
-      228: MimicTkFrontKick
-      229: MimicTkSideKick
-      230: MimicTkStepPunch
+      223: MimicSapiensBoysX
+      224: MimicSapiensBoysY
+      225: MimicSapiensBoysQ
 
-      233: MimicLimbo80
-      234: MimicLimbo90
-      235: MimicLimbo100
-      236: MimicLimbo110
-      237: MimicLimbo120
-      238: MimicLimbo130
+      226: MimicEasyXYCK1_109999_a667fbf5
+      227: MimicSmartFlowK1_107999_fb601c79
+      228: MimicAttention
+      229: MimicDitto
+      230: MimicSuperShy
+      231: MimicHypeboy
+      232: MimicTeddyBear
+      233: MimicTask2XoxoXY_d3816fbd
+      234: MimicTask2QueencardXY_89defef9
+      235: MimicTask2NeonXY_c6a28b07
+      236: MimicTask2PermissiontodanceXY_1a8656a4
+      237: MimicHammerStraightV17FT39k
+      238: MimicJiyu404XYK1_110000_d66ac6ba
+      239: MimicPowerK1_25000_389ffe11
+      240: MimicTask2SavageXY_ae9342d2
+      241: MimicTask2BlackmambaXY_40d1eed8
+      242: MimicTask2PinkvenomXY_8880e167
+      243: MimicLikeJennieK1_107999_f55628f7
+      244: MimicLXYK1_112999_5fb4d087
 
-      240: MimicEasyXYCK1_109999_a667fbf5
-      241: MimicSmartFlowK1_107999_fb601c79
-      242: MimicAttention
-      243: MimicDitto
-      244: MimicSuperShy
-      245: MimicHypeboy
-      246: MimicTeddyBear
-      247: MimicTask2XoxoXY_d3816fbd
-      248: MimicTask2QueencardXY_89defef9
-      249: MimicTask2NeonXY_c6a28b07
-      250: MimicTask2PermissiontodanceXY_1a8656a4
-      251: MimicHammerStraightV17FT39k
-      252: MimicJiyu404XYK1_110000_d66ac6ba
-      253: MimicPowerK1_25000_389ffe11
-      254: MimicTask2SavageXY_ae9342d2
-      255: MimicTask2BlackmambaXY_40d1eed8
-      256: MimicTask2PinkvenomXY_8880e167
-      257: MimicLikeJennieK1_107999_f55628f7
-      258: MimicLXYK1_112999_5fb4d087
+      246: MimicTkFrontKick
+      247: MimicTkSideKick
+      248: MimicTkStepPunch
 
-      259: MimicCheerleading
+      249: MimicTaeguek_1
+      250: MimicTaeguek_2
+      251: MimicTaeguek_3
+      252: MimicTaeguek_4
+      253: MimicTaeguek_5
+      254: MimicTaeguek_6
+      255: MimicTaeguek_7
+      256: MimicTaeguek_8
 
-      # 260: MimicTask2UnforgivenXY_bbfba803
-      # 261: MimicOnXYK1_107000_72da9c90
-
-      265: MimicSwallowBalance
-      266: MimicSwallowBalanceLeftUp
+      259: MimicLimbo80
+      260: MimicLimbo90
+      261: MimicLimbo100
+      262: MimicLimbo110
+      263: MimicLimbo120
+      264: MimicLimbo130
 
       # Entry aliases only; motion playback requires a fresh CH8 trigger after entry.
       269: SubVelocityLocoMimic
@@ -673,6 +672,15 @@ state_machine:
     MimicJiyu404XYK1_110000_d66ac6ba:
       parent: Mimic
       run: mimic_eval27_mimicjiyu404xyk1_110000_d66ac6ba
+    MimicSapiensBoysX:
+      parent: Mimic
+      run: mimic_sapiens_boys_x
+    MimicSapiensBoysY:
+      parent: Mimic
+      run: mimic_sapiens_boys_y
+    MimicSapiensBoysQ:
+      parent: Mimic
+      run: mimic_sapiens_boys_q
     MimicEasyXYCK1_109999_a667fbf5:
       parent: Mimic
       run: mimic_easy_xy_c_109999_a667fbf5
@@ -1258,16 +1266,28 @@ state_behaviors:
     motion: motion.csv
   mimic_eval27_mimicpowerk1_25000_389ffe11:
     kind: mimic
-    asset: mimic/latest27_weights_20261016_2109_v1/provided-POWER_30000_9fbcf611fed5
+    asset: mimic/power_pelvis_earlybalance_20261102
     motion: motion.csv
   mimic_eval27_mimiclikejenniek1_107999_f55628f7:
     kind: mimic
-    asset: mimic/latest27_weights_20261016_2109_v1/movin-like-jennie-mesh-com-v1_112999_44b49b73b399
+    asset: mimic/like_jennie_direct_ready33_20261102
     motion: motion.csv
   mimic_eval27_mimicjiyu404xyk1_110000_d66ac6ba:
     kind: mimic
     asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-404-jiyu-shorts-km-QzJqZRJ4-persistent-cache-recovery-e2e-v1_112999_ec4b7589bfda
     motion: motion.csv
+  mimic_sapiens_boys_x:
+    kind: mimic
+    asset: mimic/xyq_x_14500
+    motion: x.csv
+  mimic_sapiens_boys_y:
+    kind: mimic
+    asset: mimic/xyq_y_2999
+    motion: y.csv
+  mimic_sapiens_boys_q:
+    kind: mimic
+    asset: mimic/xyq_q_8489
+    motion: q.csv
   mimic_easy_xy_c_109999_a667fbf5:
     kind: mimic
     asset: mimic/latest27_weights_20261016_2109_v1/flowhmr-leia-easy-full-recap-interval20-recovery-v3_114999_47c78542e68e

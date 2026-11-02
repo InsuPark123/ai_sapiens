@@ -75,6 +75,10 @@ public:
    * @return Vector of input sizes
    */
   const std::vector<int64_t> & get_input_sizes() const;
+  const std::vector<std::vector<int64_t>> & get_input_shapes() const
+  {
+    return normalized_input_shapes_;
+  }
 
   // Match the exported semantic order as well as tensor dimensions. Localized
   // Mimic policies must provide metadata; legacy exports may omit it.

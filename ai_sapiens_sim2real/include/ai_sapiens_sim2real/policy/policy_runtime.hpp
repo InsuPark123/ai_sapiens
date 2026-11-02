@@ -47,6 +47,8 @@ namespace ai_sapiens_sim2real
 
 class OnnxInference;
 class LocomotionMimic;
+class ActionFaultRecorder;
+class PolicyFaultCapture;
 
 /**
  * @brief A policy state: observe, run inference, and produce a validated target
@@ -74,6 +76,7 @@ public:
     bool is_mirrored = false);
   virtual ~PolicyRuntime();
 
+  void set_fault_recorder(std::shared_ptr<ActionFaultRecorder> recorder);
   void reset();
   bool check_inputs();
   bool requires_localization() const {return requires_localization_;}
@@ -154,7 +157,8 @@ private:
   PolicyUpdateResult accept_action(
     const std::vector<float> & raw_action,
     const std::vector<float> & processed_action);
-  void log_action_limit_once(size_t policy_index, float raw_value, float processed_value);
+  void log_action_limit(const std::vector<float> & processed_action, const std::string & path);
+  std::vector<float> infer_once(std::unordered_map<std::string, std::vector<float>> & inputs);
   void handle_inference_failure(const char * reason);
 
   rclcpp::Node::SharedPtr node_;
@@ -176,6 +180,7 @@ private:
   Any2TrackSample any2track_sample() const;
   std::unique_ptr<Any2TrackPolicy> any2track_;
   std::unique_ptr<OnnxInference> inference_;
+  std::unique_ptr<PolicyFaultCapture> fault_capture_;
   std::unique_ptr<LocomotionMimic> locomotion_mimic_;
   std::unique_ptr<ObservationManager> obs_manager_;
   // Set only when this policy declares a gait_phase observation.
@@ -187,16 +192,16 @@ private:
   AxisRanges velocity_command_ranges_;
   double step_dt_{0.02};
   double accumulated_period_{0.02};
-  bool action_limit_logged_{false};
+  std::vector<std::string> controller_joint_names_;
+  std::optional<SensorData> previous_observation_sensors_;
+  double sensor_comparison_period_{0.0};
   bool requires_localization_{false};
   bool requires_imu_orientation_{false};
   static constexpr float kAbsActionLimitRad = 2.0f * 3.14159265f;
-  // A transient inference failure holds the previous action for one policy
-  // step; after this many consecutive failures the runtime requests the
-  // damping failsafe, so a persistent fault runs on a stale action for at
-  // most ~kMaxConsecutiveInferenceFailures * step_dt_.
-  static constexpr size_t kMaxConsecutiveInferenceFailures = 3;
-  size_t consecutive_inference_failures_{0};
+  // Share the retry budget across rejected actions and inference exceptions:
+  // only a validated action resets it, so alternating failures cannot hold forever.
+  static constexpr size_t kMaxConsecutiveActionFailures = 6;
+  size_t consecutive_action_failures_{0};
 };
 
 }  // namespace ai_sapiens_sim2real

@@ -189,6 +189,9 @@ venv.bak/
 # Policy artifacts
 ##############################
 
+# Runtime diagnostic files (all contents of the package logs directory).
+/ai_sapiens_sim2real/logs/
+
 # Policy bundles are managed outside git. Files already tracked remain tracked.
 ai_sapiens_sim2real/assets/*/locomotion/**
 ai_sapiens_sim2real/assets/*/mimic/**

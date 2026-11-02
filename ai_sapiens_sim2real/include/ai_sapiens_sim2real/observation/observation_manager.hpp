@@ -26,6 +26,7 @@
 #include <yaml-cpp/yaml.h>  // NOLINT(build/include_order)
 
 #include "ai_sapiens_sim2real/observation/observation_term_cfg.hpp"
+#include "ai_sapiens_sim2real/observation/observation_layout.hpp"
 #include "ai_sapiens_sim2real/observation/observations.hpp"
 #include "ai_sapiens_sim2real/shared_control_data.hpp"
 
@@ -75,6 +76,10 @@ public:
    */
   std::vector<float> compute();
 
+  // Replace only the just-computed history slot with the preceding retained
+  // sample. Keep older history, dimensions and the normal per-tick cadence.
+  void reject_latest();
+
   /**
    * @brief Get total observation size.
    * @return Total number of floats in observation vector
@@ -95,6 +100,7 @@ public:
    * @return Vector of observation names
    */
   std::vector<std::string> get_term_names() const;
+  std::vector<ObservationSlice> layout() const;
 
 private:
   // Config parsing creates ordered terms; compute() reuses obs_buffer_ in that order.

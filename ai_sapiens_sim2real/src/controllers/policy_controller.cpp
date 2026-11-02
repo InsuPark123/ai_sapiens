@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "ai_sapiens_sim2real/config/root_config.hpp"
+#include "ai_sapiens_sim2real/policy/action_fault_recorder.hpp"
 
 namespace ai_sapiens_sim2real
 {
@@ -39,6 +40,15 @@ PolicyController::PolicyController(
     throw std::runtime_error("PolicyController requires initialized controller joint order");
   }
 
+  try {
+    ActionFaultRecorder::Options options;
+    std::string directory;
+    node_->get_parameter_or("action_fault_directory", directory, std::string{});
+    options.directory = directory;
+    fault_recorder_ = std::make_shared<ActionFaultRecorder>(options, node_->get_logger());
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(node_->get_logger(), "Action fault file recording unavailable: %s", e.what());
+  }
   load_policies(shared_data, root_config);
   if (runtimes_.empty()) {
     throw std::runtime_error("PolicyController requires at least one policy runtime");
@@ -205,6 +215,7 @@ void PolicyController::register_runtime(
     shared_data->resize_observation(runtime->observation_size());
   }
 
+  if (fault_recorder_) {runtime->set_fault_recorder(fault_recorder_);}
   runtimes_.emplace(state_name, RuntimeEntry{std::move(runtime), action_transition});
 }
 

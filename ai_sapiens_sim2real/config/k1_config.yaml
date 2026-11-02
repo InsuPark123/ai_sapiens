@@ -83,69 +83,70 @@ selectors:
       204: MimicSquat
       205: MimicDance1
       206: MimicDance2
-      207: MimicBoxingNewton
 
-      209: MimicSwallowBalance
-      210: MimicSwallowBalanceLeftUp
+      207: MimicWaveOneHandWaistYaw
+      208: MimicWaveRightHandOnlyWaistYaw
+      209: MimicWaveTwoHandWaistYaw
 
-      211: MimicWaveOneHandWaistYaw
-      212: MimicWaveRightHandOnlyWaistYaw
-      213: MimicWaveTwoHandWaistYaw
+      210: MimicWaveOneHandWaistYawLarge
+      211: MimicWaveRightHandOnlyWaistYawLarge
+      212: MimicWaveTwoHandWaistYawLarge
 
-      214: MimicWaveOneHandWaistYawLarge
-      215: MimicWaveRightHandOnlyWaistYawLarge
-      216: MimicWaveTwoHandWaistYawLarge
+      213: MimicBowBig
+      214: MimicBowNavel
 
-      217: MimicBowBig
-      218: MimicBowNavel
+      215: MimicBoxingNewton
 
-      219: MimicRedredNewton
-      220: MimicTurn
-      221: MimicTurnMirror
+      217: MimicSwallowBalance
+      218: MimicSwallowBalanceLeftUp
 
-      223: MimicSapiensBoysX
-      224: MimicSapiensBoysY
-      225: MimicSapiensBoysQ
+      219: MimicLimbo130
+      220: MimicLimbo120
+      221: MimicLimbo110
+      222: MimicLimbo100
+      223: MimicLimbo90
+      224: MimicLimbo80
 
-      226: MimicEasyXYCK1_109999_a667fbf5
-      227: MimicSmartFlowK1_107999_fb601c79
-      228: MimicAttention
-      229: MimicDitto
-      230: MimicSuperShy
-      231: MimicHypeboy
-      232: MimicTeddyBear
-      233: MimicTask2XoxoXY_d3816fbd
-      234: MimicTask2QueencardXY_89defef9
-      235: MimicTask2NeonXY_c6a28b07
-      236: MimicTask2PermissiontodanceXY_1a8656a4
-      237: MimicHammerStraightV17FT39k
-      238: MimicJiyu404XYK1_110000_d66ac6ba
-      239: MimicPowerK1_25000_389ffe11
-      240: MimicTask2SavageXY_ae9342d2
-      241: MimicTask2BlackmambaXY_40d1eed8
-      242: MimicTask2PinkvenomXY_8880e167
-      243: MimicLikeJennieK1_107999_f55628f7
-      244: MimicLXYK1_112999_5fb4d087
+      225: MimicRedredNewton
+      226: MimicTurn
+      227: MimicTurnMirror
 
-      246: MimicTkFrontKick
-      247: MimicTkSideKick
-      248: MimicTkStepPunch
+      229: MimicSapiensBoysX
+      230: MimicSapiensBoysY
+      231: MimicSapiensBoysQ
 
-      249: MimicTaeguek_1
-      250: MimicTaeguek_2
-      251: MimicTaeguek_3
-      252: MimicTaeguek_4
-      253: MimicTaeguek_5
-      254: MimicTaeguek_6
-      255: MimicTaeguek_7
-      256: MimicTaeguek_8
+      232: MimicEasyXYCK1_109999_a667fbf5
+      233: MimicSmartFlowK1_107999_fb601c79
+      234: MimicAttention
+      235: MimicDitto
+      236: MimicSuperShy
+      237: MimicHypeboy
+      238: MimicTeddyBear
+      239: MimicTask2XoxoXY_d3816fbd
+      240: MimicTask2QueencardXY_89defef9
+      241: MimicTask2NeonXY_c6a28b07
+      242: MimicTask2PermissiontodanceXY_1a8656a4
+      243: MimicHammerStraightV17FT39k
+      244: MimicJiyu404XYK1_110000_d66ac6ba
+      245: MimicPowerK1_25000_389ffe11
+      246: MimicTask2SavageXY_ae9342d2
+      247: MimicTask2BlackmambaXY_40d1eed8
+      248: MimicTask2PinkvenomXY_8880e167
+      249: MimicLikeJennieK1_107999_f55628f7
+      250: MimicLXYK1_112999_5fb4d087
 
-      259: MimicLimbo80
-      260: MimicLimbo90
-      261: MimicLimbo100
-      262: MimicLimbo110
-      263: MimicLimbo120
-      264: MimicLimbo130
+      252: MimicTkFrontKick
+      253: MimicTkSideKick
+      254: MimicTkStepPunch
+
+      255: MimicTaeguek_1
+      256: MimicTaeguek_2
+      257: MimicTaeguek_3
+      258: MimicTaeguek_4
+      259: MimicTaeguek_5
+      260: MimicTaeguek_6
+      261: MimicTaeguek_7
+      262: MimicTaeguek_8
 
       # Entry aliases only; motion playback requires a fresh CH8 trigger after entry.
       269: SubVelocityLocoMimic

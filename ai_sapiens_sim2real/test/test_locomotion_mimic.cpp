@@ -128,6 +128,7 @@ TEST(LocomotionMimic, MasksAndTwoPassCompositionStayPolicyLocal)
   config.dial_base = 200;
   LocomotionMimic module(std::move(config));
   module.set_observation_layout(519, {"joint_pos", "mimic_gate"});
+  EXPECT_FALSE(module.has_motion_weight());
   SharedControlData shared;
   shared.resize(23, 23);
   shared.teleop.unavailable = false;
@@ -142,6 +143,7 @@ TEST(LocomotionMimic, MasksAndTwoPassCompositionStayPolicyLocal)
   ActionProperties actions;
   actions.scale.assign(23, .25f); actions.offset.assign(23, .1f);
   module.update(shared, joints, actions);  // establish switch state
+  EXPECT_FALSE(module.has_motion_weight());
   // Single-pass walking also stages feedback until the target is accepted.
   const std::vector<float> walking_observation(519, 1.f);
   module.infer(walking_observation, [](const auto &) {return std::vector<float>(23, .1f);});
@@ -158,6 +160,15 @@ TEST(LocomotionMimic, MasksAndTwoPassCompositionStayPolicyLocal)
         return std::vector<float>(23, input.at(514) == 0.f ? .2f : .8f);
     });
   EXPECT_EQ(calls, 2);
+  const auto clip_reached = module.evaluate_raw_action_boundaries(observation, result, 10.f,
+    [](const auto & input) {
+      EXPECT_FLOAT_EQ(input.at(514), 1.f);
+      return std::vector<float>(23, 10.f);
+    });
+  for (size_t j = 0; j < clip_reached.size(); ++j) {
+    // Walking owns the legs completely here; a saturated mimic leg is irrelevant.
+    EXPECT_EQ(clip_reached[j], j >= 13);
+  }
   for (int i = 0; i < 23; ++i) {
     EXPECT_FLOAT_EQ(result[i], i < 13 ? .2f : .8f);
   }
@@ -202,7 +213,42 @@ TEST(LocomotionMimic, MasksAndTwoPassCompositionStayPolicyLocal)
   module.accept();
   module.update(shared, joints, actions);
   EXPECT_FLOAT_EQ(view.last_action[13], .4f);
+  EXPECT_TRUE(module.has_motion_weight());
+  // Delta validation stays active during fade-out, until the ONNX weight is zero.
+  shared.teleop.rc_us[8] = 1000;
+  bool saw_fade_out = false;
+  for (int tick = 0; tick < 300; ++tick) {
+    module.update(shared, joints, actions);
+    const float weight = module.observations().terms.at("mimic_gate")[current::kTeacherDim];
+    EXPECT_EQ(module.has_motion_weight(), weight > 0.f);
+    if (!saw_fade_out && weight > 0.f && weight < 1.f) {
+      auto mixed_observation = observation;
+      mixed_observation[514] = weight;
+      // A blend below 10 can hide a saturated mimic branch.
+      const auto saturated = module.evaluate_raw_action_boundaries(mixed_observation,
+        std::vector<float>(23, 5.f), 10.f, [](const auto & input) {
+          EXPECT_FLOAT_EQ(input.at(514), 1.f);
+          return std::vector<float>(23, -10.f);
+        });
+      EXPECT_TRUE(saturated[13]);
+      // Conversely, a walking contribution can put the blend at 10 without mimic saturation.
+      const auto unsaturated = module.evaluate_raw_action_boundaries(mixed_observation,
+        std::vector<float>(23, 10.f), 10.f,
+        [](const auto &) {return std::vector<float>(23, 2.f);});
+      EXPECT_FALSE(unsaturated[13]);
+    }
+    saw_fade_out |= weight > 0.f && weight < 1.f;
+  }
+  EXPECT_TRUE(saw_fade_out);
+  EXPECT_FALSE(module.has_motion_weight());
+  const auto walking_clip = module.evaluate_raw_action_boundaries(observation,
+    std::vector<float>(23, 10.f), 10.f, [](const auto &) {
+      ADD_FAILURE() << "Walking must not run an extra mimic inference";
+      return std::vector<float>(23, 10.f);
+    });
+  EXPECT_EQ(walking_clip, std::vector<bool>(23, false));
   module.reset();
+  EXPECT_FALSE(module.has_motion_weight());
   EXPECT_TRUE(module.observations().joint_position.empty());
   EXPECT_TRUE(module.observations().last_action.empty());
   EXPECT_EQ(module.observations().terms.at("mimic_gate"), std::vector<float>(129, 0.f));

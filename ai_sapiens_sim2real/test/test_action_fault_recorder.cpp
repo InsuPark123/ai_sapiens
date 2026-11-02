@@ -1,6 +1,7 @@
 // Copyright 2026 ROBOTIS CO., LTD.
 // SPDX-License-Identifier: Apache-2.0
 #include <gtest/gtest.h>
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
 #include <limits>
@@ -37,8 +38,21 @@ protected:
     result.attempt = 1;
     result.current.calls.push_back({{{"obs", {.123456789f, 200.f}}}, {800.f}});
     result.current.processed_action = {200.f};
+    result.current.validation = validate_action_basics(
+      result.current.processed_action, nullptr, ActionSafetyLimits{});
     result.current.outcome = "HOLD; retry next tick";
     return result;
+  }
+  std::string enqueue_when_available(ActionFaultRecorder & recorder, const ActionFaultRecord & value)
+  {
+    // Production enqueue deliberately drops on lock contention; file tests wait
+    // for a queue slot without changing the real-time writer contract.
+    for (int attempt = 0; attempt < 25; ++attempt) {
+      auto path = recorder.enqueue(value);
+      if (!path.empty()) {return path;}
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    return {};
   }
   std::filesystem::path directory;
   ActionFaultRecorder::Options options;
@@ -47,16 +61,27 @@ protected:
 };
 }  // namespace
 
+TEST_F(ActionFaultFiles, RunsWithoutRecordsDoNotCreateDirectories)
+{
+  options.directory = directory / "not-created" / "action_faults";
+  for (int run = 0; run < 3; ++run) {
+    ActionFaultRecorder recorder(options, logger);
+    EXPECT_FALSE(std::filesystem::exists(recorder.session_directory()));
+  }
+  EXPECT_FALSE(std::filesystem::exists(directory / "not-created"));
+}
+
 TEST_F(ActionFaultFiles, RoundTripsActualTensorsWithCaptureTimestampAboveDiagnostics)
 {
   std::string path;
   {
     ActionFaultRecorder recorder(options, logger);
+    EXPECT_FALSE(std::filesystem::exists(recorder.session_directory()));
     auto r = record();
     r.current.unix_time_ns = 1793545445123456789LL;
     r.current.calls.push_back({{{"obs", {0.f, std::numeric_limits<float>::quiet_NaN()}}},
       {std::numeric_limits<float>::infinity()}});
-    path = recorder.enqueue(std::move(r));
+    path = enqueue_when_available(recorder, r);
     ASSERT_FALSE(path.empty());
   }  // Drains the queue on orderly shutdown.
   const auto file_permissions = std::filesystem::status(path).permissions();
@@ -92,16 +117,18 @@ TEST_F(ActionFaultFiles, RestartsUseUniqueDirectoriesAndNeverOverwriteExistingFi
   {
     ActionFaultRecorder recorder(options, logger);
     first = recorder.session_directory();
+    ASSERT_FALSE(std::filesystem::exists(first));
+    std::filesystem::create_directory(first);  // Simulate a pre-existing path collision.
     collision = first / "incident-1-attempt-1.yaml";
     std::ofstream(collision) << "preserve this exact content";
-    ASSERT_FALSE(recorder.enqueue(record()).empty());
+    ASSERT_FALSE(enqueue_when_available(recorder, record()).empty());
   }
   std::ifstream old(collision);
   EXPECT_EQ(std::string(std::istreambuf_iterator<char>(old), {}), "preserve this exact content");
   {
     ActionFaultRecorder recorder(options, logger);
     second = recorder.session_directory();
-    ASSERT_FALSE(recorder.enqueue(record()).empty());
+    ASSERT_FALSE(enqueue_when_available(recorder, record()).empty());
   }
   EXPECT_NE(first, second);
   EXPECT_TRUE(std::filesystem::exists(second / "incident-1-attempt-1.yaml"));
@@ -116,10 +143,10 @@ TEST_F(ActionFaultFiles, QuotaCountsOldRecordsWithoutDeletingThem)
   {
     ActionFaultRecorder recorder(options, logger);
     session = recorder.session_directory();
-    ASSERT_FALSE(recorder.enqueue(record()).empty());
+    ASSERT_FALSE(enqueue_when_available(recorder, record()).empty());
   }
   EXPECT_EQ(std::filesystem::file_size(old), 1024U);
-  EXPECT_TRUE(std::filesystem::is_empty(session));
+  EXPECT_FALSE(std::filesystem::exists(session));
 }
 
 TEST_F(ActionFaultFiles, OversizedQueueRecordIsDroppedWithoutCreatingAFile)
@@ -131,7 +158,7 @@ TEST_F(ActionFaultFiles, OversizedQueueRecordIsDroppedWithoutCreatingAFile)
     session = recorder.session_directory();
     EXPECT_TRUE(recorder.enqueue(record()).empty());
   }
-  EXPECT_TRUE(std::filesystem::is_empty(session));
+  EXPECT_FALSE(std::filesystem::exists(session));
 }
 
 TEST(Any2TrackFaultLayout, CoversEveryInputElementExactlyOnce)

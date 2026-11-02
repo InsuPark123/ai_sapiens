@@ -31,6 +31,7 @@ std::string normalized_whitespace(const std::string & value)
 class PolicyActionFault : public ::testing::Test
 {
 protected:
+  virtual bool uses_motion_reference() const {return false;}
   virtual std::filesystem::path policy_directory() const {return COMMON_POLICY_TEST_DATA_DIR;}
 
   void SetUp() override
@@ -42,8 +43,13 @@ protected:
     data.resize(2, 2);
     data.sensors.joint_pos << .4f, -.7f;
     data.sensors.is_imu_usable = true;
+    if (uses_motion_reference()) {
+      const auto motion = std::filesystem::path(__FILE__).parent_path() / "data/mimic_mirror/motion.csv";
+      reference = std::make_unique<MotionReference>(motion.string(), 50.f,
+        std::vector<std::string>{"left_hip_roll_joint", "right_hip_roll_joint", "waist_yaw_joint"});
+    }
     runtime = std::make_unique<PolicyRuntime>(node, "fault_test",
-        (directory / "policy.onnx").string(), config, config.policy_joints(), &data);
+        (directory / "policy.onnx").string(), config, config.policy_joints(), &data, reference.get());
     runtime->enter();
   }
 
@@ -53,7 +59,14 @@ protected:
   }
 
   SharedControlData data;
+  std::unique_ptr<MotionReference> reference;
   std::unique_ptr<PolicyRuntime> runtime;
+};
+
+class MimicActionFault : public PolicyActionFault
+{
+protected:
+  bool uses_motion_reference() const override {return true;}
 };
 }  // namespace
 
@@ -213,7 +226,7 @@ TEST_F(PolicyHistoryFault, FourRejectedSpikesRecoverOnTheFifthPolicyTick)
   }
 }
 
-TEST_F(PolicyActionFault, CapturesRejectedInputBeforeHistoryRepairAndRecoverySeparately)
+TEST_F(MimicActionFault, CapturesRejectedInputBeforeHistoryRepairAndRecoverySeparately)
 {
   bool has_recorded_pair = false;
   // The production queue intentionally drops records on lock contention. Retry
@@ -229,7 +242,7 @@ TEST_F(PolicyActionFault, CapturesRejectedInputBeforeHistoryRepairAndRecoverySep
     runtime->set_fault_recorder(recorder);
     ASSERT_EQ(tick(0), PolicyUpdateResult::TargetReady);
     const auto accepted = data.policy.input;
-    data.sensors.joint_pos[0] = 200.f;
+    data.sensors.joint_pos[0] = 12.f;  // raw exceeds 10, while the target stays inside the absolute limit.
     ASSERT_EQ(tick(), PolicyUpdateResult::TargetUnavailable);
     const auto rejected = data.policy.input;
     data.sensors.joint_pos[0] = .4f;
@@ -253,6 +266,10 @@ TEST_F(PolicyActionFault, CapturesRejectedInputBeforeHistoryRepairAndRecoverySep
     EXPECT_EQ(tensor(recovery["current_inference"]), recovered);
     EXPECT_EQ(recovery["current_inference"]["outcome"].as<std::string>(), "ACCEPTED");
     EXPECT_FALSE(recovery["previous_accepted_inference"]);
+    EXPECT_NE(failure["diagnostics"].as<std::string>().find("[CLIP+DELTA]"), std::string::npos);
+    EXPECT_EQ(failure["current_inference"]["action_reference"].as<std::vector<float>>(),
+      failure["previous_accepted_inference"]["processed_action"].as<std::vector<float>>());
+    EXPECT_NE(failure["diagnostics"].as<std::string>().find("change_limit="), std::string::npos);
     EXPECT_NE(failure["diagnostics"].as<std::string>().find("[JUMP!]"), std::string::npos);
     std::filesystem::remove_all(pattern);
     has_recorded_pair = true;
@@ -263,8 +280,10 @@ TEST_F(PolicyActionFault, CapturesRejectedInputBeforeHistoryRepairAndRecoverySep
 
 TEST(ActionFaultDiagnostics, ConsoleIncludesOnlyInvalidActionsAndJumpRows)
 {
-  const auto actions = format_action_fault_actions({7.f, 0.f,
-    std::numeric_limits<float>::quiet_NaN()}, {"limit_joint", "normal_joint", "nan_joint"}, 6.283f, true);
+  const std::vector<float> values{7.f, 0.f, std::numeric_limits<float>::quiet_NaN()};
+  const auto validation = validate_action_basics(values, nullptr, ActionSafetyLimits{});
+  const auto actions = format_action_fault_actions(values,
+    {"limit_joint", "normal_joint", "nan_joint"}, validation, true);
   EXPECT_NE(actions.find("limit"), std::string::npos);
   EXPECT_NE(actions.find("nan"), std::string::npos);
   EXPECT_EQ(actions.find("normal"), std::string::npos);
@@ -278,4 +297,147 @@ TEST(ActionFaultDiagnostics, ConsoleIncludesOnlyInvalidActionsAndJumpRows)
   EXPECT_EQ(sensors.find("normal"), std::string::npos);
   EXPECT_EQ(sensors.find("IMU"), std::string::npos);
   EXPECT_EQ(sensors.find("Joint velocity"), std::string::npos);
+}
+
+TEST_F(MimicActionFault, RejectsLargeChangeInsideAbsoluteLimitAndRetainsReference)
+{
+  ASSERT_EQ(tick(0), PolicyUpdateResult::TargetReady);
+  const auto accepted = runtime->target_command().position;
+  const auto last_action = data.policy.last_action;
+  data.sensors.joint_pos[0] = 12.f;  // raw 11.9; target 6.05; delta 5.8 rad.
+  for (int attempt = 0; attempt < 5; ++attempt) {
+    ASSERT_EQ(tick(), PolicyUpdateResult::TargetUnavailable);
+    EXPECT_EQ(runtime->target_command().position, accepted);
+    EXPECT_EQ(data.policy.last_action, last_action);
+    EXPECT_FALSE(data.requests.action_limit_exceeded);
+  }
+  data.sensors.joint_pos[0] = .6f;
+  ASSERT_EQ(tick(), PolicyUpdateResult::TargetReady);
+  EXPECT_NEAR(runtime->target_command().position[0], .35f, 1e-6);
+  // Recovery resets the common retry budget; rejected targets never become its reference.
+  data.sensors.joint_pos[0] = 12.2f;
+  for (int attempt = 1; attempt <= 6; ++attempt) {
+    ASSERT_EQ(tick(), PolicyUpdateResult::TargetUnavailable);
+    EXPECT_EQ(data.requests.action_limit_exceeded, attempt == 6);
+  }
+}
+
+TEST_F(MimicActionFault, RejectsAtClipWhenDeltaCrosses90Degrees)
+{
+  constexpr float limit = 3.14159265f / 2.f;
+  constexpr float target = 5.1f;  // raw 10, scale .5, offset .1
+  data.output.has_published_command = true;
+  data.sensors.joint_pos[0] = 10.1f;
+  data.output.last_published.position = {target - limit, -.325f};
+  runtime->enter();
+  ASSERT_EQ(tick(0), PolicyUpdateResult::TargetUnavailable);
+  data.output.last_published.position[0] = std::nextafter(target - limit, target);
+  runtime->enter();
+  ASSERT_EQ(tick(0), PolicyUpdateResult::TargetReady);
+  EXPECT_FLOAT_EQ(runtime->target_command().position[0], target);
+}
+
+TEST_F(MimicActionFault, EntryUsesPublishedCommandAndReentryReseedsIt)
+{
+  data.output.has_published_command = true;
+  data.output.last_published.position = {6.05f, -.325f};
+  data.output.command.position = {0.f, 0.f};  // may differ during transitions/position limiting
+  data.sensors.joint_pos[0] = 12.f;
+  runtime->enter();
+  ASSERT_EQ(tick(0), PolicyUpdateResult::TargetReady);
+  data.output.last_published.position[0] = .25f;
+  runtime->enter();
+  ASSERT_EQ(tick(0), PolicyUpdateResult::TargetUnavailable);
+}
+
+TEST(ActionFaultDiagnostics, DeltaFaultIsShownEvenInsideAbsoluteLimit)
+{
+  const std::vector<float> values{3.55f, .3f}, reference{.25f, .2f};
+  auto validation = validate_action_basics(values, &reference, ActionSafetyLimits{});
+  complete_action_boundary_check(validation, {true, false});
+  const auto report = normalized_whitespace(format_action_fault_actions(
+    values, {"left_knee_joint", "right_knee_joint"}, validation, true));
+  EXPECT_NE(report.find("L.knee 3.550 0.250 +3.300 [CLIP+DELTA]"), std::string::npos);
+  EXPECT_EQ(report.find("R.knee"), std::string::npos);
+  EXPECT_EQ(report.find("[LIMIT]"), std::string::npos);
+}
+
+TEST_F(PolicyActionFault, WalkingAcceptsLargeDeltaButStillRejectsAbsoluteLimit)
+{
+  data.output.has_published_command = true;
+  data.output.last_published.position = {-2.f, -.325f};
+  runtime->enter();
+  ASSERT_EQ(tick(0), PolicyUpdateResult::TargetReady);
+  data.sensors.joint_pos[0] = 7.f;  // target 3.55; delta 3.3 rad is allowed for walking.
+  ASSERT_EQ(tick(), PolicyUpdateResult::TargetReady);
+  EXPECT_NEAR(runtime->target_command().position[0], 3.55f, 1e-6);
+  data.sensors.joint_pos[0] = 20.f;
+  EXPECT_EQ(tick(), PolicyUpdateResult::TargetUnavailable);
+}
+
+TEST_F(MimicActionFault, RequiresClipBoundaryAndDeltaOnTheSameJoint)
+{
+  // Large delta alone is accepted, even on an unclipped Mimic model.
+  ASSERT_EQ(tick(0), PolicyUpdateResult::TargetReady);
+  data.sensors.joint_pos[0] = 7.f;
+  ASSERT_EQ(tick(), PolicyUpdateResult::TargetReady);
+  EXPECT_NEAR(runtime->target_command().position[0], 3.55f, 1e-6);
+
+  // Reaching the boundary alone is also accepted; it does not clip the actual output.
+  data.output.has_published_command = true;
+  data.output.last_published.position = {6.05f, -.325f};
+  data.sensors.joint_pos[0] = 12.f;
+  runtime->enter();
+  ASSERT_EQ(tick(0), PolicyUpdateResult::TargetReady);
+  EXPECT_NEAR(runtime->target_command().position[0], 6.05f, 1e-6);
+
+  // A large left delta cannot combine with saturation of the right joint.
+  data.output.last_published.position = {.25f, 2.375f};
+  data.sensors.joint_pos << 7.f, 10.1f;
+  runtime->enter();
+  ASSERT_EQ(tick(0), PolicyUpdateResult::TargetReady);
+
+  data.sensors.joint_pos << -9.9f, -.7f;  // raw -10 and a large delta on the same joint.
+  ASSERT_EQ(tick(), PolicyUpdateResult::TargetUnavailable);
+}
+
+TEST(ActionValidation, BasicFailuresSkipBoundaryInferenceAndKeepTheirReasons)
+{
+  const std::vector<float> reference{0.f, 0.f, std::numeric_limits<float>::quiet_NaN()};
+  const auto result = validate_action_basics(
+    {7.f, std::numeric_limits<float>::infinity(), 0.f}, &reference, ActionSafetyLimits{});
+  EXPECT_FALSE(result.is_valid());
+  EXPECT_FALSE(result.needs_boundary_evaluation());
+  EXPECT_EQ(result.boundary_check, BoundaryCheckState::SkippedInvalidAction);
+  ASSERT_EQ(result.joints.size(), 3U);
+  EXPECT_EQ(result.joints[0].rejection, ActionRejection::AbsoluteLimit);
+  EXPECT_EQ(result.joints[1].rejection, ActionRejection::Nonfinite);
+  EXPECT_EQ(result.joints[2].rejection, ActionRejection::InvalidReference);
+}
+
+TEST(ActionValidation, BoundaryEvaluationIsExplicitAndRequiresBothConditionsOnOneJoint)
+{
+  const std::vector<float> values{2.f, .1f}, reference{0.f, 0.f};
+  auto result = validate_action_basics(values, &reference, ActionSafetyLimits{});
+  ASSERT_TRUE(result.needs_boundary_evaluation());
+  EXPECT_FALSE(result.is_valid());  // A pending check must never be treated as acceptance.
+  complete_action_boundary_check(result, {false, true});
+  EXPECT_TRUE(result.is_valid());
+  EXPECT_EQ(result.boundary_check, BoundaryCheckState::Completed);
+  result = validate_action_basics(values, &reference, ActionSafetyLimits{});
+  complete_action_boundary_check(result, {true, false});
+  EXPECT_FALSE(result.is_valid());
+  EXPECT_EQ(result.joints[0].rejection, ActionRejection::BoundaryAndDelta);
+  EXPECT_EQ(result.joints[1].rejection, ActionRejection::None);
+}
+
+TEST(ActionValidation, DisabledAndUnneededChecksAreDistinct)
+{
+  const auto walking = validate_action_basics({2.f}, nullptr, ActionSafetyLimits{});
+  EXPECT_TRUE(walking.is_valid());
+  EXPECT_EQ(walking.boundary_check, BoundaryCheckState::Disabled);
+  const std::vector<float> reference{1.9f};
+  const auto mimic = validate_action_basics({2.f}, &reference, ActionSafetyLimits{});
+  EXPECT_TRUE(mimic.is_valid());
+  EXPECT_EQ(mimic.boundary_check, BoundaryCheckState::NotNeeded);
 }

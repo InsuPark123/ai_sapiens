@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "ai_sapiens_sim2real/shared_control_data.hpp"
+#include "ai_sapiens_sim2real/policy/action_validation.hpp"
 
 namespace ai_sapiens_sim2real
 {
@@ -21,9 +22,13 @@ std::string format_action_fault_sensors(
   const SensorData & current, const std::optional<SensorData> & previous,
   const std::vector<std::string> & joint_names, double elapsed_seconds, bool jumps_only = false);
 
+const char * action_rejection_label(ActionRejection reason);
+const char * boundary_check_label(BoundaryCheckState state);
+
+// Rendering consumes the actual control decision; it never re-evaluates limits.
 std::string format_action_fault_actions(
   const std::vector<float> & processed, const std::vector<std::string> & joints,
-  float limit, bool invalid_only = false);
+  const ActionValidation & validation, bool invalid_only = false);
 
 }  // namespace ai_sapiens_sim2real
 

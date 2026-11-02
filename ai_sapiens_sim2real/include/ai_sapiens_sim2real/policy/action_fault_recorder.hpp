@@ -19,6 +19,7 @@
 #include <rclcpp/logger.hpp>
 #include "ai_sapiens_sim2real/observation/observation_layout.hpp"
 #include "ai_sapiens_sim2real/shared_control_data.hpp"
+#include "ai_sapiens_sim2real/policy/action_validation.hpp"
 
 namespace ai_sapiens_sim2real
 {
@@ -30,6 +31,8 @@ struct FaultPolicyMetadata
   std::unordered_map<std::string, std::vector<ObservationSlice>> layouts;
   double step_dt{0.0};
   float action_limit{0.0f};
+  float action_change_limit{0.0f};
+  float raw_action_boundary{0.0f};
   bool is_mirrored{false};
 };
 
@@ -50,6 +53,7 @@ struct FaultSnapshot
   std::optional<SensorData> previous_sensors;
   std::vector<FaultInferenceCall> calls;
   std::vector<float> processed_action;
+  ActionValidation validation;
   std::string error, outcome;
   size_t consecutive_failures{0};
 };
@@ -82,11 +86,13 @@ public:
   static std::filesystem::path default_directory();
   uint64_t next_incident() {return ++incident_sequence_;}
   std::string enqueue(ActionFaultRecord record) noexcept;
+  // Stable planned path; materialized by the writer only for the first record.
   const std::filesystem::path & session_directory() const {return session_directory_;}
 
 private:
   void write_loop() noexcept;
   void write_record(const ActionFaultRecord & record);
+  void create_session_directory();
   Options options_;
   rclcpp::Logger logger_;
   std::filesystem::path session_directory_;
@@ -98,11 +104,12 @@ private:
   std::deque<ActionFaultRecord> queue_;
   size_t queued_bytes_{0}, stored_bytes_{0};
   bool is_stopping_{false};
+  bool is_session_created_{false};  // Writer thread only.
   std::thread worker_;
 };
 
 // Control-thread capture, independent of action validation and retry decisions.
-// Copies each actual ONNX call (including both Loco Mimic calls) before inference.
+// Copies each actual ONNX call (including Loco Mimic boundary probes) before inference.
 class PolicyFaultCapture
 {
 public:
@@ -115,7 +122,7 @@ public:
   void output(const std::vector<float> & output) noexcept;
   void error(const char * reason) noexcept;
   std::string finish(bool is_accepted, bool is_damping, size_t failures,
-    const std::vector<float> & processed) noexcept;
+    const std::vector<float> & processed, const ActionValidation & validation) noexcept;
 
 private:
   void disable() noexcept;

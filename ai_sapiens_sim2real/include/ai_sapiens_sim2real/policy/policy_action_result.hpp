@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include "ai_sapiens_sim2real/policy/action_validation.hpp"
 
 namespace ai_sapiens_sim2real
 {
@@ -15,6 +16,7 @@ struct PolicyActionResult
 {
   PolicyActionStatus status{PolicyActionStatus::InferenceFailed};
   std::vector<float> raw, processed;
+  ActionValidation validation;
   std::string error;
   bool is_accepted() const {return status == PolicyActionStatus::Accepted;}
 };

@@ -4,12 +4,14 @@
 
 #include <cerrno>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <fcntl.h>
 #include <iomanip>
 #include <limits>
+#include <random>
 #include <sstream>
 #include <stdexcept>
 #include <unistd.h>
@@ -25,7 +27,9 @@ namespace
 {
 size_t snapshot_bytes(const FaultSnapshot & snapshot)
 {
-  size_t bytes = sizeof(snapshot) + snapshot.processed_action.size() * sizeof(float) +
+  size_t bytes = sizeof(snapshot) +
+    snapshot.processed_action.size() * sizeof(float) +
+    snapshot.validation.joints.size() * sizeof(JointActionCheck) +
     snapshot.error.size() + snapshot.outcome.size();
   for (const auto & call : snapshot.calls) {
     bytes += sizeof(call) + call.output.size() * sizeof(float);
@@ -61,6 +65,23 @@ std::string channel_label(const ObservationSlice & slice, size_t index,
   return std::to_string(index);
 }
 
+void emit_action_validation(YAML::Emitter & out, const ActionValidation & validation)
+{
+  out << YAML::Key << "action_boundary_check" << YAML::Value
+      << boundary_check_label(validation.boundary_check)
+      << YAML::Key << "action_reference" << YAML::Value << YAML::Flow << YAML::BeginSeq;
+  for (const auto & joint : validation.joints) {
+    if (joint.reference) {out << *joint.reference;}
+  }
+  out << YAML::EndSeq << YAML::Key << "action_raw_boundary_reached" << YAML::Value
+      << YAML::Flow << YAML::BeginSeq;
+  for (const auto & joint : validation.joints) {out << joint.is_at_raw_action_boundary;}
+  out << YAML::EndSeq << YAML::Key << "action_rejection_reasons" << YAML::Value
+      << YAML::Flow << YAML::BeginSeq;
+  for (const auto & joint : validation.joints) {out << action_rejection_label(joint.rejection);}
+  out << YAML::EndSeq;
+}
+
 void emit_snapshot(YAML::Emitter & out, const FaultSnapshot & snapshot,
   const FaultPolicyMetadata & metadata)
 {
@@ -70,8 +91,9 @@ void emit_snapshot(YAML::Emitter & out, const FaultSnapshot & snapshot,
       << YAML::Key << "outcome" << YAML::Value << snapshot.outcome
       << YAML::Key << "consecutive_failures" << YAML::Value << snapshot.consecutive_failures
       << YAML::Key << "inference_error" << YAML::Value << snapshot.error
-      << YAML::Key << "processed_action" << YAML::Value << YAML::Flow << snapshot.processed_action
-      << YAML::Key << "onnx_calls" << YAML::Value << YAML::BeginSeq;
+      << YAML::Key << "processed_action" << YAML::Value << YAML::Flow << snapshot.processed_action;
+  emit_action_validation(out, snapshot.validation);
+  out << YAML::Key << "onnx_calls" << YAML::Value << YAML::BeginSeq;
   for (const auto & call : snapshot.calls) {
     out << YAML::BeginMap << YAML::Key << "inputs" << YAML::Value << YAML::BeginSeq;
     // Preserve ONNX input order, not unordered_map iteration order.
@@ -144,11 +166,13 @@ std::string serialize(const ActionFaultRecord & record)
   std::ostringstream diagnostics;
   diagnostics << "ACTION DIAGNOSTICS | " << s.outcome << " | incident=" << record.incident
               << " attempt=" << record.attempt << "\nPolicy: " << m.state
-              << "\nlimit=" << m.action_limit << " rad, dt=" << m.step_dt
+              << "\nlimit=" << m.action_limit << " rad, change_limit=" << m.action_change_limit
+              << " rad (" << boundary_check_label(s.validation.boundary_check)
+              << "), AND |raw mimic action| >= " << m.raw_action_boundary << ", dt=" << m.step_dt
               << " s, mirror=" << (m.is_mirrored ? "yes" : "no")
               << "\n\nActions [rad, policy coordinates]:\n"
-              << "  joint             processed flag\n"
-              << format_action_fault_actions(s.processed_action, m.policy_joints, m.action_limit)
+              << "  joint             processed   previous      delta flag\n"
+              << format_action_fault_actions(s.processed_action, m.policy_joints, s.validation)
               << "\n" << format_action_fault_sensors(s.sensors, s.previous_sensors,
                 m.controller_joints, s.sensor_interval);
   YAML::Emitter out;
@@ -218,25 +242,38 @@ ActionFaultRecorder::ActionFaultRecorder(Options options, rclcpp::Logger logger)
 {
   if (options_.directory.empty()) {options_.directory = default_directory();}
   options_.directory = std::filesystem::absolute(options_.directory);
-  std::filesystem::create_directories(options_.directory);
   // Include previous runs in the quota; never delete old evidence to make room.
-  for (const auto & entry : std::filesystem::recursive_directory_iterator(options_.directory)) {
-    if (entry.is_regular_file()) {stored_bytes_ += entry.file_size();}
+  if (std::filesystem::exists(options_.directory)) {
+    for (const auto & entry : std::filesystem::recursive_directory_iterator(options_.directory)) {
+      if (entry.is_regular_file()) {stored_bytes_ += entry.file_size();}
+    }
   }
-  const auto now = std::time(nullptr);
-  std::tm utc{};
-  gmtime_r(&now, &utc);
-  std::ostringstream name;
-  name << "run-" << std::put_time(&utc, "%Y%m%dT%H%M%SZ") << "-XXXXXX";
-  auto pattern = (options_.directory / name.str()).string();
-  if (!::mkdtemp(pattern.data())) {throw std::runtime_error(std::strerror(errno));}
-  session_directory_ = pattern;
+  // Choose the path before enqueue() needs it, without creating an empty run.
+  std::random_device random;
+  do {
+    std::ostringstream name;
+    name << "run-" << std::hex << std::setfill('0') << std::setw(8)
+         << static_cast<uint32_t>(random());
+    session_directory_ = options_.directory / name.str();
+  } while (std::filesystem::exists(session_directory_));
+
+  worker_ = std::thread(&ActionFaultRecorder::write_loop, this);
+}
+
+void ActionFaultRecorder::create_session_directory()
+{
+  if (is_session_created_) {return;}
+  std::filesystem::create_directories(options_.directory);
+  // Never reuse an existing directory, even in the unlikely event of a name collision.
+  if (!std::filesystem::create_directory(session_directory_)) {
+    throw std::runtime_error("action fault session directory already exists");
+  }
   // Containers commonly run as root; allow the bind-mount's host user to read
   // diagnostics while keeping write access restricted to the creating user.
   std::filesystem::permissions(session_directory_, std::filesystem::perms::owner_all |
     std::filesystem::perms::group_read | std::filesystem::perms::group_exec |
     std::filesystem::perms::others_read | std::filesystem::perms::others_exec);
-  worker_ = std::thread(&ActionFaultRecorder::write_loop, this);
+  is_session_created_ = true;
   RCLCPP_INFO(logger_, "Action fault files: %s (exclusive creation, no automatic deletion)",
     session_directory_.c_str());
 }
@@ -317,6 +354,7 @@ void ActionFaultRecorder::write_record(const ActionFaultRecord & record)
   {
     throw std::runtime_error("storage quota reached (no files removed)");
   }
+  create_session_directory();
   const int fd = ::open(record.path.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
   if (fd < 0) {throw std::runtime_error(std::strerror(errno));}
   if (::fchmod(fd, 0644) != 0) {
@@ -393,11 +431,12 @@ void PolicyFaultCapture::error(const char * reason) noexcept
 }
 
 std::string PolicyFaultCapture::finish(bool is_accepted, bool is_damping, size_t failures,
-  const std::vector<float> & processed) noexcept
+  const std::vector<float> & processed, const ActionValidation & validation) noexcept
 {
   if (!is_enabled_) {return {};}
   try {
     current_.processed_action = processed;
+    current_.validation = validation;
     current_.consecutive_failures = failures;
     current_.outcome = is_accepted ? "ACCEPTED" : is_damping ? "DAMPING" : "HOLD; retry next tick";
     if (is_accepted && incident_ == 0) {

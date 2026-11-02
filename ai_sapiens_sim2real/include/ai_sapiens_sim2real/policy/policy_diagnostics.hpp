@@ -26,7 +26,7 @@ public:
 private:
   void log_result(const PolicyActionResult & result, const SensorData & sensors,
     size_t previous_failures, size_t failures, const std::string & path) const;
-  void log_action_limit(const std::vector<float> & processed, const SensorData & sensors,
+  void log_action_limit(const PolicyActionResult & result, const SensorData & sensors,
     size_t failures, const std::string & path) const;
   std::shared_ptr<const FaultPolicyMetadata> metadata_;
   size_t max_failures_;

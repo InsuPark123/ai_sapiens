@@ -178,6 +178,42 @@ std::vector<float> LocomotionMimic::infer(const std::vector<float> & observation
   }
   return action;
 }
+
+std::vector<bool> LocomotionMimic::evaluate_raw_action_boundaries(
+  const std::vector<float> & observation, const std::vector<float> & action,
+  float limit, const Infer & run) const
+{
+  std::vector<bool> reached(action.size(), false);
+
+  if (!has_motion_weight()) {
+    return reached;
+  }
+
+  auto mimic_action = action;
+
+  if (observation.at(weight_index_) < 1.f || is_walking_clip_active_) {
+    // The exported weight only mixes the two branches. Inspect the same mimic
+    // branch at weight=1 without committing targets or private walking feedback.
+    auto mimic_observation = observation;
+    mimic_observation.at(weight_index_) = 1.f;
+    mimic_action = run(mimic_observation);
+  }
+
+  if (mimic_action.size() != action.size() ||
+    !std::all_of(mimic_action.begin(), mimic_action.end(),
+    [](float value) {return std::isfinite(value);}))
+  {
+    throw std::runtime_error("Invalid mimic branch output during action clip check");
+  }
+
+  for (size_t j = 0; j < action.size(); ++j) {
+    const bool contributes = !is_walking_clip_active_ || j >= 13 || gate_.leg_handoff() < 1.f;
+    reached[j] = contributes && std::abs(mimic_action[j]) >= limit;
+  }
+
+  return reached;
+}
+
 void LocomotionMimic::accept() noexcept
 {
   if (!pending_walk_.empty()) {walk_last_.swap(pending_walk_);}

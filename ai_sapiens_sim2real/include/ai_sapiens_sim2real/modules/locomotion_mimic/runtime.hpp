@@ -23,7 +23,15 @@ public:
     const SharedControlData & shared, const PolicyJointContext & joints,
     const ActionProperties & actions);
   const PolicyObservationOverrides & observations() const {return observations_;}
+  bool has_motion_weight() const
+  {
+    return observations_.terms.at("mimic_gate").at(locomotion_mimic::kTeacherDim) > 0.0f;
+  }
   using Infer = std::function<std::vector<float>(const std::vector<float> &)>;
+  // May infer the unmixed mimic branch; call only after basic action validation
+  // requests a boundary check. Targets and private feedback are never committed here.
+  std::vector<bool> evaluate_raw_action_boundaries(const std::vector<float> & observation,
+    const std::vector<float> & action, float limit, const Infer & run) const;
   // Inference stages private feedback; only a validated target commits it.
   void accept() noexcept;
   void reject() noexcept;

@@ -67,75 +67,130 @@ PolicyRuntime::PolicyRuntime(
   , model_path_(std::move(model_path))
   , sim2real_config_path_(sim2real_config.path())
 {
+  configure_input_requirements(sim2real_config, reference_motion);
+  load_sim2real_config(sim2real_config, controller_joint_names);
+  configure_mirroring(sim2real_config, reference_motion, is_mirrored);
+  log_joint_coverage(controller_joint_names);
+  log_loading();
+
+  initialize_policy_modules(sim2real_config, reference_motion, any2track_mimic);
+  load_onnx_model();
+  const auto observation_size = initialize_observations(sim2real_config, reference_motion);
+
+  initialize_target_command();
+  initialize_diagnostics(controller_joint_names);
+
+  log_ready(observation_size);
+}
+
+void PolicyRuntime::configure_input_requirements(
+  const Sim2RealConfig & sim2real_config, const MotionReference * reference_motion)
+{
   const auto observations = sim2real_config.observations();
   const bool has_robot_xy = static_cast<bool>(observations["robot_root_position_xy_w"]);
   const bool has_reference_xy = static_cast<bool>(observations["reference_root_position_xy_w"]);
   const bool has_robot_velocity = static_cast<bool>(observations["robot_root_velocity_xy_h"]);
   const bool has_reference_velocity =
     static_cast<bool>(observations["reference_root_velocity_xy_h"]);
+
   if (has_robot_velocity || has_reference_velocity) {
     throw std::runtime_error(
         "Global-position Mimic requires robot/reference_root_position_xy_w; "
         "root velocity observations belong to an incompatible training schema");
   }
+
   requires_localization_ = has_robot_xy || sim2real_config.any2track_path_tracking();
   requires_imu_orientation_ = sim2real_config.any2track() || sim2real_config.use_imu_orientation();
+
   if (requires_imu_orientation_ && !requires_localization_ && !sim2real_config.any2track()) {
     throw std::runtime_error("reference_trajectory.orientation_source=imu requires global-position Mimic");
   }
-  if (has_robot_xy != has_reference_xy ||
-    (requires_localization_ && !sim2real_config.any2track() && reference_motion == nullptr))
-  {
+
+  const bool has_incomplete_xy_pair = has_robot_xy != has_reference_xy;
+  const bool is_motion_reference_missing =
+    requires_localization_ && !sim2real_config.any2track() && reference_motion == nullptr;
+
+  if (has_incomplete_xy_pair || is_motion_reference_missing) {
     throw std::runtime_error(
         "Global-position Mimic requires both robot/reference_root_position_xy_w and a motion reference");
   }
-  load_sim2real_config(sim2real_config, controller_joint_names);
-  if (is_mirrored) {
-    if (!reference_motion || sim2real_config.any2track() || requires_localization_ ||
-      sim2real_config.steering() || sim2real_config.dance_reference() ||
-      observations["velocity_commands"] || observations["gait_phase"])
-    {
-      throw std::runtime_error(
-        "mirror supports ordinary Mimic without localization, steering, dance reference or gait commands");
-    }
-    mirror_.emplace(joint_context_.policy_joint_names);
-    refresh_sensor_view();
-    sensors_ = &sensor_view_;
+}
+
+void PolicyRuntime::configure_mirroring(
+  const Sim2RealConfig & sim2real_config, const MotionReference * reference_motion, bool is_mirrored)
+{
+  if (!is_mirrored) {
+    return;
   }
+
+  const auto observations = sim2real_config.observations();
+
+  if (!reference_motion || sim2real_config.any2track() || requires_localization_ ||
+    sim2real_config.steering() || sim2real_config.dance_reference() ||
+    observations["velocity_commands"] || observations["gait_phase"])
+  {
+    throw std::runtime_error(
+      "mirror supports ordinary Mimic without localization, steering, dance reference or gait commands");
+  }
+
+  mirror_.emplace(joint_context_.policy_joint_names);
+  refresh_sensor_view();
+  sensors_ = &sensor_view_;
+}
+
+void PolicyRuntime::initialize_policy_modules(
+  const Sim2RealConfig & sim2real_config, const MotionReference * reference_motion,
+  const MimicBehavior * any2track_mimic)
+{
   locomotion_mimic_ = LocomotionMimic::create_if_configured(
     sim2real_config, reference_motion != nullptr, mirror_.has_value());
-  log_joint_coverage(controller_joint_names);
-  log_loading();
+  is_reference_mimic_ = reference_motion != nullptr && !sim2real_config.any2track();
+
   if (sim2real_config.any2track()) {
-    if (!any2track_mimic) {throw std::runtime_error("Any2Track requires a mimic behavior");}
+    if (!any2track_mimic) {
+      throw std::runtime_error("Any2Track requires a mimic behavior");
+    }
+
     any2track_ = std::make_unique<Any2TrackPolicy>(sim2real_config, *any2track_mimic);
     RCLCPP_INFO(node_->get_logger(),
       "[Any2Track] IMU attitude/gyro; XY input=%s; "
       "20-frame velocity history and 79-frame adapter history",
       requires_localization_ ? "pelvis odometry" : "none (orientation-only model)");
   }
-  load_onnx_model();
+}
+
+size_t PolicyRuntime::initialize_observations(
+  const Sim2RealConfig & sim2real_config, const MotionReference * reference_motion)
+{
   const size_t observation_size = any2track_ ? any2track_->observation().size() :
-    create_observation_manager(sim2real_config, shared_data, reference_motion);
+    create_observation_manager(sim2real_config, shared_data_, reference_motion);
+
   if (!any2track_) {
     inference_->validate_policy_metadata(
       joint_context_.policy_joint_names, obs_manager_->get_term_names(), requires_localization_);
     gait_clock_ = make_gait_clock(sim2real_config.observations(), step_dt_);
   }
+
   if (locomotion_mimic_) {
     locomotion_mimic_->set_observation_layout(observation_size, obs_manager_->get_term_names());
   }
+
   validate_observation_size(observation_size);
   obs_buffer_[onnx_input_name_].resize(observation_size);
+
+  return observation_size;
+}
+
+void PolicyRuntime::initialize_target_command()
+{
   target_command_.resize(joint_context_.policy_joint_names.size());
   target_command_.stiffness = joint_properties_.stiffness;
   target_command_.damping = joint_properties_.damping;
+
   if (mirror_) {
     target_command_.stiffness = mirror_->reflect(target_command_.stiffness, false);
     target_command_.damping = mirror_->reflect(target_command_.damping, false);
   }
-  initialize_diagnostics(controller_joint_names);
-  log_ready(observation_size);
 }
 
 PolicyRuntime::~PolicyRuntime() = default;
@@ -146,15 +201,24 @@ void PolicyRuntime::initialize_diagnostics(const std::vector<std::string> & cont
   metadata.state = state_name_;
   metadata.model = model_path_;
   metadata.config_path = sim2real_config_path_.string();
+
   metadata.policy_joints = joint_context_.policy_joint_names;
   metadata.controller_joints = controller_joints;
   metadata.input_names = inference_->get_input_names();
   metadata.input_shapes = inference_->get_input_shapes();
+
   metadata.step_dt = step_dt_;
-  metadata.action_limit = kAbsActionLimitRad;
+  metadata.action_limit = action_safety_limits_.absolute_position_rad;
+  metadata.action_change_limit = action_safety_limits_.delta_rad;
+  metadata.raw_action_boundary = action_safety_limits_.raw_action_boundary;
   metadata.is_mirrored = mirror_.has_value();
-  if (obs_manager_) {metadata.layouts[onnx_input_name_] = obs_manager_->layout();}
-  else if (any2track_) {metadata.layouts = any2track_fault_layout(any2track_->observation().size());}
+
+  if (obs_manager_) {
+    metadata.layouts[onnx_input_name_] = obs_manager_->layout();
+  } else if (any2track_) {
+    metadata.layouts = any2track_fault_layout(any2track_->observation().size());
+  }
+
   diagnostics_ = std::make_unique<PolicyDiagnostics>(
     std::move(metadata), kMaxConsecutiveActionFailures, node_->get_logger());
 }
@@ -190,6 +254,7 @@ void PolicyRuntime::enter()
   install_joint_properties();
   install_velocity_command_ranges();
   reset_episode_state();
+  seed_action_reference();
   on_enter();
   if (obs_manager_) {obs_manager_->reset();}  // seed after on_enter()
   if (requires_localization_) {
@@ -258,6 +323,17 @@ void PolicyRuntime::reset_episode_state()
   std::fill(policy_->last_action.begin(), policy_->last_action.end(), 0.0f);
   accumulated_period_ = step_dt_;
   consecutive_action_failures_ = 0;
+}
+
+void PolicyRuntime::seed_action_reference()
+{
+  const auto & source = output_->has_published_command ? output_->last_published : output_->command;
+  action_reference_.resize(joint_context_.policy_to_controller.size());
+  for (size_t j = 0; j < action_reference_.size(); ++j) {
+    action_reference_[j] = source.position.at(joint_context_.policy_to_controller[j]);
+  }
+  // Reflection is its own inverse. Compare both values in policy coordinates.
+  if (mirror_) {action_reference_ = mirror_->reflect(action_reference_);}
 }
 
 void PolicyRuntime::on_enter()
@@ -403,61 +479,105 @@ std::vector<float> PolicyRuntime::infer_once(
   return output;
 }
 
+std::vector<float> PolicyRuntime::infer_observation(const std::vector<float> & observation)
+{
+  std::unordered_map<std::string, std::vector<float>> inputs{{onnx_input_name_, observation}};
+  return infer_once(inputs);
+}
+
 std::vector<float> PolicyRuntime::run_policy_inference()
 {
   if (locomotion_mimic_) {
     return locomotion_mimic_->infer(
-      obs_buffer_.at(onnx_input_name_), [this](const std::vector<float> & input) {
-        std::unordered_map<std::string, std::vector<float>> inputs{{onnx_input_name_, input}};
-        return infer_once(inputs);
-      });
+      obs_buffer_.at(onnx_input_name_),
+      [this](const std::vector<float> & input) {return infer_observation(input);});
   }
+
   return infer_once(any2track_ ? any2track_->inputs() : obs_buffer_);
 }
 
 PolicyActionResult PolicyRuntime::evaluate_policy_action()
 {
   PolicyActionResult result;
+
   try {
     result.raw = run_policy_inference();
     result.processed = any2track_ ? any2track_->target(result.raw) :
       action_pipeline_.process(result.raw);
-    result.status = is_action_valid(result) ?
+    validate_action_dimensions(result);
+    result.validation = validate_action_basics(result.processed,
+      is_action_change_check_enabled() ? &action_reference_ : nullptr, action_safety_limits_);
+
+    if (result.validation.needs_boundary_evaluation()) {
+      complete_action_boundary_check(result.validation, evaluate_raw_action_boundaries(result.raw));
+    }
+
+    result.status = result.validation.is_valid() ?
       PolicyActionStatus::Accepted : PolicyActionStatus::ActionRejected;
   } catch (const std::exception & e) {
     result.error = e.what();
     result.status = PolicyActionStatus::InferenceFailed;
   }
+
   return result;
 }
 
-bool PolicyRuntime::is_action_valid(const PolicyActionResult & action) const
+bool PolicyRuntime::is_action_change_check_enabled() const
+{
+  return is_reference_mimic_ || (locomotion_mimic_ && locomotion_mimic_->has_motion_weight());
+}
+
+std::vector<bool> PolicyRuntime::evaluate_raw_action_boundaries(const std::vector<float> & raw)
+{
+  if (locomotion_mimic_) {
+    return locomotion_mimic_->evaluate_raw_action_boundaries(
+      obs_buffer_.at(onnx_input_name_), raw, action_safety_limits_.raw_action_boundary,
+      [this](const std::vector<float> & input) {return infer_observation(input);});
+  }
+
+  std::vector<bool> is_at_boundary(raw.size());
+
+  for (size_t j = 0; j < raw.size(); ++j) {
+    is_at_boundary[j] = std::abs(raw[j]) >= action_safety_limits_.raw_action_boundary;
+  }
+
+  return is_at_boundary;
+}
+
+void PolicyRuntime::validate_action_dimensions(const PolicyActionResult & action) const
 {
   const size_t count = joint_context_.policy_joint_names.size();
+
   if (action.raw.size() != count) {
     throw std::runtime_error(action_size_mismatch_message("Raw", action.raw.size(), count));
   }
+
   if (action.processed.size() != count) {
     throw std::runtime_error(action_size_mismatch_message("Processed", action.processed.size(), count));
   }
-  return std::all_of(action.processed.begin(), action.processed.end(), [](float value) {
-    return std::isfinite(value) && std::abs(value) <= kAbsActionLimitRad;
-  });
 }
 
 void PolicyRuntime::commit_action(const PolicyActionResult & action)
 {
   // Only validated targets may update module feedback, last_action or output.
-  if (any2track_) {any2track_->accept(action.processed);}
-  if (locomotion_mimic_) {locomotion_mimic_->accept();}
+  if (any2track_) {
+    any2track_->accept(action.processed);
+  }
+
+  if (locomotion_mimic_) {
+    locomotion_mimic_->accept();
+  }
+
   if (mirror_) {
     target_command_.position = mirror_->reflect(action.processed);
   } else {
     std::copy(action.processed.begin(), action.processed.end(), target_command_.position.begin());
   }
+
   // The buffer is controller-sized; this policy uses its first policy-sized slots.
   const auto & applied_raw = any2track_ ? action.raw : action_pipeline_.applied_raw_action();
   std::copy(applied_raw.begin(), applied_raw.end(), policy_->last_action.begin());
+  action_reference_ = action.processed;
   consecutive_action_failures_ = 0;
 }
 
@@ -465,15 +585,30 @@ void PolicyRuntime::reject_action(PolicyActionStatus status)
 {
   // Keep the failed time slot, replacing only its sample with retained feedback.
   // Each module owns its history layout; clocks and motion progression continue.
-  if (obs_manager_) {obs_manager_->reject_latest();}
-  if (any2track_) {any2track_->reject_latest();}
-  if (locomotion_mimic_) {locomotion_mimic_->reject();}
+  if (obs_manager_) {
+    obs_manager_->reject_latest();
+  }
+
+  if (any2track_) {
+    any2track_->reject_latest();
+  }
+
+  if (locomotion_mimic_) {
+    locomotion_mimic_->reject();
+  }
 
   // Exceptions and invalid targets share one budget, reset only by acceptance.
   ++consecutive_action_failures_;
-  if (consecutive_action_failures_ < kMaxConsecutiveActionFailures) {return;}
-  if (status == PolicyActionStatus::ActionRejected) {requests_->action_limit_exceeded = true;}
-  else {requests_->damping = true;}
+
+  if (consecutive_action_failures_ < kMaxConsecutiveActionFailures) {
+    return;
+  }
+
+  if (status == PolicyActionStatus::ActionRejected) {
+    requests_->action_limit_exceeded = true;
+  } else {
+    requests_->damping = true;
+  }
 }
 
 const std::string & PolicyRuntime::state_name() const

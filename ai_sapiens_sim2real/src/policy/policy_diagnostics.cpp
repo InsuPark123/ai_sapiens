@@ -19,7 +19,9 @@ PolicyDiagnostics::PolicyDiagnostics(
 void PolicyDiagnostics::set_recorder(std::shared_ptr<ActionFaultRecorder> recorder) noexcept
 {
   capture_.reset();
+
   if (!recorder) {return;}
+
   // Configuration IO happens only during startup attachment, never in update().
   try {
     auto metadata = std::make_shared<FaultPolicyMetadata>(*metadata_);
@@ -65,11 +67,13 @@ void PolicyDiagnostics::finish(const PolicyActionResult & result, const SensorDa
 {
   try {
     std::string path;
+
     if (capture_) {
       if (!result.error.empty()) {capture_->error(result.error.c_str());}
       path = capture_->finish(result.is_accepted(), failures >= max_failures_,
-        failures, result.processed);
+        failures, result.processed, result.validation);
     }
+
     log_result(result, sensors, previous_failures, failures, path);
     previous_sensors_ = sensors;
     sensor_interval_ = 0.0;
@@ -85,13 +89,15 @@ void PolicyDiagnostics::log_result(const PolicyActionResult & result, const Sens
   size_t previous_failures, size_t failures, const std::string & path) const
 {
   if (result.status == PolicyActionStatus::ActionRejected) {
-    log_action_limit(result.processed, sensors, failures, path);
+    log_action_limit(result, sensors, failures, path);
     return;
   }
+
   if (result.status == PolicyActionStatus::InferenceFailed) {
     RCLCPP_WARN(logger_,
       "Policy '%s' inference failed (%zu/%zu consecutive unusable actions): %s",
       metadata_->state.c_str(), failures, max_failures_, result.error.c_str());
+
     if (failures >= max_failures_) {
       RCLCPP_ERROR(logger_,
         "Policy '%s' failed to produce a usable action; requesting damping failsafe",
@@ -102,29 +108,35 @@ void PolicyDiagnostics::log_result(const PolicyActionResult & result, const Sens
       "Policy '%s' recovered after %zu unusable action(s); accepting target and resetting retries",
       metadata_->state.c_str(), previous_failures);
   }
+
   if (!path.empty()) {RCLCPP_INFO(logger_, "Inference diagnostics queued: %s", path.c_str());}
 }
 
 void PolicyDiagnostics::log_action_limit(
-  const std::vector<float> & processed_action, const SensorData & sensors,
+  const PolicyActionResult & result, const SensorData & sensors,
   size_t failures, const std::string & path) const
 {
   std::ostringstream report;
   report << "ACTION LIMIT | " << failures << "/" << max_failures_
          << " | " << (failures >= max_failures_ ? "DAMPING" : "HOLD; retry next tick")
          << "\n\n--- ACTION: rejected target ---\n"
-         << "Processed position [rad, policy coordinates]\n"
+         << "Processed position [rad, policy coordinates]; change limit="
+         << metadata_->action_change_limit * 180.0f / 3.14159265f << " deg"
+         << " AND |raw mimic action| >= " << metadata_->raw_action_boundary
+         << " (" << boundary_check_label(result.validation.boundary_check) << ")\n"
          << "  " << std::left << std::setw(16) << "joint"
-         << " " << std::right << std::setw(10) << "processed" << " flag\n"
-         << format_action_fault_actions(processed_action, metadata_->policy_joints,
-           metadata_->action_limit, true);
+         << " " << std::right << std::setw(10) << "processed" << "   previous      delta flag\n"
+         << format_action_fault_actions(result.processed, metadata_->policy_joints, result.validation, true);
   const auto jumps = format_action_fault_sensors(sensors,
     previous_sensors_, metadata_->controller_joints, sensor_interval_, true);
+
   if (!jumps.empty()) {
     report << "\n--- SENSOR: feedback jumps ---\n"
            << "Physical sensor coordinates; JUMP only\n" << jumps;
   }
+
   report << "\n[FILE] " << (path.empty() ? "not queued (recording unavailable)" : path + " (queued)");
+
   if (failures >= max_failures_) {
     RCLCPP_ERROR(logger_, "%s", report.str().c_str());
   } else {

@@ -129,7 +129,14 @@ protected:
   }
 
 private:
-  // Startup loading is split by asset type so constructor order stays visible.
+  // Startup stages follow dependency order; each owns its validation and setup.
+  void configure_input_requirements(const Sim2RealConfig & config, const MotionReference * reference);
+  void configure_mirroring(const Sim2RealConfig & config, const MotionReference * reference,
+    bool is_mirrored);
+  void initialize_policy_modules(const Sim2RealConfig & config, const MotionReference * reference,
+    const MimicBehavior * any2track_mimic);
+  size_t initialize_observations(const Sim2RealConfig & config, const MotionReference * reference);
+  void initialize_target_command();
   void load_sim2real_config(
     const Sim2RealConfig & sim2real_config,
     const std::vector<std::string> & controller_joint_names);
@@ -148,6 +155,7 @@ private:
   void install_joint_properties() const;
   void install_velocity_command_ranges() const;
   void reset_episode_state();
+  void seed_action_reference();
 
   // RT update helpers keep PolicyRuntime::update at one abstraction level.
   bool advance_policy_tick(const rclcpp::Duration & period);
@@ -157,8 +165,11 @@ private:
   void refresh_sensor_view();
   bool prepare_policy_observation();
   std::vector<float> run_policy_inference();
+  std::vector<float> infer_observation(const std::vector<float> & observation);
   PolicyActionResult evaluate_policy_action();
-  bool is_action_valid(const PolicyActionResult & action) const;
+  bool is_action_change_check_enabled() const;
+  std::vector<bool> evaluate_raw_action_boundaries(const std::vector<float> & raw);
+  void validate_action_dimensions(const PolicyActionResult & action) const;
   void commit_action(const PolicyActionResult & action);
   void reject_action(PolicyActionStatus status);
   std::vector<float> infer_once(std::unordered_map<std::string, std::vector<float>> & inputs);
@@ -178,6 +189,7 @@ private:
   JointProperties joint_properties_;
   ActionPipeline action_pipeline_;
   JointCommand target_command_;
+  std::vector<float> action_reference_;
 
   Any2TrackSample any2track_sample() const;
   std::unique_ptr<Any2TrackPolicy> any2track_;
@@ -196,7 +208,8 @@ private:
   double accumulated_period_{0.02};
   bool requires_localization_{false};
   bool requires_imu_orientation_{false};
-  static constexpr float kAbsActionLimitRad = 2.0f * 3.14159265f;
+  bool is_reference_mimic_{false};
+  const ActionSafetyLimits action_safety_limits_;
   // Share the retry budget across rejected actions and inference exceptions:
   // only a validated action resets it, so alternating failures cannot hold forever.
   static constexpr size_t kMaxConsecutiveActionFailures = 6;

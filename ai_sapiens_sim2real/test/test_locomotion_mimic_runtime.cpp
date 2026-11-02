@@ -46,6 +46,7 @@ TEST(LocomotionMimicAsset, RealExportLoadsAndHandsOffWithoutLeakingOverrides)
   shared.sensors.is_imu_usable = true;
   for (size_t i = 0; i < names.size(); ++i) {
     shared.sensors.joint_pos[i] = config.joint_properties().default_position[i];
+    shared.output.command.position[i] = shared.sensors.joint_pos[i];
   }
   shared.teleop.unavailable = false;
   shared.teleop.rc_valid[8] = true;
@@ -96,4 +97,73 @@ TEST(LocomotionMimicAsset, RealExportLoadsAndHandsOffWithoutLeakingOverrides)
   runtime.enter();
   ASSERT_EQ(runtime.update(dt), PolicyUpdateResult::TargetReady);
   EXPECT_FLOAT_EQ(shared.policy.input[514], 0.f);  // held trigger cannot restart on entry
+}
+
+TEST(LocomotionMimicAsset, RejectsSaturatedSpikeWith90DegreeDeltaAndRecovers)
+{
+  const char * directory = std::getenv("LOCOMIMIC_ASSET_DIR");
+  if (!directory) {GTEST_SKIP() << "Set LOCOMIMIC_ASSET_DIR to validate an exported policy";}
+  if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
+  const auto node = std::make_shared<rclcpp::Node>("locomimic_delta_test");
+  const auto root = std::filesystem::path(directory);
+  const Sim2RealConfig config(root / "params/sim2real.yaml");
+  SharedControlData shared;
+  shared.resize(23, 23);
+  shared.sensors.is_imu_usable = true;
+  shared.output.has_published_command = true;
+  for (size_t j = 0; j < 23; ++j) {
+    shared.sensors.joint_pos[j] = config.joint_properties().default_position[j];
+    shared.output.last_published.position[j] = shared.sensors.joint_pos[j];
+  }
+  shared.teleop.unavailable = false;
+  shared.teleop.rc_valid[8] = true;
+  shared.teleop.rc_us[8] = 1000;
+  shared.teleop.selector_code = 270;
+  const auto model = (root / "exported/policy.onnx").string();
+  PolicyRuntime runtime(node, "loco_delta", model, config, config.policy_joints(), &shared);
+  // Walking must ignore even a large entry delta while retaining absolute validation.
+  for (auto & value : shared.output.last_published.position) {value += 4.f;}
+  runtime.enter();
+  const auto dt = rclcpp::Duration::from_seconds(.02);
+  ASSERT_EQ(runtime.update(dt), PolicyUpdateResult::TargetReady);
+  ASSERT_FLOAT_EQ(shared.policy.input[514], 0.f);
+  shared.teleop.rc_us[8] = 2000;
+  for (int tick = 0; tick < 250 && shared.policy.input[514] < 1.f; ++tick) {
+    ASSERT_EQ(runtime.update(dt), PolicyUpdateResult::TargetReady) << tick;
+  }
+  ASSERT_FLOAT_EQ(shared.policy.input[514], 1.f);  // full mimic branch, not idle walking
+  const auto sensors = shared.sensors;
+  const auto target = runtime.target_command().position;
+  const auto last_action = shared.policy.last_action;
+  OnnxInference replay(model);
+  ActionPipeline pipeline(config.action_properties());
+  for (int attempt = 0; attempt < 3; ++attempt) {
+    shared.sensors = sensors;
+    for (int j = 0; j < 23; ++j) {
+      shared.sensors.joint_pos[j] += j % 2 == 0 ? 100.f : -100.f;
+      shared.sensors.joint_vel[j] += j % 2 == 0 ? 2000.f : -2000.f;
+    }
+    shared.sensors.angular_velocity << 1200.f, -1000.f, 800.f;
+    shared.sensors.orientation = Eigen::AngleAxisf(2.7f, Eigen::Vector3f::UnitZ()) *
+      Eigen::AngleAxisf(-1.4f, Eigen::Vector3f::UnitY()) *
+      Eigen::AngleAxisf(2.6f, Eigen::Vector3f::UnitX());
+    shared.sensors.compute_projected_gravity();
+    ASSERT_EQ(runtime.update(dt), PolicyUpdateResult::TargetUnavailable);
+    EXPECT_EQ(runtime.target_command().position, target);
+    EXPECT_EQ(shared.policy.last_action, last_action);
+    EXPECT_FALSE(shared.requests.action_limit_exceeded);
+    std::unordered_map<std::string, std::vector<float>> input{
+      {replay.get_input_names().front(), shared.policy.input}};
+    const auto raw = replay.run(input);
+    const auto processed = pipeline.process(raw);
+    bool has_clip_and_delta = false;
+    for (size_t j = 0; j < processed.size(); ++j) {
+      EXPECT_LE(std::abs(processed[j]), 6.28319f);
+      has_clip_and_delta |= std::abs(raw[j]) >= 10.f &&
+        std::abs(processed[j] - target[j]) >= 3.14159265f / 2.f;
+    }
+    EXPECT_TRUE(has_clip_and_delta);
+  }
+  shared.sensors = sensors;
+  EXPECT_EQ(runtime.update(dt), PolicyUpdateResult::TargetReady);
 }

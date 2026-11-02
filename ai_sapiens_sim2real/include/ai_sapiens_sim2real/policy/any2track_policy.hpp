@@ -49,6 +49,7 @@ public:
   bool observe(const Any2TrackSample & sample);
   std::vector<float> target(const std::vector<float> & action) const;
   void accept(const std::vector<float> & target);
+  void reject_latest();
   void advance() {++cursor_;}
   std::unordered_map<std::string, std::vector<float>> & inputs() {return inputs_;}
   const std::vector<float> & observation() const {return inputs_.at("obs");}
@@ -66,6 +67,9 @@ private:
   Eigen::Vector2f origin_{Eigen::Vector2f::Zero()}, reference_origin_{Eigen::Vector2f::Zero()};
   Eigen::Quaternionf alignment_{Eigen::Quaternionf::Identity()};
   size_t start_{0}, end_{0}, cursor_{0};
+  std::array<float, 75> previous_velocity_sample_{};
+  bool has_pending_observation_{false};
+  bool is_initial_observation_{false};
   bool first_{true};
   bool path_tracking_{false};
   std::string completion_state_;

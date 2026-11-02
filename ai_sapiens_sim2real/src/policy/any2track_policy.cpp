@@ -165,6 +165,7 @@ void Any2TrackPolicy::reset(const Any2TrackSample & s, bool align_on_entry)
   sensor_features(s);
   cursor_ = start_ + 1;  // reset observes the upcoming frame, as in training
   first_ = true;
+  has_pending_observation_ = false;
   const auto & f = frames_[start_];
   alignment_ = align_on_entry ? Eigen::Quaternionf(Eigen::AngleAxisf(
     yaw(rotation(f)) - yaw(s.orientation.normalized()),
@@ -175,6 +176,12 @@ void Any2TrackPolicy::reset(const Any2TrackSample & s, bool align_on_entry)
   for (int j = 0; j < 23; ++j) {
     last_targets_[j] = s.position[j];
   }
+  // If the first inference fails, replace its replicated velocity history
+  // with the entry sample. Successful first observations still seed all slots.
+  std::copy_n(current_history_.begin() + 3, 3, previous_velocity_sample_.begin());
+  std::copy_n(current_history_.begin(), 3, previous_velocity_sample_.begin() + 3);
+  std::copy_n(current_history_.begin() + 6, 46, previous_velocity_sample_.begin() + 6);
+  std::copy(last_targets_.begin(), last_targets_.end(), previous_velocity_sample_.begin() + 52);
   auto & history = inputs_.at("history");
   for (int c = 0; c < 75; ++c) {
     const float value = c < 52 ? current_history_[c] : last_targets_[c - 52];
@@ -222,12 +229,15 @@ bool Any2TrackPolicy::observe(const Any2TrackSample & s)
   std::copy_n(obs.begin() + 46, 6, velocity.begin());
   std::copy_n(obs.begin() + 52, 69, velocity.begin() + 6);
   auto & history = inputs_.at("velocity_history");
+  is_initial_observation_ = first_;
+  has_pending_observation_ = true;
   if (first_) {
     for (int t = 0; t < 20; ++t) {
       std::copy(velocity.begin(), velocity.end(), history.begin() + t * 75);
     }
     first_ = false;
   } else {
+    std::copy(history.end() - 75, history.end(), previous_velocity_sample_.begin());
     std::move(history.begin() + 75, history.end(), history.begin());
     std::copy(velocity.begin(), velocity.end(), history.end() - 75);
   }
@@ -255,5 +265,19 @@ void Any2TrackPolicy::accept(const std::vector<float> & target)
     h[(c + 1) * 79 - 1] = c < 52 ? current_history_[c] : target[c - 52];
   }
   last_targets_ = target;
+  has_pending_observation_ = false;
+}
+void Any2TrackPolicy::reject_latest()
+{
+  if (!has_pending_observation_) {return;}
+  auto & history = inputs_.at("velocity_history");
+  const int slots = is_initial_observation_ ? 20 : 1;
+  for (int t = 1; t <= slots; ++t) {
+    std::copy(previous_velocity_sample_.begin(), previous_velocity_sample_.end(),
+      history.end() - t * 75);
+  }
+  // Adapter history and last_targets_ only change in accept(). Keep the clock
+  // advancing, and retain the rejected obs itself for fault diagnostics.
+  has_pending_observation_ = false;
 }
 }  // namespace ai_sapiens_sim2real

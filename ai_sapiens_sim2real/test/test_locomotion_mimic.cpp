@@ -1,6 +1,7 @@
 // Copyright 2026 ROBOTIS CO., LTD.
 // SPDX-License-Identifier: Apache-2.0
 #include <gtest/gtest.h>
+#include <limits>
 #include <random>
 #include <set>
 #include "data/locomotion_mimic/original_gate.hpp"
@@ -141,8 +142,15 @@ TEST(LocomotionMimic, MasksAndTwoPassCompositionStayPolicyLocal)
   ActionProperties actions;
   actions.scale.assign(23, .25f); actions.offset.assign(23, .1f);
   module.update(shared, joints, actions);  // establish switch state
+  // Single-pass walking also stages feedback until the target is accepted.
+  const std::vector<float> walking_observation(519, 1.f);
+  module.infer(walking_observation, [](const auto &) {return std::vector<float>(23, .1f);});
+  module.accept();
+  module.infer(walking_observation, [](const auto &) {return std::vector<float>(23, 100.f);});
+  module.reject();
   shared.teleop.rc_us[8] = 2000;
   module.update(shared, joints, actions);
+  EXPECT_FLOAT_EQ(module.observations().last_action[13], .1f);
   std::vector<float> observation(519, 1.f);
   int calls = 0;
   const auto result = module.infer(observation, [&](const auto & input) {
@@ -152,7 +160,8 @@ TEST(LocomotionMimic, MasksAndTwoPassCompositionStayPolicyLocal)
   EXPECT_EQ(calls, 2);
   for (int i = 0; i < 23; ++i) {
     EXPECT_FLOAT_EQ(result[i], i < 13 ? .2f : .8f);
-                                                                               }
+  }
+  module.accept();
   module.update(shared, joints, actions);
   const auto & view = module.observations();
   ASSERT_EQ(view.joint_position.size(), 23U);
@@ -161,6 +170,38 @@ TEST(LocomotionMimic, MasksAndTwoPassCompositionStayPolicyLocal)
   EXPECT_FLOAT_EQ(view.last_action[13], .2f);
   EXPECT_FLOAT_EQ(shared.sensors.joint_pos[13], 0.f);
   EXPECT_FLOAT_EQ(shared.policy.last_action[13], 0.f);
+  // Common target rejection must discard the separate walking inference too.
+  for (int attempt = 0; attempt < 5; ++attempt) {
+    module.infer(observation, [](const auto &) {return std::vector<float>(23, 100.f);});
+    module.reject();
+    module.update(shared, joints, actions);
+    EXPECT_FLOAT_EQ(view.last_action[13], .2f);
+    EXPECT_FLOAT_EQ(view.joint_position[13], .15f);
+  }
+  calls = 0;
+  EXPECT_THROW(module.infer(observation, [&](const auto &) {
+    if (++calls == 2) {throw std::runtime_error("second inference failed");}
+    return std::vector<float>(23, .9f);
+  }), std::runtime_error);
+  module.reject();
+  module.update(shared, joints, actions);
+  EXPECT_FLOAT_EQ(view.last_action[13], .2f);
+
+  // Hidden walking arms can be invalid even when the composed target is finite.
+  calls = 0;
+  EXPECT_THROW(module.infer(observation, [&](const auto &) {
+    std::vector<float> value(23, .3f);
+    if (++calls == 2) {value[13] = std::numeric_limits<float>::infinity();}
+    return value;
+  }), std::runtime_error);
+  module.reject();
+  module.update(shared, joints, actions);
+  EXPECT_FLOAT_EQ(view.last_action[13], .2f);
+
+  module.infer(observation, [](const auto &) {return std::vector<float>(23, .4f);});
+  module.accept();
+  module.update(shared, joints, actions);
+  EXPECT_FLOAT_EQ(view.last_action[13], .4f);
   module.reset();
   EXPECT_TRUE(module.observations().joint_position.empty());
   EXPECT_TRUE(module.observations().last_action.empty());

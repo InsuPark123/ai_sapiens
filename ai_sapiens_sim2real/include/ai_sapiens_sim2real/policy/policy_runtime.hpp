@@ -34,6 +34,7 @@
 #include <yaml-cpp/yaml.h>  // NOLINT(build/include_order)
 
 #include "ai_sapiens_sim2real/policy/action_pipeline.hpp"
+#include "ai_sapiens_sim2real/policy/policy_action_result.hpp"
 #include "ai_sapiens_sim2real/policy/k1_mirror.hpp"
 #include "ai_sapiens_sim2real/policy/any2track_policy.hpp"
 #include "ai_sapiens_sim2real/policy/gait_clock.hpp"
@@ -48,7 +49,7 @@ namespace ai_sapiens_sim2real
 class OnnxInference;
 class LocomotionMimic;
 class ActionFaultRecorder;
-class PolicyFaultCapture;
+class PolicyDiagnostics;
 
 /**
  * @brief A policy state: observe, run inference, and produce a validated target
@@ -141,6 +142,7 @@ private:
     const MotionReference * reference_motion);
   void validate_observation_size(size_t observation_size) const;
   void log_ready(size_t observation_size) const;
+  void initialize_diagnostics(const std::vector<std::string> & controller_joints);
 
   // Entry steps, each at the same level so enter() reads as one sequence.
   void install_joint_properties() const;
@@ -153,13 +155,13 @@ private:
   void resolve_active_velocity_command();
   void compute_observation();
   void refresh_sensor_view();
-  std::optional<std::vector<float>> run_policy_inference();
-  PolicyUpdateResult accept_action(
-    const std::vector<float> & raw_action,
-    const std::vector<float> & processed_action);
-  void log_action_limit(const std::vector<float> & processed_action, const std::string & path);
+  bool prepare_policy_observation();
+  std::vector<float> run_policy_inference();
+  PolicyActionResult evaluate_policy_action();
+  bool is_action_valid(const PolicyActionResult & action) const;
+  void commit_action(const PolicyActionResult & action);
+  void reject_action(PolicyActionStatus status);
   std::vector<float> infer_once(std::unordered_map<std::string, std::vector<float>> & inputs);
-  void handle_inference_failure(const char * reason);
 
   rclcpp::Node::SharedPtr node_;
   BehaviorOutput * output_;
@@ -180,7 +182,7 @@ private:
   Any2TrackSample any2track_sample() const;
   std::unique_ptr<Any2TrackPolicy> any2track_;
   std::unique_ptr<OnnxInference> inference_;
-  std::unique_ptr<PolicyFaultCapture> fault_capture_;
+  std::unique_ptr<PolicyDiagnostics> diagnostics_;
   std::unique_ptr<LocomotionMimic> locomotion_mimic_;
   std::unique_ptr<ObservationManager> obs_manager_;
   // Set only when this policy declares a gait_phase observation.
@@ -192,9 +194,6 @@ private:
   AxisRanges velocity_command_ranges_;
   double step_dt_{0.02};
   double accumulated_period_{0.02};
-  std::vector<std::string> controller_joint_names_;
-  std::optional<SensorData> previous_observation_sensors_;
-  double sensor_comparison_period_{0.0};
   bool requires_localization_{false};
   bool requires_imu_orientation_{false};
   static constexpr float kAbsActionLimitRad = 2.0f * 3.14159265f;

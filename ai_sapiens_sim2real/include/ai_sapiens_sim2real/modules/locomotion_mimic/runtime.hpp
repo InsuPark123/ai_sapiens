@@ -24,6 +24,9 @@ public:
     const ActionProperties & actions);
   const PolicyObservationOverrides & observations() const {return observations_;}
   using Infer = std::function<std::vector<float>(const std::vector<float> &)>;
+  // Inference stages private feedback; only a validated target commits it.
+  void accept() noexcept;
+  void reject() noexcept;
   std::vector<float> infer(const std::vector<float> & observation, const Infer & run);
 
 private:
@@ -36,7 +39,7 @@ private:
   LocomotionMimicConfig config_;
   locomotion_mimic::Gate gate_;
   PolicyObservationOverrides observations_;
-  std::vector<float> walk_last_;
+  std::vector<float> walk_last_, pending_walk_;
   size_t weight_index_{0};
   bool is_walking_clip_active_{false};
 };

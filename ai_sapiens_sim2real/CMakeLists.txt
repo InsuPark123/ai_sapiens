@@ -82,6 +82,7 @@ add_executable(ai_sapiens_sim2real_node
   src/observation/observations.cpp
   src/policy/onnx_inference.cpp
   src/policy/policy_runtime.cpp
+  src/policy/policy_diagnostics.cpp
   src/policy/action_fault_diagnostics.cpp
   src/policy/action_fault_recorder.cpp
   src/config/root_config.cpp
@@ -366,6 +367,7 @@ if(BUILD_TESTING)
   # Shared integration-test runtime; each feature keeps its own test target.
   set(POLICY_RUNTIME_TEST_SOURCES
     src/policy/policy_runtime.cpp
+    src/policy/policy_diagnostics.cpp
     src/policy/action_fault_diagnostics.cpp
     src/policy/action_fault_recorder.cpp
     src/policy/mimic_policy_runtime.cpp
@@ -400,6 +402,11 @@ if(BUILD_TESTING)
   target_compile_definitions(test_policy_action_fault PRIVATE
     COMMON_POLICY_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/common/two_joint_policy"
     HISTORY_POLICY_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/common/four_frame_policy")
+  ament_add_gtest(test_any2track_history test/test_any2track_history.cpp
+    src/policy/any2track_policy.cpp src/policy/motion_reference.cpp
+    src/config/sim2real_config.cpp src/config/config_utils.cpp)
+  ament_target_dependencies(test_any2track_history ament_index_cpp)
+  target_link_libraries(test_any2track_history yaml-cpp Eigen3::Eigen mujoco::mujoco OpenSSL::Crypto)
   ament_add_gtest(test_policy_observation_overrides test/test_policy_observation_overrides.cpp
     src/observation/observation_manager.cpp src/observation/observations.cpp
     src/policy/motion_reference.cpp)

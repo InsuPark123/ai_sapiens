@@ -17,13 +17,9 @@
 #include "ai_sapiens_sim2real/policy/policy_runtime.hpp"
 
 #include <cmath>
-#include <iomanip>
-#include <fstream>
-#include <sstream>
 
 #include "ai_sapiens_sim2real/modules/locomotion_mimic/runtime.hpp"
-#include "ai_sapiens_sim2real/policy/action_fault_diagnostics.hpp"
-#include "ai_sapiens_sim2real/policy/action_fault_recorder.hpp"
+#include "ai_sapiens_sim2real/policy/policy_diagnostics.hpp"
 #include "ai_sapiens_sim2real/policy/onnx_inference.hpp"
 
 namespace ai_sapiens_sim2real
@@ -93,7 +89,6 @@ PolicyRuntime::PolicyRuntime(
     throw std::runtime_error(
         "Global-position Mimic requires both robot/reference_root_position_xy_w and a motion reference");
   }
-  controller_joint_names_ = controller_joint_names;
   load_sim2real_config(sim2real_config, controller_joint_names);
   if (is_mirrored) {
     if (!reference_motion || sim2real_config.any2track() || requires_localization_ ||
@@ -139,36 +134,34 @@ PolicyRuntime::PolicyRuntime(
     target_command_.stiffness = mirror_->reflect(target_command_.stiffness, false);
     target_command_.damping = mirror_->reflect(target_command_.damping, false);
   }
+  initialize_diagnostics(controller_joint_names);
   log_ready(observation_size);
 }
 
 PolicyRuntime::~PolicyRuntime() = default;
 
+void PolicyRuntime::initialize_diagnostics(const std::vector<std::string> & controller_joints)
+{
+  FaultPolicyMetadata metadata;
+  metadata.state = state_name_;
+  metadata.model = model_path_;
+  metadata.config_path = sim2real_config_path_.string();
+  metadata.policy_joints = joint_context_.policy_joint_names;
+  metadata.controller_joints = controller_joints;
+  metadata.input_names = inference_->get_input_names();
+  metadata.input_shapes = inference_->get_input_shapes();
+  metadata.step_dt = step_dt_;
+  metadata.action_limit = kAbsActionLimitRad;
+  metadata.is_mirrored = mirror_.has_value();
+  if (obs_manager_) {metadata.layouts[onnx_input_name_] = obs_manager_->layout();}
+  else if (any2track_) {metadata.layouts = any2track_fault_layout(any2track_->observation().size());}
+  diagnostics_ = std::make_unique<PolicyDiagnostics>(
+    std::move(metadata), kMaxConsecutiveActionFailures, node_->get_logger());
+}
+
 void PolicyRuntime::set_fault_recorder(std::shared_ptr<ActionFaultRecorder> recorder)
 {
-  if (!recorder) {fault_capture_.reset(); return;}
-  // Startup only. Failure to prepare diagnostics must not prevent deployment.
-  try {
-    auto metadata = std::make_shared<FaultPolicyMetadata>();
-    metadata->state = state_name_;
-    metadata->model = model_path_;
-    metadata->config_path = sim2real_config_path_.string();
-    std::ifstream config(sim2real_config_path_);
-    metadata->config_yaml.assign(std::istreambuf_iterator<char>(config), {});
-    metadata->policy_joints = joint_context_.policy_joint_names;
-    metadata->controller_joints = controller_joint_names_;
-    metadata->input_names = inference_->get_input_names();
-    metadata->input_shapes = inference_->get_input_shapes();
-    metadata->step_dt = step_dt_;
-    metadata->action_limit = kAbsActionLimitRad;
-    metadata->is_mirrored = mirror_.has_value();
-    if (obs_manager_) {metadata->layouts[onnx_input_name_] = obs_manager_->layout();}
-    else if (any2track_) {metadata->layouts = any2track_fault_layout(any2track_->observation().size());}
-    fault_capture_ = std::make_unique<PolicyFaultCapture>(
-      std::move(recorder), std::move(metadata), node_->get_logger());
-  } catch (const std::exception & e) {
-    RCLCPP_ERROR(node_->get_logger(), "Cannot prepare fault observation capture: %s", e.what());
-  }
+  diagnostics_->set_recorder(std::move(recorder));
 }
 
 bool PolicyRuntime::check_inputs()
@@ -179,7 +172,7 @@ bool PolicyRuntime::check_inputs()
 
 void PolicyRuntime::reset()
 {
-  if (fault_capture_) {fault_capture_->reset();}
+  diagnostics_->reset();
   accumulated_period_ = step_dt_;
   if (obs_manager_) {
     obs_manager_->reset();
@@ -188,7 +181,7 @@ void PolicyRuntime::reset()
 
 void PolicyRuntime::enter()
 {
-  if (fault_capture_) {fault_capture_->reset();}
+  diagnostics_->reset();
   refresh_sensor_view();
   policy_->uses_global_position = requires_localization_;
   policy_->motion_frame.reset();
@@ -258,8 +251,6 @@ void PolicyRuntime::reset_episode_state()
 {
   policy_->episode_time = 0.0f;
   if (locomotion_mimic_) {locomotion_mimic_->reset();}
-  previous_observation_sensors_.reset();
-  sensor_comparison_period_ = 0.0;
   if (policy_->last_action.size() < joint_context_.policy_joint_names.size()) {
     throw std::runtime_error("Policy state '" + state_name_ + "' last_action buffer too small");
   }
@@ -305,17 +296,28 @@ void PolicyRuntime::advance_clocks()
 
 PolicyUpdateResult PolicyRuntime::update(const rclcpp::Duration & period)
 {
-  if (std::isfinite(period.seconds()) && period.seconds() > 0.0) {
-    sensor_comparison_period_ += period.seconds();
-  }
-  if (!advance_policy_tick(period)) {
-    return PolicyUpdateResult::Skipped;
-  }
+  diagnostics_->advance(period.seconds());
+  if (!advance_policy_tick(period)) {return PolicyUpdateResult::Skipped;}
+  if (!prepare_policy_observation()) {return PolicyUpdateResult::TargetUnavailable;}
+
+  diagnostics_->begin(policy_->episode_time, shared_data_->sensors);
+  const auto action = evaluate_policy_action();
+  const size_t previous_failures = consecutive_action_failures_;
+  if (action.is_accepted()) {commit_action(action);}
+  else {reject_action(action.status);}
+  diagnostics_->finish(action, shared_data_->sensors,
+    previous_failures, consecutive_action_failures_);
+  advance_clocks();
+  return action.is_accepted() ? PolicyUpdateResult::TargetReady : PolicyUpdateResult::TargetUnavailable;
+}
+
+bool PolicyRuntime::prepare_policy_observation()
+{
   refresh_sensor_view();
   const bool command_first = gait_clock_ && gait_clock_->resolve_command_before_update();
   if (command_first) {resolve_active_velocity_command();}
   if (!prepare_observation()) {
-    return PolicyUpdateResult::TargetUnavailable;
+    return false;
   }
 
   if (!command_first) {resolve_active_velocity_command();}
@@ -325,38 +327,7 @@ PolicyUpdateResult PolicyRuntime::update(const rclcpp::Duration & period)
       *shared_data_, joint_context_, action_pipeline_.properties());
   }
   compute_observation();
-  if (fault_capture_) {
-    fault_capture_->begin(policy_->episode_time, shared_data_->sensors,
-      previous_observation_sensors_, sensor_comparison_period_);
-  }
-  PolicyUpdateResult result = PolicyUpdateResult::TargetUnavailable;
-  std::vector<float> processed_action;
-  if (const auto raw_action = run_policy_inference()) {
-    processed_action = any2track_ ? any2track_->target(*raw_action) :
-      action_pipeline_.process(*raw_action);
-    result = accept_action(*raw_action, processed_action);
-  }
-  std::string diagnostic_path;
-  if (fault_capture_) {
-    diagnostic_path = fault_capture_->finish(result == PolicyUpdateResult::TargetReady,
-      requests_->action_limit_exceeded || requests_->damping,
-      consecutive_action_failures_, processed_action);
-  }
-  if (result == PolicyUpdateResult::TargetUnavailable && !processed_action.empty()) {
-    log_action_limit(processed_action, diagnostic_path);
-  } else if (!diagnostic_path.empty()) {
-    RCLCPP_INFO(node_->get_logger(), "Inference diagnostics queued: %s", diagnostic_path.c_str());
-  }
-  if (result == PolicyUpdateResult::TargetUnavailable && obs_manager_) {
-    // The failed observation has already entered history during compute().
-    // Retain its time slot with the preceding sample so retries do not ingest
-    // the same corrupt measurement again. Leave policy_->input for diagnostics.
-    obs_manager_->reject_latest();
-  }
-  previous_observation_sensors_ = shared_data_->sensors;
-  sensor_comparison_period_ = 0.0;
-  advance_clocks();
-  return result;
+  return true;
 }
 
 bool PolicyRuntime::advance_policy_tick(const rclcpp::Duration & period)
@@ -426,135 +397,83 @@ void PolicyRuntime::compute_observation()
 std::vector<float> PolicyRuntime::infer_once(
   std::unordered_map<std::string, std::vector<float>> & inputs)
 {
-  if (fault_capture_) {fault_capture_->input(inputs);}
+  diagnostics_->input(inputs);
   auto output = inference_->run(inputs);
-  if (fault_capture_) {fault_capture_->output(output);}
+  diagnostics_->output(output);
   return output;
 }
 
-// Inference exceptions consume the same retry budget as rejected actions.
-// Only accept_action resets the streak after validating a usable target.
-std::optional<std::vector<float>> PolicyRuntime::run_policy_inference()
+std::vector<float> PolicyRuntime::run_policy_inference()
 {
-  try {
-    auto raw_action = locomotion_mimic_ ? locomotion_mimic_->infer(
+  if (locomotion_mimic_) {
+    return locomotion_mimic_->infer(
       obs_buffer_.at(onnx_input_name_), [this](const std::vector<float> & input) {
         std::unordered_map<std::string, std::vector<float>> inputs{{onnx_input_name_, input}};
         return infer_once(inputs);
-      }) : infer_once(any2track_ ? any2track_->inputs() : obs_buffer_);
-    if (any2track_) {
-      // Validate the residual inside the inference failure boundary as well.
-      any2track_->target(raw_action);
-    }
-    return raw_action;
+      });
+  }
+  return infer_once(any2track_ ? any2track_->inputs() : obs_buffer_);
+}
+
+PolicyActionResult PolicyRuntime::evaluate_policy_action()
+{
+  PolicyActionResult result;
+  try {
+    result.raw = run_policy_inference();
+    result.processed = any2track_ ? any2track_->target(result.raw) :
+      action_pipeline_.process(result.raw);
+    result.status = is_action_valid(result) ?
+      PolicyActionStatus::Accepted : PolicyActionStatus::ActionRejected;
   } catch (const std::exception & e) {
-    if (fault_capture_) {fault_capture_->error(e.what());}
-    handle_inference_failure(e.what());
-    return std::nullopt;
+    result.error = e.what();
+    result.status = PolicyActionStatus::InferenceFailed;
   }
+  return result;
 }
 
-// Failed steps hold the previous command. A shared finite retry budget stops
-// a persistent fault from leaving the robot on that frozen command indefinitely.
-void PolicyRuntime::handle_inference_failure(const char * reason)
+bool PolicyRuntime::is_action_valid(const PolicyActionResult & action) const
 {
-  ++consecutive_action_failures_;
-  RCLCPP_WARN(
-    node_->get_logger(),
-    "Policy '%s' inference failed (%zu/%zu consecutive unusable actions): %s",
-    state_name_.c_str(),
-    consecutive_action_failures_,
-    kMaxConsecutiveActionFailures,
-    reason);
-
-  if (consecutive_action_failures_ >= kMaxConsecutiveActionFailures &&
-    !requests_->damping)
-  {
-    RCLCPP_ERROR(
-      node_->get_logger(),
-      "Policy '%s' failed to produce a usable action; requesting damping failsafe",
-      state_name_.c_str());
-    requests_->damping = true;
+  const size_t count = joint_context_.policy_joint_names.size();
+  if (action.raw.size() != count) {
+    throw std::runtime_error(action_size_mismatch_message("Raw", action.raw.size(), count));
   }
+  if (action.processed.size() != count) {
+    throw std::runtime_error(action_size_mismatch_message("Processed", action.processed.size(), count));
+  }
+  return std::all_of(action.processed.begin(), action.processed.end(), [](float value) {
+    return std::isfinite(value) && std::abs(value) <= kAbsActionLimitRad;
+  });
 }
 
-PolicyUpdateResult PolicyRuntime::accept_action(
-  const std::vector<float> & raw_action,
-  const std::vector<float> & processed_action)
+void PolicyRuntime::commit_action(const PolicyActionResult & action)
 {
-  const size_t policy_joint_count = joint_context_.policy_joint_names.size();
-  if (processed_action.size() != policy_joint_count) {
-    throw std::runtime_error(
-      action_size_mismatch_message("Processed", processed_action.size(), policy_joint_count));
-  }
-
-  if (raw_action.size() != policy_joint_count) {
-    throw std::runtime_error(
-      action_size_mismatch_message("Raw", raw_action.size(), policy_joint_count));
-  }
-
-  const bool has_nonfinite_action = std::any_of(
-    processed_action.begin(), processed_action.end(), [](float value) {
-      return !std::isfinite(value);
-    });
-  const bool has_excessive_action = std::any_of(
-    processed_action.begin(), processed_action.end(), [](float value) {
-      return std::abs(value) > kAbsActionLimitRad;
-    });
-  if (has_nonfinite_action || has_excessive_action) {
-    ++consecutive_action_failures_;
-    // Do not expose the rejected target or update last_action. The command
-    // transition holds the last published command until a valid target arrives.
-    requests_->action_limit_exceeded =
-      consecutive_action_failures_ >= kMaxConsecutiveActionFailures;
-    return PolicyUpdateResult::TargetUnavailable;
-  }
-
-  if (consecutive_action_failures_ != 0) {
-    RCLCPP_INFO(node_->get_logger(),
-      "Policy '%s' recovered after %zu unusable action(s); accepting target and resetting retries",
-      state_name_.c_str(), consecutive_action_failures_);
-  }
-  consecutive_action_failures_ = 0;
-
-  // Only expose fully validated targets to the command output stage.
+  // Only validated targets may update module feedback, last_action or output.
+  if (any2track_) {any2track_->accept(action.processed);}
+  if (locomotion_mimic_) {locomotion_mimic_->accept();}
   if (mirror_) {
-    target_command_.position = mirror_->reflect(processed_action);
+    target_command_.position = mirror_->reflect(action.processed);
   } else {
-    std::copy(processed_action.begin(), processed_action.end(), target_command_.position.begin());
+    std::copy(action.processed.begin(), action.processed.end(), target_command_.position.begin());
   }
-
-  // The buffer is controller-sized; this policy uses the first joint_names.size() slots.
-  if (any2track_) {any2track_->accept(processed_action);}
-  const auto & applied_raw = any2track_ ? raw_action : action_pipeline_.applied_raw_action();
+  // The buffer is controller-sized; this policy uses its first policy-sized slots.
+  const auto & applied_raw = any2track_ ? action.raw : action_pipeline_.applied_raw_action();
   std::copy(applied_raw.begin(), applied_raw.end(), policy_->last_action.begin());
-  return PolicyUpdateResult::TargetReady;
+  consecutive_action_failures_ = 0;
 }
 
-void PolicyRuntime::log_action_limit(
-  const std::vector<float> & processed_action, const std::string & path)
+void PolicyRuntime::reject_action(PolicyActionStatus status)
 {
-  std::ostringstream report;
-  report << "ACTION LIMIT | " << consecutive_action_failures_ << "/" << kMaxConsecutiveActionFailures
-         << " | " << (requests_->action_limit_exceeded ? "DAMPING" : "HOLD; retry next tick")
-         << "\n\n--- ACTION: rejected target ---\n"
-         << "Processed position [rad, policy coordinates]\n"
-         << "  " << std::left << std::setw(16) << "joint"
-         << " " << std::right << std::setw(10) << "processed" << " flag\n"
-         << format_action_fault_actions(processed_action, joint_context_.policy_joint_names,
-           kAbsActionLimitRad, true);
-  const auto jumps = format_action_fault_sensors(shared_data_->sensors,
-    previous_observation_sensors_, controller_joint_names_, sensor_comparison_period_, true);
-  if (!jumps.empty()) {
-    report << "\n--- SENSOR: feedback jumps ---\n"
-           << "Physical sensor coordinates; JUMP only\n" << jumps;
-  }
-  report << "\n[FILE] " << (path.empty() ? "not queued (recording unavailable)" : path + " (queued)");
-  if (requests_->action_limit_exceeded) {
-    RCLCPP_ERROR(node_->get_logger(), "%s", report.str().c_str());
-  } else {
-    RCLCPP_WARN(node_->get_logger(), "%s", report.str().c_str());
-  }
+  // Keep the failed time slot, replacing only its sample with retained feedback.
+  // Each module owns its history layout; clocks and motion progression continue.
+  if (obs_manager_) {obs_manager_->reject_latest();}
+  if (any2track_) {any2track_->reject_latest();}
+  if (locomotion_mimic_) {locomotion_mimic_->reject();}
+
+  // Exceptions and invalid targets share one budget, reset only by acceptance.
+  ++consecutive_action_failures_;
+  if (consecutive_action_failures_ < kMaxConsecutiveActionFailures) {return;}
+  if (status == PolicyActionStatus::ActionRejected) {requests_->action_limit_exceeded = true;}
+  else {requests_->damping = true;}
 }
 
 const std::string & PolicyRuntime::state_name() const

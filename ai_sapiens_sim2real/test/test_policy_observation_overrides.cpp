@@ -64,3 +64,97 @@ last_action: {history_length: 2, scale: [3], clip: [-1, 1]}
     }
   }
 }
+
+TEST(PolicyObservationHistory, RejectsOnlyLatestSampleWithoutRescalingOrResettingHistory)
+{
+  for (bool is_frame_major : {false, true}) {
+    for (int history_length : {1, 4}) {
+      for (int failure_count : {1, 2}) {
+        SharedControlData shared;
+        shared.resize(1, 1);
+        PolicyJointContext joints;
+        joints.policy_joint_names = {"joint"};
+        joints.policy_to_controller = {0};
+        auto config = YAML::Load(
+          "joint_pos: {scale: [2]}\njoint_vel: {scale: [3]}\n");
+        config["joint_pos"]["history_length"] = history_length;
+        config["joint_vel"]["history_length"] = history_length;
+        config["use_gym_history"] = is_frame_major;
+        ObservationManager manager(config, &shared, joints, nullptr);
+        for (int value = 1; value <= 3; ++value) {
+          shared.sensors.joint_pos[0] = value;
+          shared.sensors.joint_vel[0] = value * 10;
+          manager.compute();
+        }
+        for (int failure = 0; failure < failure_count; ++failure) {
+          shared.sensors.joint_pos[0] = 999;
+          shared.sensors.joint_vel[0] = 999;
+          manager.compute();
+          manager.reject_latest();
+        }
+        shared.sensors.joint_pos[0] = 4;
+        shared.sensors.joint_vel[0] = 40;
+        const auto observation = manager.compute();
+        ASSERT_EQ(observation.size(), static_cast<size_t>(history_length * 2));
+        for (int frame = 0; frame < history_length; ++frame) {
+          const float expected = frame == history_length - 1 ? 4 :
+            (failure_count == 1 && frame == 0 ? 2 : 3);
+          const int position = is_frame_major ? frame * 2 : frame;
+          const int velocity = is_frame_major ? frame * 2 + 1 : history_length + frame;
+          EXPECT_FLOAT_EQ(observation[position], expected * 2);
+          EXPECT_FLOAT_EQ(observation[velocity], expected * 30);
+        }
+      }
+    }
+  }
+}
+
+TEST(PolicyObservationHistory, FirstRejectedFrameUsesEntrySeedAndResetClearsFallback)
+{
+  ObservationTermCfg term;
+  term.history_length = 1;
+  term.scale = {2};
+  term.reset({3});
+  term.add({999});
+  term.reject_latest();
+  EXPECT_EQ(term.get(), std::vector<float>({6}));
+  term.add({999});
+  term.reject_latest();
+  EXPECT_EQ(term.get(), std::vector<float>({6}));
+  term.reset({4});
+  term.add({999});
+  term.reject_latest();
+  EXPECT_EQ(term.get(), std::vector<float>({8}));
+}
+
+TEST(PolicyObservationHistory, DiagnosticLayoutReadsActualTensorIncludingReplacedCommands)
+{
+  for (const bool frame_major : {false, true}) {
+    SharedControlData shared;
+    shared.resize(1, 1);
+    PolicyJointContext joints;
+    joints.policy_joint_names = {"joint"};
+    joints.policy_to_controller = {0};
+    auto config = YAML::Load(
+      "joint_pos: {scale: [2], history_length: 3}\n"
+      "velocity_commands: {history_length: 3}\n");
+    config["use_gym_history"] = frame_major;
+    config["replace_velocity_command_history"] = frame_major;
+    ObservationManager manager(config, &shared, joints, nullptr);
+    std::vector<float> input;
+    for (int frame = 1; frame <= 3; ++frame) {
+      shared.sensors.joint_pos[0] = frame;
+      shared.mode.velocity_commands.setConstant(frame);
+      input = manager.compute();
+    }
+    const auto layout = manager.layout();
+    ASSERT_EQ(layout.size(), 2U);
+    for (size_t frame = 0; frame < 3; ++frame) {
+      EXPECT_FLOAT_EQ(input.at(layout[0].offset + frame * layout[0].frame_stride), 2 * (frame + 1));
+      for (size_t channel = 0; channel < 3; ++channel) {
+        EXPECT_FLOAT_EQ(input.at(layout[1].offset + frame * layout[1].frame_stride + channel),
+          frame_major ? 3 : frame + 1);
+      }
+    }
+  }
+}

@@ -921,6 +921,8 @@ state_behaviors:
   velocity_policy_amp_hangang_limited:
     kind: policy
     asset: locomotion/velocity/walk_amp_hangang_limited
+    # ONNX clips to +/-10; reject when the same joint's target also changes >=90 deg.
+    action_boundary_delta_check: true
 
   velocity_policy_woojin_amp_mjlab_k1_head_safe_50000:
     kind: policy

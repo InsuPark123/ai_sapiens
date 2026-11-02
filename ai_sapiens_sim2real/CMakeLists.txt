@@ -12,6 +12,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(Threads REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(realtime_tools REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -45,6 +46,10 @@ include_directories(${ONNXRUNTIME_INCLUDE_DIR})
 # Include directories
 include_directories(include)
 
+# Keep diagnostic files in this source checkout regardless of the launch cwd.
+set_source_files_properties(src/policy/action_fault_recorder.cpp PROPERTIES
+  COMPILE_DEFINITIONS "AI_SAPIENS_SIM2REAL_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
+
 # ============================================================================
 # Executable
 # ============================================================================
@@ -77,6 +82,9 @@ add_executable(ai_sapiens_sim2real_node
   src/observation/observations.cpp
   src/policy/onnx_inference.cpp
   src/policy/policy_runtime.cpp
+  src/policy/policy_diagnostics.cpp
+  src/policy/action_fault_diagnostics.cpp
+  src/policy/action_fault_recorder.cpp
   src/config/root_config.cpp
   src/sensor_handles/api_heartbeat_handle.cpp
   src/sensor_handles/imu_sensor_handle.cpp
@@ -359,6 +367,9 @@ if(BUILD_TESTING)
   # Shared integration-test runtime; each feature keeps its own test target.
   set(POLICY_RUNTIME_TEST_SOURCES
     src/policy/policy_runtime.cpp
+    src/policy/policy_diagnostics.cpp
+    src/policy/action_fault_diagnostics.cpp
+    src/policy/action_fault_recorder.cpp
     src/policy/mimic_policy_runtime.cpp
     src/policy/any2track_policy.cpp
     src/policy/action_pipeline.cpp
@@ -378,6 +389,24 @@ if(BUILD_TESTING)
   target_compile_definitions(test_mimic_mirror PRIVATE
     MIRROR_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/mimic_mirror"
     COMMON_POLICY_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/common/two_joint_policy")
+  ament_add_gtest(test_action_fault_recorder test/test_action_fault_recorder.cpp
+    src/policy/action_fault_recorder.cpp src/policy/action_fault_diagnostics.cpp)
+  ament_target_dependencies(test_action_fault_recorder rclcpp realtime_tools)
+  target_link_libraries(test_action_fault_recorder yaml-cpp Eigen3::Eigen Threads::Threads)
+
+  ament_add_gtest(test_policy_action_fault test/test_policy_action_fault.cpp
+    ${POLICY_RUNTIME_TEST_SOURCES})
+  ament_target_dependencies(test_policy_action_fault rclcpp realtime_tools ament_index_cpp)
+  target_link_libraries(test_policy_action_fault yaml-cpp Eigen3::Eigen
+    ${ONNXRUNTIME_LIBRARY} mujoco::mujoco OpenSSL::Crypto)
+  target_compile_definitions(test_policy_action_fault PRIVATE
+    COMMON_POLICY_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/common/two_joint_policy"
+    HISTORY_POLICY_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data/common/four_frame_policy")
+  ament_add_gtest(test_any2track_history test/test_any2track_history.cpp
+    src/policy/any2track_policy.cpp src/policy/motion_reference.cpp
+    src/config/sim2real_config.cpp src/config/config_utils.cpp)
+  ament_target_dependencies(test_any2track_history ament_index_cpp)
+  target_link_libraries(test_any2track_history yaml-cpp Eigen3::Eigen mujoco::mujoco OpenSSL::Crypto)
   ament_add_gtest(test_policy_observation_overrides test/test_policy_observation_overrides.cpp
     src/observation/observation_manager.cpp src/observation/observations.cpp
     src/policy/motion_reference.cpp)
@@ -468,6 +497,7 @@ target_link_libraries(ai_sapiens_sim2real_node locomotion_mimic)
 if(BUILD_TESTING)
   # PolicyRuntime owns the module connection, including in ordinary-policy tests.
   target_link_libraries(test_mimic_mirror locomotion_mimic)
+  target_link_libraries(test_policy_action_fault locomotion_mimic)
   ament_add_gtest(test_locomotion_mimic_runtime test/test_locomotion_mimic_runtime.cpp
     ${POLICY_RUNTIME_TEST_SOURCES})
   ament_target_dependencies(test_locomotion_mimic_runtime rclcpp realtime_tools ament_index_cpp)
@@ -482,6 +512,14 @@ if(BUILD_TESTING)
     src/policy/motion_reference.cpp)
   ament_target_dependencies(test_locomotion_mimic rclcpp realtime_tools)
   target_link_libraries(test_locomotion_mimic locomotion_mimic yaml-cpp Eigen3::Eigen)
+endif()
+
+# Diagnostics are written by a single background worker.
+target_link_libraries(ai_sapiens_sim2real_node Threads::Threads)
+if(BUILD_TESTING)
+  foreach(target test_policy_action_fault test_mimic_mirror test_locomotion_mimic_runtime)
+    target_link_libraries(${target} Threads::Threads)
+  endforeach()
 endif()
 
 ament_package()

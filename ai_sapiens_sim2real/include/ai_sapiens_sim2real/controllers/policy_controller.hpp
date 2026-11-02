@@ -91,6 +91,7 @@ private:
 
   // Stored by base pointer so mimic policies keep their derived behavior; the
   // active state's policy name selects which runtime drives the act stage.
+  std::shared_ptr<ActionFaultRecorder> fault_recorder_;
   std::unordered_map<std::string, RuntimeEntry> runtimes_;
   // SharedControlData::mode.transition_count value at our last runtime enter.
   uint64_t entered_transition_count_{0};

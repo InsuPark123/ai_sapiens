@@ -307,6 +307,34 @@ TEST(RootConfig, PolicyTransitionsInheritAndOverrideIndividualFields)
   expect("mimic_run", true, 0.0);
 }
 
+TEST(RootConfig, ActionBoundaryDeltaCheckIsAnExplicitPerPolicyOptIn)
+{
+  const auto path = mode_controller_test::write_root_config();
+  auto document = YAML::LoadFile(path.string());
+  auto expect = [&](bool is_enabled) {
+      const ai_sapiens_sim2real::RootConfig config(path);
+      bool found = false;
+      for (const auto & behavior : config.policy_behaviors()) {
+        if (behavior.name == "velocity_policy") {found = true;}
+        EXPECT_EQ(behavior.is_action_boundary_delta_check_enabled,
+          behavior.name == "velocity_policy" && is_enabled);
+      }
+      EXPECT_TRUE(found);
+    };
+
+  expect(false);
+  for (const bool is_enabled : {true, false}) {
+    document["state_behaviors"]["velocity_policy"]["action_boundary_delta_check"] = is_enabled;
+    std::ofstream(path) << document;
+    expect(is_enabled);
+  }
+
+  document["state_behaviors"]["velocity_policy"]["action_boundary_delta_check"] = "invalid";
+  std::ofstream(path) << document;
+  const ai_sapiens_sim2real::RootConfig config(path);
+  EXPECT_THROW(config.policy_behaviors(), std::runtime_error);
+}
+
 TEST(RootConfig, RejectsInvalidPolicyTransitionOverrides)
 {
   for (const auto & name : {"velocity_policy", "mimic_run"}) {

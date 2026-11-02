@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "ai_sapiens_sim2real/modules/locomotion_mimic/runtime.hpp"
 #include "ai_sapiens_sim2real/policy/torso_orientation.hpp"
+#include <algorithm>
+#include <cmath>
 #include <limits>
 #include "ai_sapiens_sim2real/observation/observations.hpp"
 namespace ai_sapiens_sim2real
@@ -50,6 +52,7 @@ void LocomotionMimic::reset()
   observations_ = {};
   observations_.terms["mimic_gate"].assign(gate_.observation_size(), 0.0f);
   std::fill(walk_last_.begin(), walk_last_.end(), 0.0f);
+  pending_walk_.clear();
   is_walking_clip_active_ = false;
 }
 void LocomotionMimic::set_observation_layout(size_t size, const std::vector<std::string> & terms)
@@ -147,6 +150,7 @@ void LocomotionMimic::update_walking_observations(
 }
 std::vector<float> LocomotionMimic::infer(const std::vector<float> & observation, const Infer & run)
 {
+  pending_walk_.clear();
   auto action = run(observation);
   if (action.size() != walk_last_.size()) {
     throw std::runtime_error("mimic_gate ONNX action size changed during inference");
@@ -161,10 +165,62 @@ std::vector<float> LocomotionMimic::infer(const std::vector<float> & observation
     for (size_t j = 0; j < 13; ++j) {
       action[j] = walk_action[j] + (1.0f - gate_.leg_handoff()) * (action[j] - walk_action[j]);
     }
-    walk_last_ = walk_action;
+    pending_walk_ = walk_action;
   } else {
-    walk_last_ = action;
+    pending_walk_ = action;
+  }
+  // The walking-only arms may not reach the blended target, but become future
+  // observations. Do not let a nonfinite hidden output poison that feedback.
+  if (!std::all_of(pending_walk_.begin(), pending_walk_.end(),
+    [](float value) {return std::isfinite(value);}))
+  {
+    throw std::runtime_error("mimic_gate nonfinite walking feedback");
   }
   return action;
+}
+
+std::vector<bool> LocomotionMimic::evaluate_raw_action_boundaries(
+  const std::vector<float> & observation, const std::vector<float> & action,
+  float limit, const Infer & run) const
+{
+  std::vector<bool> reached(action.size(), false);
+
+  if (!has_motion_weight()) {
+    return reached;
+  }
+
+  auto mimic_action = action;
+
+  if (observation.at(weight_index_) < 1.f || is_walking_clip_active_) {
+    // The exported weight only mixes the two branches. Inspect the same mimic
+    // branch at weight=1 without committing targets or private walking feedback.
+    auto mimic_observation = observation;
+    mimic_observation.at(weight_index_) = 1.f;
+    mimic_action = run(mimic_observation);
+  }
+
+  if (mimic_action.size() != action.size() ||
+    !std::all_of(mimic_action.begin(), mimic_action.end(),
+    [](float value) {return std::isfinite(value);}))
+  {
+    throw std::runtime_error("Invalid mimic branch output during action clip check");
+  }
+
+  for (size_t j = 0; j < action.size(); ++j) {
+    const bool contributes = !is_walking_clip_active_ || j >= 13 || gate_.leg_handoff() < 1.f;
+    reached[j] = contributes && std::abs(mimic_action[j]) >= limit;
+  }
+
+  return reached;
+}
+
+void LocomotionMimic::accept() noexcept
+{
+  if (!pending_walk_.empty()) {walk_last_.swap(pending_walk_);}
+  pending_walk_.clear();
+}
+void LocomotionMimic::reject() noexcept
+{
+  pending_walk_.clear();
 }
 }  // namespace ai_sapiens_sim2real

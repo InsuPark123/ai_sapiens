@@ -87,6 +87,11 @@ std::vector<float> ObservationManager::compute()
   return obs_buffer_;
 }
 
+void ObservationManager::reject_latest()
+{
+  for (auto & term : terms_) {term.reject_latest();}
+}
+
 size_t ObservationManager::get_observation_size() const
 {
   size_t total = 0;
@@ -105,6 +110,21 @@ std::vector<std::string> ObservationManager::get_term_names() const
   }
 
   return names;
+}
+
+std::vector<ObservationSlice> ObservationManager::layout() const
+{
+  size_t frame_width = 0;
+  for (const auto & term : terms_) {frame_width += term.single_size();}
+  std::vector<ObservationSlice> result;
+  size_t offset = 0;
+  for (const auto & term : terms_) {
+    const auto width = term.single_size();
+    result.push_back({term.name, offset, width, static_cast<size_t>(term.history_length),
+      use_gym_history_ ? frame_width : width});
+    offset += use_gym_history_ ? width : term.size();
+  }
+  return result;
 }
 
 void ObservationManager::parse_config(const YAML::Node & obs_config)

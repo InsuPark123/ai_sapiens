@@ -142,6 +142,87 @@ Every failsafe in the first five entries selects the configured initial state,
 which is expected to be Damping. Action-limit and bad-orientation checks apply
 only while a policy behavior is active.
 
+Finite action targets beyond `2*pi` radians are rejected without changing the
+last accepted action or published command. The runtime retries at the next
+normal policy tick, up to five retries after the initial failure; six consecutive
+unusable actions trigger Damping. Non-finite processed actions (NaN/Inf) and
+inference exceptions share this budget. Only an accepted action resets it.
+Policy clocks retain their normal per-tick behavior during
+retries. In the common ObservationManager path (velocity and ordinary Mimic), a
+rejected action or inference exception replaces the latest history slot with the
+preceding retained observation. Older frames and the per-tick history cadence
+are preserved; repeated failures keep using the last retained sample. On entry,
+the seeded observation supplies the fallback. The failed input remains available
+in diagnostic output. This does not reset an entire history or guarantee that
+the next action is valid.
+
+Each action-limit rejection queues a separate diagnostic file containing all
+processed actions and physical sensor values: IMU ZYX roll/pitch/yaw, body-axis gyro rates (not Euler derivatives), and
+all joint positions/velocities. Angles use degrees and velocities use degrees
+per second. Values and deltas are compared with the previous policy observation,
+including a rejected attempt; the first observation has no comparison baseline.
+`[JUMP!]` highlights changes exceeding 1000 deg/s for angles or 25000 deg/s^2
+for velocities, scaled by the elapsed control periods between observations
+(equivalent to 20 deg or 500 deg/s over 20 ms). Euler angle deltas wrap at 180
+degrees; near Euler singularities they can be misleading. These are diagnostic
+heuristics, not calibrated sensor validity limits or additional failsafe gates.
+`[NONFINITE]` and `[PREV_NONFINITE]` identify non-finite measurements. Sensor
+diagnostics use physical coordinates even for mirrored policies. The console
+prints the attempt/damping status, only invalid actions (limit violations or
+NaN/Inf), only `[JUMP!]` sensor rows, and the queued file path.
+
+### Inference fault files
+
+One background writer is shared by all policy runtimes. It writes readable YAML
+starting with a `timestamp` in ISO 8601 format with milliseconds and the explicit
+Korea time offset (`+09:00`), independent of the container timezone. The next line,
+`timestamp_unix`, uses Unix seconds with nine fractional digits, matching the
+terminal log time format. Both use the same capture from
+`rclcpp::Clock(RCL_SYSTEM_TIME).now()`, independent of `use_sim_time`. This is the
+inference capture time, not the later terminal-log or file-write time; each
+snapshot also retains its precise `unix_time_ns`. The full sensor/action report follows as a literal
+block, followed by the
+actual inference observations grouped by term, joint/channel, and history
+(oldest to newest). These are the final scaled/clipped inputs in policy
+coordinates, including command history replacement and mirror transforms.
+Every ONNX call retains its raw input tensors, normalized shapes, input order,
+and raw output with round-trip float32 precision. Loco Mimic's extra inference
+is included; Any2Track's three inputs and both history layouts are grouped
+separately. YAML `.nan`, `.inf`, and `-.inf` preserve non-finite values.
+The model path, startup sim2real configuration and joint order are also saved;
+the ONNX model itself is not copied.
+
+Each execution creates a unique `run-<UTC timestamp>-<random suffix>` directory
+under `ai_sapiens_sim2real/logs/action_faults/` in the source checkout used at
+build time, independently of the launch working directory. The whole `logs/`
+directory is ignored by Git. The startup-only ROS parameter
+`action_fault_directory` overrides this parent directory; set it when deploying
+a binary to a different filesystem without its original source checkout.
+Container builds use their source mount path, so a bind-mounted checkout makes
+the files available in the same package directory on the host. Session directories
+use mode `0755` and diagnostic files `0644`, allowing host users to read logs
+created by a root container without granting them write access.
+Files are named `incident-<id>-attempt-<n>.yaml`. The initial failure and all
+five retries produce up to six separate files; a successful recovery gets its
+own `incident-<id>-attempt-<n>-recovered.yaml` file instead of further retries. The first failure also contains the
+preceding accepted inference, if one exists in that policy episode. Inference
+exceptions use the same incident sequence and preserve the inputs available
+before the exception. Entry/reset starts a fresh incident and baseline.
+
+Both session directories and files use exclusive creation; existing files are
+never truncated or automatically deleted. Serialization and disk writes run
+only in the worker. The control thread copies snapshots and attempts a
+nonblocking enqueue (16 records / 32 MiB maximum queued snapshot payload).
+An unavailable/full queue drops that diagnostic record and reports it; it does
+not delay or change control. The writer stops recording on an IO error or a
+256 MiB storage quota, counting existing files under the parent at startup.
+The quota is local to one writer, not coordinated across concurrent processes.
+`(queued)` in the console is not a write-success confirmation: asynchronous
+failures are reported separately. Orderly shutdown drains the queue and each
+file is flushed; abrupt termination can lose queued records or leave a partial
+file, which is preserved. Recording does not alter retry, clock, history repair,
+or command acceptance semantics.
+
 ## Configuration
 
 The launch file resolves `robot:=k1` to

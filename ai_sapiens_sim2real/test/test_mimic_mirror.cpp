@@ -64,6 +64,10 @@ TEST(MimicMirror, ModelCoordinatesStayLocalAndCompletionHandsOffPhysicalCommand)
   mimic.is_mirrored = true;
   auto mirrored = MimicPolicyRuntime::create(node, "mirrored", (directory / "policy.onnx").string(),
       config, mimic, names, &real);
+  // Entry comparison must map the physical published command back into policy coordinates.
+  real.output.has_published_command = virtual_robot.output.has_published_command = true;
+  real.output.last_published.position = {-2.75f, -3.35f};
+  virtual_robot.output.last_published.position = mirror.reflect(real.output.last_published.position);
   ordinary->enter();
   mirrored->enter();
   const auto dt = rclcpp::Duration::from_seconds(.02);

@@ -343,7 +343,7 @@ state_machine:
       # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_207000
       # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_207000_limited
       # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_212000
-      run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000_limited
+      run: velocity_motifect_lowonly_hangang_angvel_push_fullreset_phase080_stop005_swing040_nt_on_from280000_lpf6_284000_limited
       transitions:
         - when: DampingRequested
           to: Damping
@@ -368,7 +368,7 @@ state_machine:
       # run: velocity_motifect_stable_torso_no_phase_lpf6_93400
       # run: velocity_motifect_sharedlow_noncross_phase_nt_on_from208000_lpf6_217000
       # run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from200000_lpf6_212000
-      run: velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000
+      run: velocity_motifect_lowonly_hangang_angvel_push_fullreset_phase080_stop005_swing040_nt_on_from280000_lpf6_284000
       transitions:
         - when: DampingRequested
           to: Damping
@@ -994,6 +994,15 @@ state_behaviors:
   velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000_limited:
     kind: policy
     asset: locomotion/velocity/walk_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000_limited
+
+  # Command-only phase gating; preserve the exported phase clock and parameters.
+  velocity_motifect_lowonly_hangang_angvel_push_fullreset_phase080_stop005_swing040_nt_on_from280000_lpf6_284000:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_lowonly_hangang_angvel_push_fullreset_phase080_stop005_swing040_nt_on_from280000_lpf6_284000
+
+  velocity_motifect_lowonly_hangang_angvel_push_fullreset_phase080_stop005_swing040_nt_on_from280000_lpf6_284000_limited:
+    kind: policy
+    asset: locomotion/velocity/walk_motifect_lowonly_hangang_angvel_push_fullreset_phase080_stop005_swing040_nt_on_from280000_lpf6_284000_limited
 
   loco_mimic:
     kind: policy

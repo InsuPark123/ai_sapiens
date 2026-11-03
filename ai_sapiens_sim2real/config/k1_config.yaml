@@ -170,6 +170,8 @@ selectors:
       287: SubVelocityLocoMimic
       288: SubVelocityLocoMimic
 
+      290: MimicNeonIntro
+
       299: SubVelocityHangangLimited
 
 selectors:
@@ -855,11 +857,12 @@ state_machine:
       parent: Mimic
       run: mimic_cheerleading
 
+    MimicNeonIntro:
+      parent: Mimic
+      run: mimic_neon_intro_112999
+
 
 state_behaviors:
-  loco_mimic:
-    kind: policy
-    asset: locomotion/velocity/mimic_v17b_sd_20261029
   damping:
     kind: damping
     damping:
@@ -991,6 +994,10 @@ state_behaviors:
   velocity_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000_limited:
     kind: policy
     asset: locomotion/velocity/walk_motifect_sharedlow_noncross_lowonly_phase080_stop005_swing040_nt_on_from243000_lpf6_277000_limited
+
+  loco_mimic:
+    kind: policy
+    asset: locomotion/velocity/mimic_v17b_sd_20261029
 
   mimic_dance1:
     kind: mimic
@@ -1598,3 +1605,8 @@ state_behaviors:
     kind: mimic
     asset: mimic/supernatural_short_transition_235_ft5k_117500
     motion: motion.csv
+  mimic_neon_intro_112999:
+    kind: mimic
+    asset: mimic/neon_intro_112999_75b123da
+    motion: motion.csv
+    fps: 50

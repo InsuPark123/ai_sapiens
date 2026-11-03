@@ -1274,7 +1274,7 @@ state_behaviors:
     motion: motion.csv
   mimic_eval27_mimicpowerk1_25000_389ffe11:
     kind: mimic
-    asset: mimic/power_pelvis_earlybalance_20261102
+    asset: mimic/power_end165_20261103_111655
     motion: motion.csv
   mimic_eval27_mimiclikejenniek1_107999_f55628f7:
     kind: mimic
@@ -1286,15 +1286,15 @@ state_behaviors:
     motion: motion.csv
   mimic_sapiens_boys_x:
     kind: mimic
-    asset: mimic/xyq_x_14500
+    asset: mimic/xyq_long_20261103/x_hold5
     motion: x.csv
   mimic_sapiens_boys_y:
     kind: mimic
-    asset: mimic/xyq_y_2999
+    asset: mimic/xyq_long_20261103/y_hold5
     motion: y.csv
   mimic_sapiens_boys_q:
     kind: mimic
-    asset: mimic/xyq_q_8489
+    asset: mimic/xyq_long_20261103/q_hold4
     motion: q.csv
   mimic_easy_xy_c_109999_a667fbf5:
     kind: mimic

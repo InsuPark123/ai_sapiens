@@ -1,0 +1,66 @@
+{
+  "target": "k1-snpr50a1018",
+  "config": "/data/ai_sapiens/ai_sapiens_sim2real/config/k1_config.yaml",
+  "backup": "/data/ai_sapiens/ai_sapiens_sim2real/config/k1_config.yaml.before_xyq_long_20261103_1793665975",
+  "config_before_sha256": "c8ae21a26accf3f1670b99718cb0cdb317ad3e204b6d9e94d533ab7e1e7df396",
+  "config_after_sha256": "822def0b7ae9073a90ebf6619d1e47a85d7cef247db3d83e8e3417560345dd5f",
+  "rows": [
+    {
+      "mode": "MimicSapiensBoysX",
+      "selector": 229,
+      "run": "mimic_sapiens_boys_x",
+      "step": 14500,
+      "old_asset": "mimic/xyq_x_14500",
+      "new_asset": "mimic/xyq_long_20261103/x_hold5",
+      "local_asset": "/home/robotis/workspace_kes/xyq_pose_20261029/deployments/1018_xyq_long_20261103/assets/x_hold5",
+      "hashes": {
+        "exported/policy.onnx": "a0e1c897ce1d7c433f9c637da99e5d563df91e527a00671bd8f358a172ae157d",
+        "params/sim2real.yaml": "cb907637a368e5d2a76f9c17559b8fbf92650828642c9d8b2f4a2e29ee4c30d1",
+        "params/x.csv": "afd729ae023733316df586c81ab28f99823b5b5d9de362de62ea974b64e93dfb"
+      },
+      "replace_span": [
+        39619,
+        39636
+      ]
+    },
+    {
+      "mode": "MimicSapiensBoysY",
+      "selector": 230,
+      "run": "mimic_sapiens_boys_y",
+      "step": 2999,
+      "old_asset": "mimic/xyq_y_2999",
+      "new_asset": "mimic/xyq_long_20261103/y_hold5",
+      "local_asset": "/home/robotis/workspace_kes/xyq_pose_20261029/deployments/1018_xyq_long_20261103/assets/y_hold5",
+      "hashes": {
+        "exported/policy.onnx": "984ea499c2bd709459e954471ca8402594da917b5fa200f2d659107e32932de9",
+        "params/sim2real.yaml": "cb907637a368e5d2a76f9c17559b8fbf92650828642c9d8b2f4a2e29ee4c30d1",
+        "params/y.csv": "86d0159561eaac4d5c21a29e72b8a44c46758fafd0d82ddf8cfd3747a9be8577"
+      },
+      "replace_span": [
+        39706,
+        39722
+      ]
+    },
+    {
+      "mode": "MimicSapiensBoysQ",
+      "selector": 231,
+      "run": "mimic_sapiens_boys_q",
+      "step": 8489,
+      "old_asset": "mimic/xyq_q_8489",
+      "new_asset": "mimic/xyq_long_20261103/q_hold4",
+      "local_asset": "/home/robotis/workspace_kes/xyq_pose_20261029/deployments/1018_xyq_long_20261103/assets/q_hold4",
+      "hashes": {
+        "exported/policy.onnx": "59ef6216ba496568f197b0b76ab9a555051d47826bcb1daf4bfba570e206b5ae",
+        "params/q.csv": "5f1aa8a6ac3d19c122f8553535574e1450c1c72253b65e81b62124ed685be452",
+        "params/sim2real.yaml": "cb907637a368e5d2a76f9c17559b8fbf92650828642c9d8b2f4a2e29ee4c30d1"
+      },
+      "replace_span": [
+        39792,
+        39808
+      ]
+    }
+  ],
+  "all_asset_hashes_verified": true,
+  "services_started": false,
+  "hardware_executed": false
+}

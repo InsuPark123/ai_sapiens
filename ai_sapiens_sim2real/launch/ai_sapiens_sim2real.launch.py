@@ -45,6 +45,11 @@ def generate_launch_description():
     # ==========================================================================
     args = [
         DeclareLaunchArgument(
+            'robot',
+            default_value='k1',
+            description='Robot config name; resolves to config/<robot>_config.yaml by default'
+        ),
+        DeclareLaunchArgument(
             'config_path', default_value=default_config,
             description='Path to the controller configuration YAML'),
         DeclareLaunchArgument(
@@ -62,11 +67,6 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'localization_align_on_entry', default_value='true',
             description='Zero robot/reference XY at each entry and align odometry yaw'),
-        DeclareLaunchArgument(
-            'robot',
-            default_value='k1',
-            description='Robot config name; resolves to config/<robot>_config.yaml by default'
-        ),
         DeclareLaunchArgument(
             'imu_topic',
             default_value='/imu_sensor_broadcaster/imu',

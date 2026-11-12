@@ -172,138 +172,144 @@ selectors:
 
       290: MimicNeonIntro
 
+      291: SuperMimicTaeguek1
+      292: SuperMimicTaeguek2
+      293: SuperMimicTaeguek3
+      294: SuperMimicTaeguek4
+      295: SuperMimicTaeguek5
+      296: SuperMimicTaeguek6
+      297: SuperMimicTaeguek7
       299: SubVelocityHangangLimited
 
-selectors:
-  mimic_selector_all_dance:  # NOT USED
-    table:
-      200: MimicStandup
-      201: MimicLiedown
-      202: SubVelocityHangang
-      203: SubVelocityTerrain
-
-      204: MimicSquat
-      205: MimicDance1
-      206: MimicDance2
-      207: MimicBoxingNewton
-
-      208: MimicWaveOneHandWaistYaw
-      209: MimicWaveRightHandOnlyWaistYaw
-      210: MimicWaveTwoHandWaistYaw
-
-      211: MimicWaveOneHandWaistYawLarge
-      212: MimicWaveRightHandOnlyWaistYawLarge
-      213: MimicWaveTwoHandWaistYawLarge
-
-      214: MimicBowBig
-      215: MimicBowNavel
-
-      216: MimicRedredNewton
-      217: MimicTurn
-
-      240: MimicCrayonBar3
-      # 241: MimicSupernaturalLongYawStanceSupportFT8k
-      242: MimicPeaches
-      243: MimicHammerTransitionXY5k
-
-      300: MimicKillXYK1_112999_07eb337a
-      301: MimicAnpanmanXYK1_112999_92bdb876
-      302: MimicButterXYK1_112999_0bcc9a83
-      303: MimicLXYK1_112999_5fb4d087
-      304: MimicPopXYK1_112999_c47d9042
-      305: MimicRudeXYK1_112999_84d931a4
-      306: MimicIcyXYK1_112999_11eaa701
-      307: MimicDallaXYK1_112999_96212e46
-      308: MimicLovesickXYK1_112999_28e737d0
-      309: MimicYesOrYesXYK1_112999_423a5938
-      310: MimicDynamiteXYK1_112999_9ec28a87
-      311: MimicBoyWithLuvXYK1_112999_5b225a9a
-      312: MimicSmartFlowK1_107999_fb601c79
-      313: MimicThatThatXYK1_112999_c646419b
-      314: MimicDTNAXYK1_109000_a364220b
-      315: MimicOnXYK1_107000_72da9c90
-      316: MimicPowerK1_25000_389ffe11
-      317: MimicLikeJennieK1_107999_f55628f7
-      318: MimicJiyu404XYK1_110000_d66ac6ba
-      319: MimicEasyXYCK1_109999_a667fbf5
-      320: MimicHypeBoyFlowK1_107999_592cd45c
-      321: MimicBouncyFlowK1_107999_c9fe2ee4
-      322: MimicDramaFlowK1_107999_485ffdfe
-      323: MimicOmgFlowK1_107999_32329a5a
-      324: MimicPerfectNightFlowK1_107999_b7cd53a4
-      325: MimicSlayFlowK1_107999_f3050621
-      326: MimicUntouchableFlowK1_107999_1b7b7656
-      327: MimicTask2PermissiontodanceXY_1a8656a4
-      328: MimicTask2HowyoulikethatXY_55a2e178
-      329: MimicTask2NeonXY_c6a28b07
-      330: MimicFeelSpecial
-      331: MimicTask2ThefeelsXY_f3572b0c
-      332: MimicTask2FancyXY_d42b5a98
-      333: MimicTask2IcantstopmeXY_f297435a
-      334: MimicTask2PinkvenomXY_8880e167
-      335: MimicTask2SomidumbdumbXY_11480532
-      336: MimicTask2StrategyXY_ed3d61a7
-      337: MimicTask2SupernovaXY_2f114f3d
-      338: MimicTask2MoneyXY_5e65fd61
-      339: MimicTask2GnarlyXY_2ffdf957
-      340: MimicTask2InthemorningXY_34ba869a
-      341: MimicTask2LocoXY_6c79376d
-      342: MimicTask2SuperladyXY_dc8c04d8
-      343: MimicTask2CherishmyloveXY_752b705c
-      344: MimicTask2TomboyXY_93c2f221
-      345: MimicTask2DripXY_4bbd0ecc
-      346: MimicTask2SpicyXY_033a9df5
-      347: MimicTask2SavageXY_ae9342d2
-      348: MimicTask2NextlevelXY_fca2ac6a
-      349: MimicTask2QueencardXY_89defef9
-      350: MimicTask2KitschXY_934d15b3
-      351: MimicTask2LovemelikethisXY_b6b7d2bc
-      352: MimicTask2UnforgivenXY_bbfba803
-      353: MimicTask23dXY_0b06ed69
-      354: MimicTask2PsychoXY_6d1b868b
-      355: MimicTask2BlackmambaXY_40d1eed8
-      356: MimicTask2BabymonsterbillionaireXY_a148d4ec
-      357: MimicTask2JisooearthquakeXY_3ae001f4
-      358: MimicTask2CheshireXY_19cbfb1a
-      359: MimicTask2XoxoXY_d3816fbd
-      360: MimicTask2ArmageddonXY_21defea2
-      361: MimicTask2HotXY_07f3f85d
-      362: MimicTask2SheeshXY_161e1d78
-      363: MimicTask2WhatisloveXY_7869efa4
-      364: MimicTask2SoloXY_ce211219
-      365: MimicTask2BadboyXY_b579b208
-      366: MimicTask2KnockknockXY_3247f2af
-      367: MimicTask2CheerupXY_27a45815
-      368: MimicTask2HeartshakerXY_7167b197
-      369: MimicTask2LikeoohahhXY_b80074cc
-      370: MimicTask2LikeyXY_92bde402
-      371: MimicTask2SignalXY_8b264d22
-      372: MimicTask2TtXY_8f3449b7
-      # 373: MimicSupernaturalShort235Interim105k
-
-      374: MimicSeventeen
-      375: MimicZico
-      376: MimicCheerleading
-
-      377: MimicHypeboy
-      378: MimicOMG
-      379: MimicSuperShy
-      380: MimicAttention
-      381: MimicDitto
-      382: MimicETA
-      383: MimicHowSweet
-      384: MimicLoveDive
-      385: MimicIAm
-      386: MimicTalkThatTalk
-      387: MimicTeddyBear
-      388: MimicStereotype
-      389: MimicItzySneakers
-      390: MimicWannabe
-      391: MimicNotshy
-      392: MimicDundundance
-      393: MimicAntifragile
-      394: MimicGravity
-
+#   mimic_selector_all_dance:  # NOT USED
+#     table:
+#       200: MimicStandup
+#       201: MimicLiedown
+#       202: SubVelocityHangang
+#       203: SubVelocityTerrain
+#
+#       204: MimicSquat
+#       205: MimicDance1
+#       206: MimicDance2
+#       207: MimicBoxingNewton
+#
+#       208: MimicWaveOneHandWaistYaw
+#       209: MimicWaveRightHandOnlyWaistYaw
+#       210: MimicWaveTwoHandWaistYaw
+#
+#       211: MimicWaveOneHandWaistYawLarge
+#       212: MimicWaveRightHandOnlyWaistYawLarge
+#       213: MimicWaveTwoHandWaistYawLarge
+#
+#       214: MimicBowBig
+#       215: MimicBowNavel
+#
+#       216: MimicRedredNewton
+#       217: MimicTurn
+#
+#       240: MimicCrayonBar3
+#       # 241: MimicSupernaturalLongYawStanceSupportFT8k
+#       242: MimicPeaches
+#       243: MimicHammerTransitionXY5k
+#
+#       300: MimicKillXYK1_112999_07eb337a
+#       301: MimicAnpanmanXYK1_112999_92bdb876
+#       302: MimicButterXYK1_112999_0bcc9a83
+#       303: MimicLXYK1_112999_5fb4d087
+#       304: MimicPopXYK1_112999_c47d9042
+#       305: MimicRudeXYK1_112999_84d931a4
+#       306: MimicIcyXYK1_112999_11eaa701
+#       307: MimicDallaXYK1_112999_96212e46
+#       308: MimicLovesickXYK1_112999_28e737d0
+#       309: MimicYesOrYesXYK1_112999_423a5938
+#       310: MimicDynamiteXYK1_112999_9ec28a87
+#       311: MimicBoyWithLuvXYK1_112999_5b225a9a
+#       312: MimicSmartFlowK1_107999_fb601c79
+#       313: MimicThatThatXYK1_112999_c646419b
+#       314: MimicDTNAXYK1_109000_a364220b
+#       315: MimicOnXYK1_107000_72da9c90
+#       316: MimicPowerK1_25000_389ffe11
+#       317: MimicLikeJennieK1_107999_f55628f7
+#       318: MimicJiyu404XYK1_110000_d66ac6ba
+#       319: MimicEasyXYCK1_109999_a667fbf5
+#       320: MimicHypeBoyFlowK1_107999_592cd45c
+#       321: MimicBouncyFlowK1_107999_c9fe2ee4
+#       322: MimicDramaFlowK1_107999_485ffdfe
+#       323: MimicOmgFlowK1_107999_32329a5a
+#       324: MimicPerfectNightFlowK1_107999_b7cd53a4
+#       325: MimicSlayFlowK1_107999_f3050621
+#       326: MimicUntouchableFlowK1_107999_1b7b7656
+#       327: MimicTask2PermissiontodanceXY_1a8656a4
+#       328: MimicTask2HowyoulikethatXY_55a2e178
+#       329: MimicTask2NeonXY_c6a28b07
+#       330: MimicFeelSpecial
+#       331: MimicTask2ThefeelsXY_f3572b0c
+#       332: MimicTask2FancyXY_d42b5a98
+#       333: MimicTask2IcantstopmeXY_f297435a
+#       334: MimicTask2PinkvenomXY_8880e167
+#       335: MimicTask2SomidumbdumbXY_11480532
+#       336: MimicTask2StrategyXY_ed3d61a7
+#       337: MimicTask2SupernovaXY_2f114f3d
+#       338: MimicTask2MoneyXY_5e65fd61
+#       339: MimicTask2GnarlyXY_2ffdf957
+#       340: MimicTask2InthemorningXY_34ba869a
+#       341: MimicTask2LocoXY_6c79376d
+#       342: MimicTask2SuperladyXY_dc8c04d8
+#       343: MimicTask2CherishmyloveXY_752b705c
+#       344: MimicTask2TomboyXY_93c2f221
+#       345: MimicTask2DripXY_4bbd0ecc
+#       346: MimicTask2SpicyXY_033a9df5
+#       347: MimicTask2SavageXY_ae9342d2
+#       348: MimicTask2NextlevelXY_fca2ac6a
+#       349: MimicTask2QueencardXY_89defef9
+#       350: MimicTask2KitschXY_934d15b3
+#       351: MimicTask2LovemelikethisXY_b6b7d2bc
+#       352: MimicTask2UnforgivenXY_bbfba803
+#       353: MimicTask23dXY_0b06ed69
+#       354: MimicTask2PsychoXY_6d1b868b
+#       355: MimicTask2BlackmambaXY_40d1eed8
+#       356: MimicTask2BabymonsterbillionaireXY_a148d4ec
+#       357: MimicTask2JisooearthquakeXY_3ae001f4
+#       358: MimicTask2CheshireXY_19cbfb1a
+#       359: MimicTask2XoxoXY_d3816fbd
+#       360: MimicTask2ArmageddonXY_21defea2
+#       361: MimicTask2HotXY_07f3f85d
+#       362: MimicTask2SheeshXY_161e1d78
+#       363: MimicTask2WhatisloveXY_7869efa4
+#       364: MimicTask2SoloXY_ce211219
+#       365: MimicTask2BadboyXY_b579b208
+#       366: MimicTask2KnockknockXY_3247f2af
+#       367: MimicTask2CheerupXY_27a45815
+#       368: MimicTask2HeartshakerXY_7167b197
+#       369: MimicTask2LikeoohahhXY_b80074cc
+#       370: MimicTask2LikeyXY_92bde402
+#       371: MimicTask2SignalXY_8b264d22
+#       372: MimicTask2TtXY_8f3449b7
+#       # 373: MimicSupernaturalShort235Interim105k
+#
+#       374: MimicSeventeen
+#       375: MimicZico
+#       376: MimicCheerleading
+#
+#       377: MimicHypeboy
+#       378: MimicOMG
+#       379: MimicSuperShy
+#       380: MimicAttention
+#       381: MimicDitto
+#       382: MimicETA
+#       383: MimicHowSweet
+#       384: MimicLoveDive
+#       385: MimicIAm
+#       386: MimicTalkThatTalk
+#       387: MimicTeddyBear
+#       388: MimicStereotype
+#       389: MimicItzySneakers
+#       390: MimicWannabe
+#       391: MimicNotshy
+#       392: MimicDundundance
+#       393: MimicAntifragile
+#       394: MimicGravity
+#
 state_machine:
   initial: Damping
   states:
@@ -862,6 +868,28 @@ state_machine:
       run: mimic_neon_intro_112999
 
 
+    SuperMimicTaeguek1:
+      parent: Mimic
+      run: supermimic_taeguek_1
+    SuperMimicTaeguek2:
+      parent: Mimic
+      run: supermimic_taeguek_2
+    SuperMimicTaeguek3:
+      parent: Mimic
+      run: supermimic_taeguek_3
+    SuperMimicTaeguek4:
+      parent: Mimic
+      run: supermimic_taeguek_4
+    SuperMimicTaeguek5:
+      parent: Mimic
+      run: supermimic_taeguek_5
+    SuperMimicTaeguek6:
+      parent: Mimic
+      run: supermimic_taeguek_6
+    SuperMimicTaeguek7:
+      parent: Mimic
+      run: supermimic_taeguek_7
+
 state_behaviors:
   damping:
     kind: damping
@@ -943,7 +971,7 @@ state_behaviors:
   velocity_policy_walk_terrain:
     kind: policy
     asset: locomotion/velocity/walk_terrain_new
-  
+
   velocity_policy_woojin_dreamwaq_amp_phase_free:
     kind: policy
     asset: locomotion/velocity/woojin_dreamwaq_amp_phase_free
@@ -1126,6 +1154,41 @@ state_behaviors:
     motion: motion.csv
     mirror: true
 
+  supermimic_taeguek_1:
+    kind: mimic
+    asset: mimic/supermimic_taeguek_ori_only
+    motion: taeguek_1.csv
+    fps: 50
+  supermimic_taeguek_2:
+    kind: mimic
+    asset: mimic/supermimic_taeguek_ori_only
+    motion: taeguek_2.csv
+    fps: 50
+  supermimic_taeguek_3:
+    kind: mimic
+    asset: mimic/supermimic_taeguek_ori_only
+    motion: taeguek_3.csv
+    fps: 50
+  supermimic_taeguek_4:
+    kind: mimic
+    asset: mimic/supermimic_taeguek_ori_only
+    motion: taeguek_4.csv
+    fps: 50
+  supermimic_taeguek_5:
+    kind: mimic
+    asset: mimic/supermimic_taeguek_ori_only
+    motion: taeguek_5.csv
+    fps: 50
+  supermimic_taeguek_6:
+    kind: mimic
+    asset: mimic/supermimic_taeguek_ori_only
+    motion: taeguek_6.csv
+    fps: 50
+  supermimic_taeguek_7:
+    kind: mimic
+    asset: mimic/supermimic_taeguek_ori_only
+    motion: taeguek_7.csv
+    fps: 50
   mimic_taeguek_1:
     kind: mimic
     asset: mimic/taeguek_01
@@ -1135,7 +1198,7 @@ state_behaviors:
     asset: mimic/taeguek_02
     motion: taeguek_2.csv
   mimic_taeguek_3:
-    kind: mimic   
+    kind: mimic
     asset: mimic/taeguek_03
     motion: taeguek_3.csv
   mimic_taeguek_4:

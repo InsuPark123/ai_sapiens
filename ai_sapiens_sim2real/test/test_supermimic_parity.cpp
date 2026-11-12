@@ -71,7 +71,9 @@ TEST(SuperMimicParity, MujocoObservationsAndActorOutputs)
       std::vector<float> expected(row.begin() + k, row.end());
       for(size_t j = 0; j < actual.size(); ++j) {
         float e = std::abs(actual[j] - expected[j]);max_obs = std::max(max_obs, e);
-        ASSERT_LT(e, 2e-4f) << name << " frame=" << frame << " obs=" << j;
+        ASSERT_LT(e, 2e-4f) << name << " frame=" << frame << " obs=" << j <<
+          " actual=" << actual[j] << " expected=" << expected[j] <<
+          " reference_frame=" << ref.frame_index();
       }
       if(frame % 100 == 0 || frame + 1 == static_cast<size_t>(ref.frame_count())) {
         auto a = Ort::Value::CreateTensor<float>(memory, actual.data(), actual.size(), shape.data(),

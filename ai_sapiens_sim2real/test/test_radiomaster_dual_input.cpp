@@ -44,7 +44,7 @@ TEST(RadiomasterDualInput, IndependentTicksGroupSwitchAndSelectorMapping)
   msg.channels[4].rc_us = 2000; // CH5 group
   msg.channels[6].rc_us = 2000; // CH7 active
   msg.channels[5].rc_us = 2000; // CH6 mimic
-  msg.channels[10].rc_us = 1020; // CH11 selector 201
+  msg.channels[10].rc_us = 1005; // CH11 selector 201
   msg.channels[2].axis = 0.5f;
   individual.handle_raw_message(msg);
   group.handle_raw_message(msg); // same tick accepted by separate stream
@@ -112,6 +112,32 @@ TEST(RadiomasterDualInput, UnhealthyGroupDoesNotBlockIndividualReadyToWalk)
   group.handle_raw_message(invalid);
   group.read_latest_accepted_command(common);
   EXPECT_EQ(common.received_at, accepted_at);
+}
+TEST(RadiomasterDualInput, SuperMimicTaeguekSixSelector)
+{
+  if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
+  const auto node = std::make_shared<rclcpp::Node>("radiomaster_supermimic_test");
+  InjectableRadiomaster individual;
+  individual.configure(node, YAML::LoadFile(TEST_CONFIG_DIR "/teleop/radiomaster_pocket.yaml"));
+  ai_sapiens_interfaces::msg::RcStatus msg;
+  msg.status_data_valid = true;
+  msg.is_control_input_safe = true;
+  msg.realtime_tick = 1;
+  for (uint8_t id = 1; id <= 16; ++id) {
+    ai_sapiens_interfaces::msg::RcChannel channel;
+    channel.rc_channel = id;
+    channel.valid = true;
+    channel.rc_us = 1500;
+    msg.channels.push_back(channel);
+  }
+  msg.channels[5].rc_us = 2000;
+  msg.channels[6].rc_us = 2000;
+  msg.channels[10].rc_us = 1480;
+  individual.handle_raw_message(msg);
+  TeleopInputCommand command;
+  ASSERT_TRUE(individual.read_latest_accepted_command(command));
+  EXPECT_EQ(command.input_code, 4);
+  EXPECT_EQ(command.selector_code, 296);
 }
 TEST(RadiomasterDualInput, DisabledGroupPreservesLegacyAcceptanceWithoutChannelFive)
 {

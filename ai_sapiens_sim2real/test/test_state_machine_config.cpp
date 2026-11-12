@@ -696,3 +696,25 @@ TEST(StateMachineConfig, LocoMimicEntryAliasesPreserveSelectionWithoutReentry)
         "SubVelocityLocoMimic", input, {true, 4, 269}).has_value());
   }
 }
+
+TEST(SuperMimicConfiguration, PreservesActiveSelectorsAndAddsSeven)
+{
+  const char * config=std::getenv("SUPERMIMIC_CONFIG");
+  const char * original=std::getenv("SUPERMIMIC_ORIGINAL_CONFIG");
+  if (!config || !original) GTEST_SKIP() << "Set SUPERMIMIC_CONFIG and SUPERMIMIC_ORIGINAL_CONFIG";
+  RootConfig before(original), after(config);
+  before.selectors_config().for_each_selector([&](const std::string & name, const ai_sapiens_sim2real::Selector & values) {
+    for(const auto & entry: values) EXPECT_EQ(after.selectors_config().find_target_state_for_selector_code(name,entry.first), entry.second);
+  });
+  for(int i=1;i<=7;++i) {
+    const auto state=after.selectors_config().find_target_state_for_selector_code("mimic_selector",290+i);
+    ASSERT_TRUE(state.has_value());EXPECT_EQ(*state,"SuperMimicTaeguek"+std::to_string(i));
+  }
+  auto policies=after.policy_behaviors();
+  for(int i=1;i<=7;++i) {
+    const auto name="supermimic_taeguek_"+std::to_string(i);
+    const auto it=std::find_if(policies.begin(),policies.end(),[&](const auto & x){return x.name==name;});
+    ASSERT_NE(it,policies.end());ASSERT_TRUE(it->mimic.has_value());
+    EXPECT_EQ(it->mimic->motion_file.filename(),"taeguek_"+std::to_string(i)+".csv");
+  }
+}

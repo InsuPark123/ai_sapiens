@@ -32,3 +32,13 @@ TEST(MimicHeadingAlignment, OpposingTiltIsFinite)
   const Eigen::Quaternionf actual(0,1,0,0);
   EXPECT_TRUE(mimic_heading_alignment(Eigen::Quaternionf::Identity(),actual).isApprox(Eigen::Quaternionf::Identity()));
 }
+
+TEST(SuperMimicHeading, MatchesReferenceYawDifferenceWithTilt)
+{
+  using ai_sapiens_sim2real::supermimic_heading_alignment;
+  const Eigen::Quaternionf ref=Eigen::AngleAxisf(.8f,Eigen::Vector3f::UnitZ()) * Eigen::AngleAxisf(.5f,Eigen::Vector3f::UnitX());
+  const Eigen::Quaternionf actual=Eigen::AngleAxisf(-.4f,Eigen::Vector3f::UnitZ()) * Eigen::AngleAxisf(.3f,Eigen::Vector3f::UnitY());
+  const auto aligned=supermimic_heading_alignment(ref,actual);
+  EXPECT_NEAR(aligned.w(),std::cos(-.6f),1e-6f);
+  EXPECT_NEAR(aligned.z(),std::sin(-.6f),1e-6f);
+}

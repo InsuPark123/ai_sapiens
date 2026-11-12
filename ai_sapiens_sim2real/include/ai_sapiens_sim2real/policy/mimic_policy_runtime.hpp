@@ -88,6 +88,7 @@ private:
   std::string completion_state_;
   MotionObservationOrigin observation_origin_;
   bool use_imu_orientation_;
+  bool supermimic_;
   std::optional<PlanarSteeringConfig> steering_;
   float steering_dt_;
   MotionSteeringRelease steering_release_;

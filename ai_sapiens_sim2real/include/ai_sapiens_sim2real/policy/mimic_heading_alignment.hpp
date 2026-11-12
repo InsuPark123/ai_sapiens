@@ -21,6 +21,17 @@ inline Eigen::Quaternionf mimic_heading_alignment(
   }
   return Eigen::Quaternionf(delta.w() / norm, 0.0f, 0.0f, delta.z() / norm);
 }
+// Match the SuperMimic simulation adapter's difference of torso Euler yaws.
+inline Eigen::Quaternionf supermimic_heading_alignment(
+  const Eigen::Quaternionf & reference, const Eigen::Quaternionf & actual)
+{
+  const auto yaw = [](const Eigen::Quaternionf & input) {
+    const auto q = input.normalized();
+    return std::atan2(2.0f * (q.w() * q.z() + q.x() * q.y()),
+      1.0f - 2.0f * (q.y() * q.y() + q.z() * q.z()));
+  };
+  return Eigen::Quaternionf(Eigen::AngleAxisf(yaw(actual) - yaw(reference), Eigen::Vector3f::UnitZ()));
+}
 }  // namespace ai_sapiens_sim2real
 
 #endif

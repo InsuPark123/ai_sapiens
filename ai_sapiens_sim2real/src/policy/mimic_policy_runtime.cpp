@@ -108,6 +108,7 @@ MimicPolicyRuntime::MimicPolicyRuntime(
   , completion_state_(std::move(completion_state))
   , observation_origin_(sim2real_config.observation_origin())
   , use_imu_orientation_(sim2real_config.use_imu_orientation())
+  , supermimic_(static_cast<bool>(sim2real_config.observations()["supermimic_future"]))
   , steering_(sim2real_config.steering())
   , steering_dt_(static_cast<float>(sim2real_config.step_dt()))
 {
@@ -170,8 +171,10 @@ void MimicPolicyRuntime::on_enter()
   const Eigen::Quaternionf reference_torso = playback_.reference->root_quaternion() *
     Eigen::AngleAxisf(playback_.reference->joint_pos_for_joint(kWaistYawJointName),
       Eigen::Vector3f::UnitZ());
-  policy_->motion_init_quat = mimic_heading_alignment(
-    reference_torso, torso_orientation_in_world(*sensors_, joint_context()));
+  const auto actual_torso = torso_orientation_in_world(*sensors_, joint_context());
+  policy_->motion_init_quat = supermimic_ ?
+    supermimic_heading_alignment(reference_torso, actual_torso) :
+    mimic_heading_alignment(reference_torso, actual_torso);
 }
 
 bool MimicPolicyRuntime::prepare_observation()

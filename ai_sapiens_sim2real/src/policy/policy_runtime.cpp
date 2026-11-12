@@ -99,10 +99,11 @@ void PolicyRuntime::configure_input_requirements(
         "root velocity observations belong to an incompatible training schema");
   }
 
+  const bool supermimic = static_cast<bool>(observations["supermimic_future"]);
   requires_localization_ = has_robot_xy || sim2real_config.any2track_path_tracking();
-  requires_imu_orientation_ = sim2real_config.any2track() || sim2real_config.use_imu_orientation();
+  requires_imu_orientation_ = sim2real_config.any2track() || sim2real_config.use_imu_orientation() || supermimic;
 
-  if (requires_imu_orientation_ && !requires_localization_ && !sim2real_config.any2track()) {
+  if (requires_imu_orientation_ && !requires_localization_ && !sim2real_config.any2track() && !supermimic) {
     throw std::runtime_error("reference_trajectory.orientation_source=imu requires global-position Mimic");
   }
 
@@ -723,7 +724,8 @@ size_t PolicyRuntime::create_observation_manager(
     shared_data,
     joint_context_,
     reference_motion, mirror_ ? &sensor_view_ : nullptr,
-    mirror_ ? &joint_properties_.default_position : nullptr,
+    (mirror_ || sim2real_config.observations()["supermimic_future"]) ?
+    &joint_properties_.default_position : nullptr,
     locomotion_mimic_ ? &locomotion_mimic_->observations() : nullptr);
   return obs_manager_->get_observation_size();
 }

@@ -18,6 +18,7 @@
 #define AI_SAPIENS_SIM2REAL__POLICY__MOTION_REFERENCE_HPP_
 
 #include <cctype>
+#include <array>
 
 #include <algorithm>
 #include <fstream>
@@ -53,6 +54,7 @@ public:
     const Eigen::Quaternionf & root_quaternion;
   };
   Frame frame(int index) const;
+  std::vector<float> supermimic_goal() const;
   void seek(double time);
 
   // Optional runtime targets in motion-file joint order; seek() clears them.
@@ -123,6 +125,7 @@ private:
   // Initialized once by the constructor; never mutated by seek/copy.
   struct FrameData
   {
+    std::vector<std::array<float, 56>> supermimic_frames_;
     std::vector<std::string> joint_order_;
     std::unordered_map<std::string, Eigen::Index> joint_index_by_name_;
     std::vector<Eigen::VectorXf> root_positions_;

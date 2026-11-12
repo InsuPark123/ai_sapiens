@@ -45,6 +45,9 @@ def generate_launch_description():
     # ==========================================================================
     args = [
         DeclareLaunchArgument(
+            'config_path', default_value=default_config,
+            description='Path to the controller configuration YAML'),
+        DeclareLaunchArgument(
             'localization_topic', default_value='/state_estimator/odom',
             description='feature-localization pelvis odometry topic'),
         DeclareLaunchArgument(
@@ -170,7 +173,7 @@ def generate_launch_description():
             'localization_base_frame': LaunchConfiguration('localization_base_frame'),
             'localization_timeout': LaunchConfiguration('localization_timeout'),
             'localization_align_on_entry': LaunchConfiguration('localization_align_on_entry'),
-            'config_path': default_config,
+            'config_path': LaunchConfiguration('config_path'),
             'imu_topic': LaunchConfiguration('imu_topic'),
             'joint_states_topic': LaunchConfiguration('joint_states_topic'),
             'thread_priority': LaunchConfiguration('thread_priority'),

@@ -40,6 +40,30 @@ MotionReference::MotionReference(
 
   duration_ = (num_frames_ - 1) * dt_;
 
+  // Optional exact SuperMimic reference data; ordinary motion CSVs remain unchanged.
+  const std::string sidecar_path = motion_file + ".supermimic";
+  std::ifstream sidecar(sidecar_path);
+  if (sidecar.is_open()) {
+    if (std::abs(fps - 50.0f) > 1e-5f) {
+      throw std::runtime_error("SuperMimic reference requires 50 Hz");
+    }
+    std::string line;
+    while (std::getline(sidecar, line)) {
+      std::vector<float> values;
+      if (!parse_numeric_row(split_csv_line(line), values) || values.size() != 56U ||
+        !std::all_of(values.begin(), values.end(), [](float x) {return std::isfinite(x);}))
+      {
+        throw std::runtime_error("Invalid SuperMimic reference frame: " + sidecar_path);
+      }
+      std::array<float, 56> frame;
+      std::copy(values.begin(), values.end(), frame.begin());
+      frames_->supermimic_frames_.push_back(frame);
+    }
+    if (frames_->supermimic_frames_.size() != data.size()) {
+      throw std::runtime_error("SuperMimic reference frame count mismatch: " + sidecar_path);
+    }
+  }
+
   for (int i = 0; i < num_frames_; ++i) {
     frames_->root_positions_.push_back(Eigen::VectorXf::Map(data[i].data(), 3));
     frames_->root_quaternions_.push_back(
@@ -75,6 +99,20 @@ MotionReference::Frame MotionReference::frame(int index) const
   }
   return {frames_->dof_positions_[index], frames_->dof_velocities_[index],
     frames_->root_positions_[index], frames_->root_quaternions_[index]};
+}
+
+std::vector<float> MotionReference::supermimic_goal() const
+{
+  if (frames_->supermimic_frames_.size() != static_cast<size_t>(num_frames_)) {
+    throw std::runtime_error("Missing SuperMimic reference data");
+  }
+  std::vector<float> result;
+  result.reserve(560);
+  for (int i = 0; i < 10; ++i) {
+    const auto & values = frames_->supermimic_frames_[std::min(index_0_ + i, num_frames_ - 1)];
+    result.insert(result.end(), values.begin(), values.end());
+  }
+  return result;
 }
 
 void MotionReference::set_joint_targets(

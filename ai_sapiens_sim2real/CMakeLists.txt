@@ -381,6 +381,12 @@ if(BUILD_TESTING)
     src/config/config_utils.cpp
     src/observation/observation_manager.cpp
     src/observation/observations.cpp)
+  ament_add_gtest(test_supermimic_runtime test/test_supermimic_runtime.cpp
+    ${POLICY_RUNTIME_TEST_SOURCES})
+  ament_target_dependencies(test_supermimic_runtime rclcpp realtime_tools ament_index_cpp)
+  target_link_libraries(test_supermimic_runtime yaml-cpp Eigen3::Eigen
+    ${ONNXRUNTIME_LIBRARY} mujoco::mujoco OpenSSL::Crypto Threads::Threads)
+
   ament_add_gtest(test_mimic_mirror test/test_mimic_mirror.cpp
     ${POLICY_RUNTIME_TEST_SOURCES})
   ament_target_dependencies(test_mimic_mirror rclcpp realtime_tools ament_index_cpp)
@@ -423,6 +429,16 @@ if(BUILD_TESTING)
     src/sensor_handles/imu_sensor_handle.cpp)
   ament_target_dependencies(test_imu_validation rclcpp realtime_tools sensor_msgs)
   target_link_libraries(test_imu_validation Eigen3::Eigen)
+
+  ament_add_gtest(test_supermimic_parity test/test_supermimic_parity.cpp
+    src/observation/observation_manager.cpp src/observation/observations.cpp
+    src/policy/motion_reference.cpp)
+  ament_target_dependencies(test_supermimic_parity rclcpp realtime_tools)
+  target_link_libraries(test_supermimic_parity yaml-cpp Eigen3::Eigen ${ONNXRUNTIME_LIBRARY})
+
+  ament_add_gtest(test_supermimic_reference
+    test/test_supermimic_reference.cpp src/policy/motion_reference.cpp)
+  target_link_libraries(test_supermimic_reference Eigen3::Eigen)
 
   ament_add_gtest(test_motion_playback
     test/test_motion_playback.cpp
@@ -496,6 +512,7 @@ target_link_libraries(ai_sapiens_sim2real_node locomotion_mimic)
 
 if(BUILD_TESTING)
   # PolicyRuntime owns the module connection, including in ordinary-policy tests.
+  target_link_libraries(test_supermimic_runtime locomotion_mimic)
   target_link_libraries(test_mimic_mirror locomotion_mimic)
   target_link_libraries(test_policy_action_fault locomotion_mimic)
   ament_add_gtest(test_locomotion_mimic_runtime test/test_locomotion_mimic_runtime.cpp

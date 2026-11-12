@@ -271,6 +271,30 @@ std::vector<float> obs_motion_command(
   return pos;
 }
 
+std::vector<float> obs_supermimic_future(
+  const ObservationContext & context, const YAML::Node &)
+{
+  if (!context.reference_motion || context.joints.policy_joint_names.size() != 23U ||
+    context.joints.policy_joint_names != context.reference_motion->joint_order())
+  {
+    throw std::runtime_error("SuperMimic requires 23 reference joints in exact policy order");
+  }
+  const auto goal = context.reference_motion->supermimic_goal();
+  const auto & reference = *context.reference_motion;
+  for (int frame = 0; frame < 10; ++frame) {
+    const auto source = reference.frame(std::min(reference.frame_index() + frame, reference.frame_count() - 1));
+    for (int joint = 0; joint < 23; ++joint) {
+      const auto controller_index = context.joints.policy_to_controller.at(joint);
+      const float initial = context.default_positions ? context.default_positions->at(joint) :
+        context.shared.output.default_joint_pos[static_cast<Eigen::Index>(controller_index)];
+      if (std::abs(goal[frame * 56 + joint] - (source.joint_pos[joint] - initial)) > 1e-4f) {
+        throw std::runtime_error("SuperMimic reference data does not match motion or defaults");
+      }
+    }
+  }
+  return goal;
+}
+
 std::vector<float> obs_motion_anchor_ori_b(
   const ObservationContext & context,
   const YAML::Node & /*params*/)
@@ -340,6 +364,7 @@ struct ObservationRegistrar
     ObservationRegistry::register_observation("motion_joint_pos", obs_motion_joint_pos);
     ObservationRegistry::register_observation("motion_joint_vel", obs_motion_joint_vel);
     ObservationRegistry::register_observation("motion_command", obs_motion_command);
+    ObservationRegistry::register_observation("supermimic_future", obs_supermimic_future);
     ObservationRegistry::register_observation("motion_anchor_ori_b", obs_motion_anchor_ori_b);
     ObservationRegistry::register_observation("robot_root_position_xy_w",
           obs_robot_root_position_xy_w);
